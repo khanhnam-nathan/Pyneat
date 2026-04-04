@@ -37,7 +37,7 @@ class NamingConventionRule(Rule):
                 content = self._apply_all_changes(content, name_mapping)
                 for old, new in name_mapping.items():
                     if old != new:
-                        changes.append(f"Name '{old}' → '{new}'")
+                        changes.append(f"Name '{old}' -> '{new}'")
             
             return self._create_result(code_file, content, changes)
             
