@@ -1,0 +1,2 @@
+[console_scripts]
+pyneat = pyneat.cli:cli

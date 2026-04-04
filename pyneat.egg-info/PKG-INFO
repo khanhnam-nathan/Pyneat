@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: pyneat
+Version: 1.0.0
+Requires-Dist: click>=8.0.0
+Dynamic: requires-dist
