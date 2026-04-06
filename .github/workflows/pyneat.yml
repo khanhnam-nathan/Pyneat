@@ -47,15 +47,15 @@ jobs:
 
       - name: Run unit tests
         run: |
-          py -m pytest tests/ -v --tb=short
+          python -m pytest tests/ -v --tb=short
 
       - name: Run fuzzing tests
         run: |
-          py -m pytest tests/test_fuzz.py -v --tb=short
+          python -m pytest tests/test_fuzz.py -v --tb=short
 
       - name: Run property-based tests
         run: |
-          py -m pytest tests/test_property.py -v --tb=short
+          python -m pytest tests/test_property.py -v --tb=short
 
       - name: Upload test results
         if: always()
@@ -107,11 +107,11 @@ jobs:
 
       - name: Run stress tests (monster code)
         run: |
-          py -m pytest tests/test_stress.py -v
+          python -m pytest tests/test_stress.py -v
 
       - name: Run real-world integration tests
         run: |
-          py -m pytest tests/test_real_world.py -v
+          python -m pytest tests/test_real_world.py -v
 
   summary:
     name: Test Summary
@@ -152,8 +152,8 @@ jobs:
 
       - name: Run PyNeat on itself (dry-run)
         run: |
-          py -m pyneat clean-dir pyneat --dry-run --diff
+          python -m pyneat clean-dir pyneat --dry-run --diff
 
-      - name: Verify cleaned files are valid Python
+      - name: Verify package sources compile
         run: |
-          python -m pycompile pyneat/*.py pyneat/**/*.py 2>&1 || true
+          python -m compileall -q pyneat
