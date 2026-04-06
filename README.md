@@ -1,6 +1,6 @@
 # PyNeat: The Anti-Spaghetti Code Cleaner
 
-**PyNeat** is an aggressive, AST-based Python code refactoring tool designed to clean up messy, legacy, or AI-generated code. Unlike standard formatters that only fix whitespace, PyNeat performs deep structural surgery on your logic in a single optimized pass using LibCST.
+**PyNeat 2.0.0** is an aggressive, AST-based Python code refactoring tool designed to clean up messy, legacy, or AI-generated code. Unlike standard formatters that only fix whitespace, PyNeat performs deep structural surgery on your logic in a single optimized pass using LibCST.
 
 ## Features
 
@@ -25,6 +25,23 @@
 | `--enable-redundant` | `RedundantExpressionRule` | Simplifies `x == True`, `str(str(x))`, etc. |
 
 ### What It Fixes
+
+## What's New in v2.0.0
+
+| Category | Feature |
+|----------|---------|
+| **New Rule** | `IsNotNoneRule` - Converts `x is not None` patterns |
+| **New Rule** | `MagicNumberRule` - Detects and flags magic numbers |
+| **New Rule** | `RangeLenRule` - Fixes `range(len())` anti-patterns |
+| **Improvement** | Refactored comprehensive rule system with priority ordering |
+| **Improvement** | Added comprehensive test samples for real-world scenarios |
+| **Improvement** | Cleaner CI/CD workflow with lint and stress tests |
+| **Improvement** | Enhanced isolated block processing for nested code |
+| **Improvement** | Fixed Unicode encoding issues in CLI output |
+| **Bug Fix** | Fixed CI configuration to use proper Linux Python paths |
+| **Bug Fix** | Fixed compileall verification for package integrity |
+| **Cleanup** | Removed redundant test files for leaner test suite |
+| **Cleanup** | Simplified CI pipeline (single pytest run instead of multiple jobs) |
 
 1. Flattens deeply nested `if/else` (Arrow Anti-pattern)
 2. Converts `x == None` to `x is None`

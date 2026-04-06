@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyneat"
-version = "1.1.0"
+version = "2.0.0"
 description = "Neat Python AI Code Cleaner — removes AI-generated code artifacts, dead code, and security vulnerabilities"
 readme = "README.md"
 requires-python = ">=3.10"

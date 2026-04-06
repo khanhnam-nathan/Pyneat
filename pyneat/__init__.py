@@ -17,7 +17,7 @@ from .rules.is_not_none import IsNotNoneRule
 from .rules.magic_numbers import MagicNumberRule
 from .rules.range_len_pattern import RangeLenRule
 
-__version__ = "1.1.0"
+__version__ = "2.0.0"
 __all__ = [
     'RuleEngine',
     'CodeFile',
