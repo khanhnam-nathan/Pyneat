@@ -1,0 +1,39 @@
+# Pre-commit configuration for PyNeat
+# Install: pre-commit install
+# Usage: pre-commit run --all-files
+# Docs: https://pre-commit.com/
+
+repos:
+  - repo: local
+    hooks:
+      - id: pyneat-clean
+        name: PyNeat AI Code Cleaner
+        description: Remove AI-generated code artifacts (print, pdb, empty TODOs, unused imports, etc.)
+        entry: py clean --in-place --verbose
+        language: system
+        types: [python]
+        pass_filenames: true
+        args: ['--enable-unused', '--enable-redundant']
+        stages: [pre-commit]
+
+  - repo: local
+    hooks:
+      - id: pyneat-scan
+        name: PyNeat Security Scan
+        description: Scan for security issues in AI-generated code
+        entry: py clean --in-place --enable-security --enable-quality --verbose
+        language: system
+        types: [python]
+        pass_filenames: true
+        stages: [pre-push]
+
+  - repo: local
+    hooks:
+      - id: pyneat-diff
+        name: PyNeat Preview (Dry Run)
+        description: Show diff of changes without modifying files (for CI)
+        entry: py clean --dry-run --diff
+        language: system
+        types: [python]
+        pass_filenames: true
+        stages: [pre-commit]

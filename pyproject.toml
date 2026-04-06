@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyneat"
+version = "1.1.0"
+description = "Neat Python AI Code Cleaner — removes AI-generated code artifacts, dead code, and security vulnerabilities"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0.0",
+    "libcst>=0.4.0",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Quality Assurance",
+    "Keywords :: ai-code-cleaner python-cleaner ast-refactoring dead-code security",
+]
+
+[project.scripts]
+pyneat = "pyneat.cli:cli"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+pre-commit = [
+    "pre-commit>=3.0.0",
+]
+
+[tool.pyneat]
+# Default rule settings for pyneat clean / pyneat clean-dir
+# All rules are enabled by default; set to false to disable
+
+enable_security = false
+enable_quality = false
+enable_performance = false
+enable_unused_imports = true
+enable_redundant = true

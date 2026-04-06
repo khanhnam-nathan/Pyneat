@@ -6,3 +6,12 @@ from pyneat.rules.security import SecurityScannerRule
 from pyneat.rules.quality import CodeQualityRule
 from pyneat.rules.performance import PerformanceRule
 from pyneat.rules.isolated import IsolatedBlockCleaner
+from pyneat.rules.debug import DebugCleaner
+from pyneat.rules.comments import CommentCleaner
+from pyneat.rules.unused import UnusedImportRule
+from pyneat.rules.redundant import RedundantExpressionRule
+from pyneat.rules.deadcode import DeadCodeRule
+from pyneat.rules.is_not_none import IsNotNoneRule
+from pyneat.rules.magic_numbers import MagicNumberRule
+from pyneat.rules.range_len_pattern import RangeLenRule
+from pyneat.rules.init_protection import InitFileProtectionRule
