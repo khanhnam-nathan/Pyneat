@@ -1,4 +1,5 @@
 """Smoke tests: engine runs and output stays valid Python."""
+
 from __future__ import annotations
 
 import ast
@@ -9,20 +10,19 @@ import pytest
 from pyneat.cli import _build_engine
 from pyneat.core.types import CodeFile
 
+_NO_BOOLS = (
+    False, False, False, False,  # security, quality, performance, unused
+    False, False, False, False,  # redundant, is_not_none, magic_numbers, dead_code
+    False, False, False, False,  # fstring, range_len, typing, match_case
+    False,                      # dataclass
+    False, False, False, False,  # import_cleaning, naming, refactoring, comment_clean
+    False,                      # package placeholder
+)
+
 
 @pytest.fixture
 def default_engine():
-    return _build_engine(
-        {},
-        False,
-        False,
-        False,
-        False,
-        False,
-        False,
-        False,
-        debug_clean_mode="off",
-    )
+    return _build_engine({}, *_NO_BOOLS, debug_clean_mode="off")
 
 
 def test_build_engine_has_rules(default_engine):

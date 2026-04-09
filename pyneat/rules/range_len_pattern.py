@@ -1,4 +1,22 @@
-"""Rule for fixing 'for i in range(len(items)): item = items[i]' anti-pattern."""
+"""Rule for fixing 'for i in range(len(items)): item = items[i]' anti-pattern.
+
+Copyright (c) 2024-2026 PyNEAT Authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, contact: license@pyneat.dev
+"""
 
 from typing import List, Optional, Tuple
 
@@ -17,6 +35,8 @@ class RangeLenRule(Rule):
       - for i in range(len(items)): print(items[i])    ->  for item in items: print(item)
     """
 
+    ALLOWED_SEMANTIC_NODES: set = {"Assign"}
+
     @property
     def description(self) -> str:
         return "Fixes range(len()) anti-pattern with direct iteration"
@@ -25,10 +45,14 @@ class RangeLenRule(Rule):
         try:
             content = code_file.content
 
-            try:
-                tree = cst.parse_module(content)
-            except Exception:
-                return self._create_result(code_file, content, [])
+            # Use cached CST tree if available (RuleEngine pre-parses)
+            if hasattr(code_file, 'cst_tree') and code_file.cst_tree is not None:
+                tree = code_file.cst_tree
+            else:
+                try:
+                    tree = cst.parse_module(content)
+                except Exception:
+                    return self._create_result(code_file, content, [])
 
             transformer = _RangeLenTransformer()
             new_tree = tree.visit(transformer)

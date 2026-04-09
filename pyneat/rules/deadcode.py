@@ -1,11 +1,30 @@
-"""Rule for detecting and removing dead/unused code (functions, classes, methods)."""
+"""Rule for detecting and removing dead/unused code (functions, classes, methods).
+
+Copyright (c) 2024-2026 PyNEAT Authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, contact: license@pyneat.dev
+"""
 
 import ast
 import re
-from typing import List, Set, Tuple, Optional, Any
+from typing import List, Set, Tuple, Optional
 
 from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
 from pyneat.rules.base import Rule
+from pyneat.core.scope_guard import ScopeGuard
 
 
 class DeadCodeRule(Rule):
@@ -24,6 +43,12 @@ class DeadCodeRule(Rule):
       - Functions with side effects (yield, raise, I/O)
       - Built-in magic methods: __init__, __str__, __repr__, etc.
     """
+
+    ALLOWED_SEMANTIC_NODES: Set[str] = {
+        "FunctionDef", "AsyncFunctionDef", "ClassDef",
+        "Assign", "AnnAssign",  # Removing functions/classes also removes their local variables
+        "Try",  # Try blocks can be removed when the containing function is removed
+    }
 
     PRESERVE_DECORATORS: frozenset = frozenset({
         'export', 'public', 'register', 'app.route', 'route',
@@ -71,7 +96,12 @@ class DeadCodeRule(Rule):
             if not content.strip():
                 return self._create_result(code_file, content, changes)
 
-            new_content, removed_items = self._remove_dead_code(content)
+            # Use cached AST if available (RuleEngine pre-parses)
+            ast_tree = None
+            if hasattr(code_file, 'ast_tree') and code_file.ast_tree is not None:
+                ast_tree = code_file.ast_tree
+
+            new_content, removed_items = self._remove_dead_code(content, ast_tree)
             for item in removed_items:
                 changes.append(f"Removed dead code: {item}")
 
@@ -85,10 +115,10 @@ class DeadCodeRule(Rule):
                 code_file, f"DeadCodeRule failed: {str(e)}"
             )
 
-    def _remove_dead_code(self, content: str) -> Tuple[str, List[str]]:
+    def _remove_dead_code(self, content: str, ast_tree=None) -> Tuple[str, List[str]]:
         """Return (new_content, list_of_removed_items)."""
         try:
-            tree = ast.parse(content)
+            tree = ast.parse(content) if ast_tree is None else ast_tree
         except SyntaxError:
             return content, []
 
@@ -106,7 +136,19 @@ class DeadCodeRule(Rule):
             all_references, content
         )
 
-        if not dead_funcs and not dead_classes:
+        # Find dead branches (constant-condition branches) — report as suggestions
+        dead_branch_items = self._find_dead_branches(tree, content)
+
+        # Layer 4: ScopeGuard — filter out items still referenced downstream
+        scope_guard = ScopeGuard()
+        all_dead = dead_funcs + dead_classes
+        safe_dead, scope_warnings = scope_guard.check_dead_code_safe(content, all_dead)
+
+        # Split back into funcs and classes
+        dead_funcs = [d for d in safe_dead if "func" in d.get("type", "func")]
+        dead_classes = [d for d in safe_dead if "class" in d.get("type", "class")]
+
+        if not dead_funcs and not dead_classes and not dead_branch_items:
             return content, []
 
         # Remove dead code from content
@@ -125,25 +167,41 @@ class DeadCodeRule(Rule):
             self._remove_lines(lines, start, end)
             removed_items.append(f"unused class: {class_name}")
 
+        # Mark dead branches as suggestions (don't auto-remove — too risky)
+        for branch in dead_branch_items:
+            removed_items.append(f"Dead branch detected: {branch}")
+
+        # Log scope warnings as informational changes
+        for warning in scope_warnings:
+            removed_items.append(f"SCOPE GUARD: {warning}")
+
         # Clean up blank lines
         new_content = self._cleanup_blank_lines('\n'.join(lines))
 
         return new_content, removed_items
 
     def _collect_definitions(self, tree: ast.AST) -> Tuple[Set[str], Set[str]]:
-        """Collect all defined function and class names."""
+        """Collect top-level function and class names (not methods)."""
         funcs: Set[str] = set()
         classes: Set[str] = set()
 
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                if self._is_class_method(node):
-                    continue
-                funcs.add(node.name)
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if not self._is_method(node, tree):
+                    funcs.add(node.name)
             elif isinstance(node, ast.ClassDef):
                 classes.add(node.name)
 
         return funcs, classes
+
+    def _is_method(self, node: ast.FunctionDef | ast.AsyncFunctionDef, tree: ast.AST) -> bool:
+        """Check if a FunctionDef is a method inside a ClassDef.
+
+        ast.walk() descends INTO a node's children, so it can't be used to find
+        parents. We check if the function is a direct child of tree.body instead.
+        If it is, it's top-level. Otherwise it's inside a class (method).
+        """
+        return node not in tree.body
 
     def _collect_references(self, tree: ast.AST) -> Set[str]:
         """Collect all function/class names that are called or instantiated."""
@@ -230,8 +288,8 @@ class DeadCodeRule(Rule):
         if self._has_side_effects(node):
             return None
 
-        # Check if it's referenced anywhere
-        if name in all_references:
+        # Never remove magic methods (even if unreferenced)
+        if name in self.MAGIC_METHODS:
             return None
 
         # Check if it's referenced as an attribute
@@ -242,6 +300,7 @@ class DeadCodeRule(Rule):
             'name': name,
             'start': node.lineno,
             'end': node.end_lineno or node.lineno,
+            'type': 'function',
         }
 
     def _check_dead_class(
@@ -277,15 +336,8 @@ class DeadCodeRule(Rule):
             'name': name,
             'start': node.lineno,
             'end': node.end_lineno or node.lineno,
+            'type': 'class',
         }
-
-    def _is_class_method(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-        """Check if function is a method inside a class."""
-        return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and any(
-            isinstance(parent, ast.ClassDef)
-            for parent in ast.walk(node)
-            if parent is not node
-        )
 
     def _is_in_main_block(self, node: ast.FunctionDef | ast.AsyncFunctionDef, content: str) -> bool:
         """Check if function is inside `if __name__ == "__main__":` block."""
@@ -332,7 +384,11 @@ class DeadCodeRule(Rule):
         return None
 
     def _has_side_effects(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-        """Check if function has side effects (yield, raise, I/O)."""
+        """Check if function has side effects (yield, raise, I/O).
+
+        Only checks actual Call nodes — references to I/O names without calls
+        (e.g. assigning the function to a variable) do not trigger side effects.
+        """
         for child in ast.walk(node):
             if isinstance(child, (ast.Yield, ast.YieldFrom)):
                 return True
@@ -343,10 +399,11 @@ class DeadCodeRule(Rule):
                 if func_name:
                     io_funcs = {
                         'print', 'write', 'read', 'open', 'send', 'recv',
-                        'sendto', 'recvfrom', 'sendfile', 'request',
-                        'get', 'post', 'put', 'delete', 'patch', 'head',
-                        'execute', 'fetch', 'query', 'insert', 'update',
-                        'delete', 'commit', 'rollback', 'save', 'flush',
+                        'sendto', 'recvfrom', 'sendfile',
+                        'execute', 'fetch', 'query',
+                        'insert', 'update', 'delete', 'commit', 'rollback',
+                        'save', 'flush', 'log',
+                        'append_file', 'write_text', 'read_text',
                     }
                     if func_name.lower() in io_funcs:
                         return True
@@ -400,7 +457,6 @@ class DeadCodeRule(Rule):
         lines = content.split('\n')
         result_lines = [line for line in lines if line != '']
 
-        # Restore single blank lines where multiple were removed
         cleaned = []
         prev_blank = False
         for line in result_lines:
@@ -411,3 +467,51 @@ class DeadCodeRule(Rule):
             prev_blank = is_blank
 
         return '\n'.join(cleaned).strip('\n') + '\n'
+
+    def _find_dead_branches(self, tree: ast.AST, content: str) -> List[str]:
+        """Find dead branches from if/while/for with constant conditions.
+
+        Detects (but does not auto-remove) patterns like:
+        - if False: / while False: — entire block is dead
+        - if True: ... else: ... — else branch is dead
+
+        Auto-removal is disabled by default to avoid breaking code that relies
+        on these patterns for scaffolding/placeholders.
+        """
+        removed: List[str] = []
+
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.If, ast.While, ast.For)):
+                continue
+
+            if isinstance(node, ast.If):
+                test = node.test
+                if self._is_always_falsy(test):
+                    reason = self._get_dead_branch_reason(node, content)
+                    removed.append(reason)
+            elif isinstance(node, (ast.While, ast.For)):
+                if isinstance(node, ast.While):
+                    test = node.test
+                    if self._is_always_falsy(test):
+                        reason = self._get_dead_branch_reason(node, content)
+                        removed.append(reason)
+
+        return removed
+
+    def _get_dead_branch_reason(self, node: ast.AST, content: str) -> str:
+        """Get a human-readable reason for a dead branch."""
+        if isinstance(node, ast.While):
+            return f"while True: loop with no break (dead)"
+        return f"if False: — unreachable block"
+
+    def _is_always_falsy(self, node: ast.AST) -> bool:
+        """Check if a test is always falsy."""
+        if isinstance(node, ast.Constant) and node.value in (False, 0, None, '', [], {}):
+            return True
+        return False
+
+    def _is_always_truthy(self, node: ast.AST) -> bool:
+        """Check if a test is always truthy."""
+        if isinstance(node, ast.Constant) and node.value not in (False, 0, None, '', [], {}):
+            return True
+        return False

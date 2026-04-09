@@ -1,4 +1,22 @@
-"""Rule for cleaning and standardizing imports using LibCST."""
+"""Rule for cleaning and standardizing imports using LibCST.
+
+Copyright (c) 2024-2026 PyNEAT Authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, contact: license@pyneat.dev
+"""
 
 import libcst as cst
 from typing import List, Tuple, Union
@@ -64,7 +82,7 @@ class ImportCollectorTransformer(cst.CSTTransformer):
 
     def leave_Import(
         self, original_node: cst.Import, updated_node: cst.Import
-    ) -> Union[cst.Import, cst.Removal]:
+    ) -> Union[cst.Import, cst.RemovalSentinel]:
         key = self._normalize_import(updated_node)
         if key not in self._seen_imports:
             self._seen_imports.add(key)
@@ -73,7 +91,7 @@ class ImportCollectorTransformer(cst.CSTTransformer):
 
     def leave_ImportFrom(
         self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
-    ) -> Union[cst.ImportFrom, cst.Removal]:
+    ) -> Union[cst.ImportFrom, cst.RemovalSentinel]:
         key = self._normalize_import(updated_node)
         if key not in self._seen_imports:
             self._seen_imports.add(key)
@@ -147,7 +165,12 @@ class ImportCleaningRule(Rule):
 
     def apply(self, code_file: CodeFile) -> TransformationResult:
         try:
-            source_tree = cst.parse_module(code_file.content)
+            # Use cached CST tree if available (RuleEngine pre-parses)
+            if hasattr(code_file, 'cst_tree') and code_file.cst_tree is not None:
+                source_tree = code_file.cst_tree
+            else:
+                source_tree = cst.parse_module(code_file.content)
+
             transformer = ImportCollectorTransformer()
             modified_tree = source_tree.visit(transformer)
 

@@ -1,0 +1,14 @@
+D:\pyneat-final\pyneat-rs\target\debug\deps\tree_sitter-9554c5e8dd4c7f3a.d: C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\lib.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\ffi.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\util.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\./README.md C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\./bindings.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\../src/array.h C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\../src/parser.h D:\pyneat-final\pyneat-rs\target\debug\build\tree-sitter-989066166b1ecb8e\out/stdlib-symbols.txt
+
+D:\pyneat-final\pyneat-rs\target\debug\deps\libtree_sitter-9554c5e8dd4c7f3a.rmeta: C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\lib.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\ffi.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\util.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\./README.md C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\./bindings.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\../src/array.h C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\../src/parser.h D:\pyneat-final\pyneat-rs\target\debug\build\tree-sitter-989066166b1ecb8e\out/stdlib-symbols.txt
+
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\lib.rs:
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\ffi.rs:
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\util.rs:
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\./README.md:
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\./bindings.rs:
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\../src/array.h:
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-0.23.2\binding_rust\../src/parser.h:
+D:\pyneat-final\pyneat-rs\target\debug\build\tree-sitter-989066166b1ecb8e\out/stdlib-symbols.txt:
+
+# env-dep:OUT_DIR=D:\\pyneat-final\\pyneat-rs\\target\\debug\\build\\tree-sitter-989066166b1ecb8e\\out

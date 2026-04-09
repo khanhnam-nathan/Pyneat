@@ -1,0 +1,8 @@
+D:\pyneat-final\pyneat-rs\target\debug\deps\tree_sitter_python-5292bd453e10a423.d: C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\lib.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\../../src/node-types.json C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\../../queries/highlights.scm C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\../../queries/tags.scm
+
+D:\pyneat-final\pyneat-rs\target\debug\deps\libtree_sitter_python-5292bd453e10a423.rmeta: C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\lib.rs C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\../../src/node-types.json C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\../../queries/highlights.scm C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\../../queries/tags.scm
+
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\lib.rs:
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\../../src/node-types.json:
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\../../queries/highlights.scm:
+C:\Users\admin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tree-sitter-python-0.23.6\bindings\rust\../../queries/tags.scm:
