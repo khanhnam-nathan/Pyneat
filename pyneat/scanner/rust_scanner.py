@@ -3,7 +3,7 @@
 This module provides a Python wrapper around the Rust-based pyneat-rs scanner,
 enabling high-performance security scanning using tree-sitter and regex patterns.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 """
 
 import json
@@ -327,3 +327,21 @@ def scan_file(file_path: str) -> List[Dict[str, Any]]:
         List of findings as dictionaries
     """
     return get_scanner().scan_file(file_path)
+
+
+# Copyright (c) 2026 PyNEAT Authors
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# For commercial licensing, contact: n.khanhnam@gmail.com

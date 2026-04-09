@@ -88,6 +88,6 @@ class TestNamingCrossFile:
         assert result.success
         # The import should be updated
         transformed = result.transformed_content
-        # Note: import update is conservative — may not trigger for unused names
+        # Note: import update is conservative â€” may not trigger for unused names
         assert result.success
         other.unlink(missing_ok=True)

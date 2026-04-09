@@ -1,6 +1,6 @@
-﻿"""Orchestrates the application of multiple rules.
+"""Orchestrates the application of multiple rules.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import ast
@@ -34,6 +34,7 @@ from pyneat.core.types import (
     CodeFile, TransformationResult, RuleConfig,
     RuleConflict, RuleRange,
 )
+from pyneat.core.manifest import AgentMarker, ManifestExporter
 from pyneat.rules.base import Rule
 from pyneat.core.atomic import AtomicWriter
 from pyneat.core.semantic_guard import SemanticDiffGuard
@@ -43,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 # ----------------------------------------------------------------------
-# Module-level cache singleton — persists across RuleEngine instances
+# Module-level cache singleton â€” persists across RuleEngine instances
 # Keyed by (content_hash, file_path) so the same file reused across
 # engine instances benefits from the cache
 # ----------------------------------------------------------------------
@@ -105,7 +106,6 @@ class RuleEngine:
     def __init__(self, rules: List[Rule] = None):
         self.rules = rules or []
         self._rule_map = {rule.name: rule for rule in self.rules}
-        self._tree_cache: Dict[str, Tuple[ast.AST, cst.Module]] = {}
         self._cache_enabled = True
         self._processed_files: set[Path] = set()
         self.atomic_writer = AtomicWriter()
@@ -115,23 +115,15 @@ class RuleEngine:
         self.type_shield = TypeAwareShield(enabled=False)
         self._type_baseline: Dict[Path, set] = {}
 
-    def _get_content_hash(self, content: str) -> str:
-        """Get hash of content for caching."""
-        return hashlib.md5(content.encode()).hexdigest()
-
     def get_cached_trees(self, content: str, file_path: Path | None = None) -> Optional[Tuple[ast.AST, cst.Module]]:
         """Get cached AST and CST trees for content.
 
-        Uses module-level cache for cross-instance sharing,
-        plus instance-level cache as fallback.
+        Uses the module-level cache keyed by content hash + file path.
         """
         if not self._cache_enabled:
             return None
         cache_key = _get_cache_key(content, file_path)
-        result = _get_cached_trees(cache_key)
-        if result:
-            return result
-        return self._tree_cache.get(self._get_content_hash(content))
+        return _get_cached_trees(cache_key)
 
     def cache_trees(self, content: str, ast_tree: ast.AST, cst_tree: cst.Module, file_path: Path | None = None) -> None:
         """Cache AST and CST trees for content."""
@@ -139,25 +131,83 @@ class RuleEngine:
             return
         cache_key = _get_cache_key(content, file_path)
         _cache_trees(cache_key, ast_tree, cst_tree)
-        self._tree_cache[self._get_content_hash(content)] = (ast_tree, cst_tree)
 
     def clear_cache(self) -> None:
-        """Clear both instance and module-level caches."""
-        self._tree_cache.clear()
+        """Clear the module-level cache."""
         clear_module_cache()
 
     def get_cache_stats(self) -> Dict[str, Any]:
-        """Get combined cache statistics."""
-        inst_total = sum(1 for v in self._tree_cache.values())
+        """Get cache statistics."""
         mod_stats = get_module_cache_stats()
         return {
-            'cache_entries': inst_total + mod_stats['cache_entries'],
+            'cache_entries': mod_stats['cache_entries'],
             'cache_enabled': self._cache_enabled,
             'cache_hits': mod_stats['cache_hits'],
             'cache_misses': mod_stats['cache_misses'],
             'hit_rate_pct': mod_stats['hit_rate_pct'],
-            'module_cache_entries': mod_stats['cache_entries'],
         }
+
+    def export_manifest(
+        self,
+        file_path: Path,
+        markers: List[AgentMarker],
+        source_content: str = "",
+    ) -> Optional[Path]:
+        """Export AgentMarkers to a .pyneat.manifest.json sidecar file.
+
+        Args:
+            file_path: Path to the source file the markers apply to.
+            markers: List of AgentMarkers from rules.
+            source_content: Original source content (for hash).
+
+        Returns:
+            Path to the written manifest file, or None if no markers.
+        """
+        if not markers:
+            return None
+        exporter = ManifestExporter()
+        for marker in markers:
+            exporter.add_marker(marker, file_path, source_content)
+        return exporter.write(file_path)
+
+    def process_file_with_manifest(
+        self,
+        file_path: Path,
+        check_conflicts: bool = False,
+        export_manifest: bool = False,
+    ) -> Tuple[TransformationResult, Optional[Path]]:
+        """Process a file and optionally export a manifest.
+
+        Returns:
+            Tuple of (TransformationResult, manifest_path_or_None).
+        """
+        result = self.process_file(file_path, check_conflicts=check_conflicts)
+
+        manifest_path = None
+        if export_manifest:
+            markers: List[AgentMarker] = list(result.agent_markers)
+
+            if result.security_findings:
+                for finding in result.security_findings:
+                    markers.append(AgentMarker(
+                        marker_id=f"PYN-S{len(markers) + 1:03d}",
+                        issue_type="security_issue",
+                        rule_id="SecurityScannerRule",
+                        severity=finding.severity,
+                        line=finding.start_line,
+                        hint="; ".join(finding.fix_constraints[:1]) if finding.fix_constraints else "",
+                        why=finding.problem,
+                        confidence=finding.confidence,
+                        can_auto_fix=finding.can_auto_fix,
+                        snippet=finding.snippet[:80],
+                        cwe_id=finding.cwe_id,
+                        auto_fix_available=finding.auto_fix_available,
+                    ))
+            manifest_path = self.export_manifest(
+                file_path, markers, result.original.content
+            )
+
+        return result, manifest_path
 
     def add_rule(self, rule: Rule) -> None:
         """Add a rule to the engine."""
@@ -180,7 +230,7 @@ class RuleEngine:
                 try:
                     with open(file_path, 'r', encoding=encoding) as f:
                         raw = f.read()
-                    # Strip BOM — PyNEAT always writes UTF-8 without BOM
+                    # Strip BOM â€” PyNEAT always writes UTF-8 without BOM
                     BOM = "\ufeff"
                     content = raw.lstrip(BOM)
                     break
@@ -355,7 +405,16 @@ class RuleEngine:
         Uses the tree cache to avoid re-parsing the same content across
         multiple rules. Each unique content is parsed once (AST + CST).
         """
-        # Check cache first — avoid re-parsing if this content was already processed
+        # Quick exit for empty files
+        if not code_file.content.strip():
+            return TransformationResult(
+                original=code_file,
+                transformed_content=code_file.content,
+                changes_made=[],
+                success=True,
+            )
+
+        # Check cache first â€” avoid re-parsing if this content was already processed
         cached = self.get_cached_trees(code_file.content)
         if cached:
             cached_ast, cached_cst = cached
@@ -381,6 +440,7 @@ class RuleEngine:
         all_security_findings: List = []
         all_dependency_findings: List = []
         all_auto_fix_applied: List[str] = []
+        all_agent_markers: List[AgentMarker] = []
 
         # Sort rules by priority (lower = runs first), then by insertion order
         sorted_rules = sorted(
@@ -415,7 +475,7 @@ class RuleEngine:
             if result.success:
                 current_content = result.transformed_content
 
-                # Layer 1+: Guard — if a rule produces output that can't be parsed/compiled, revert
+                # Layer 1+: Guard â€” if a rule produces output that can't be parsed/compiled, revert
                 try:
                     # Fast check with ast.parse
                     ast.parse(current_content)
@@ -428,7 +488,7 @@ class RuleEngine:
                     finally:
                         Path(tmp_name).unlink(missing_ok=True)
                 except (SyntaxError, py_compile.PyCompileError) as e:
-                    # Rule produced invalid output — skip this rule, keep current content
+                    # Rule produced invalid output â€” skip this rule, keep current content
                     err_lineno = getattr(e, "lineno", None)
                     err_msg = str(e.args[0]) if e.args else str(e)
                     logger.warning(
@@ -438,7 +498,7 @@ class RuleEngine:
                     all_changes.append(f"SKIPPED {rule.name}: syntax error (line {getattr(e, 'lineno', '?')})")
                     continue
 
-                # Layer 1+: Guard — don't lose required __future__ imports
+                # Layer 1+: Guard â€” don't lose required __future__ imports
                 if self._removed_future_imports(before, current_content):
                     logger.warning(
                         "Rule '%s' attempted to remove a __future__ import in %s. Skipping rule.",
@@ -447,7 +507,7 @@ class RuleEngine:
                     all_changes.append(f"SKIPPED {rule.name}: would remove __future__ import")
                     continue
 
-                # Layer 5: Semantic diffing — detect unintended structural changes
+                # Layer 5: Semantic diffing â€” detect unintended structural changes
                 allowed_nodes = rule.allowed_semantic_nodes
                 is_safe, diff_messages = self.semantic_guard.is_safe(
                     before, current_content, allowed_nodes
@@ -457,7 +517,7 @@ class RuleEngine:
                         "Rule '%s' produced unsafe semantic changes in %s: %s. Skipping rule.",
                         rule.name, cf.path, diff_messages,
                     )
-                    all_changes.append(f"SKIPPED {rule.name}: semantic safety failed — {diff_messages[0]}")
+                    all_changes.append(f"SKIPPED {rule.name}: semantic safety failed â€” {diff_messages[0]}")
                     current_content = before
                     continue
 
@@ -469,6 +529,11 @@ class RuleEngine:
                     all_dependency_findings.extend(result.dependency_findings)
                 if hasattr(result, 'auto_fix_applied'):
                     all_auto_fix_applied.extend(result.auto_fix_applied)
+
+                # Phase 2: collect AgentMarkers from mark_for_agent()
+                rule_markers = rule.mark_for_agent(rule_cf)
+                if rule_markers:
+                    all_agent_markers.extend(rule_markers)
 
                 if check_conflicts and before != current_content:
                     ranges = self._diff_lines(original_content, current_content)
@@ -496,6 +561,7 @@ class RuleEngine:
             security_findings=all_security_findings,
             auto_fix_applied=all_auto_fix_applied,
             dependency_findings=all_dependency_findings,
+            agent_markers=all_agent_markers,
         )
     
     def get_rule_stats(self) -> Dict[str, Any]:

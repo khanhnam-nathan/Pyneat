@@ -1,6 +1,6 @@
 """Rule for improving code quality using AST analysis.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,13 +15,13 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import ast
 import re
-from typing import List, Set
-from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
+from typing import List, Set, Optional
+from pyneat.core.types import CodeFile, RuleConfig, TransformationResult, AgentMarker
 from pyneat.rules.base import Rule
 
 
@@ -29,7 +29,7 @@ class CodeQualityRule(Rule):
     """Improves code quality by detecting anti-patterns using AST analysis.
 
     Detects:
-    - Magic numbers (multi-digit integers ≥ 100)
+    - Magic numbers (multi-digit integers â‰¥ 100)
     - Empty except blocks
     - Potentially unused imports (heuristic: import name not seen elsewhere)
     """
@@ -83,7 +83,7 @@ class CodeQualityRule(Rule):
     def _find_magic_numbers(self, tree: ast.AST, content: str) -> Set[str]:
         """Find multi-digit numbers that are likely magic constants."""
         magic: Set[str] = set()
-        # Only find numeric constants that are integers ≥ 100
+        # Only find numeric constants that are integers â‰¥ 100
         for node in ast.walk(tree):
             if isinstance(node, ast.Constant) and isinstance(node.value, int):
                 if node.value >= 100:
@@ -122,3 +122,53 @@ class CodeQualityRule(Rule):
                 unused.append(name)
 
         return unused
+
+    def mark_for_agent(self, code_file: CodeFile) -> Optional[List[AgentMarker]]:
+        """Return AgentMarkers for code quality issues."""
+        from typing import Optional
+
+        markers: List[AgentMarker] = []
+
+        try:
+            tree = getattr(code_file, 'ast_tree', None) or ast.parse(code_file.content)
+        except SyntaxError:
+            return None
+
+        lines = code_file.content.splitlines()
+
+        magic_numbers = self._find_magic_numbers(tree, code_file.content)
+        for num in magic_numbers:
+            for i, line in enumerate(lines):
+                if num in line:
+                    markers.append(AgentMarker(
+                        marker_id=f"PYN-Q{len(markers) + 1:03d}",
+                        issue_type="magic_number",
+                        rule_id="CodeQualityRule",
+                        severity="info",
+                        line=i + 1,
+                        param=num,
+                        hint=f"Magic number {num} — extract to a named constant",
+                        why="Magic numbers reduce code readability and maintainability",
+                        confidence=0.8,
+                        can_auto_fix=False,
+                        snippet=line.strip()[:80],
+                    ))
+                    break
+
+        empty_excepts = self._find_empty_except_blocks(tree)
+        for line_no in empty_excepts:
+            snippet = lines[line_no - 1].strip() if 0 < line_no <= len(lines) else ""
+            markers.append(AgentMarker(
+                marker_id=f"PYN-Q{len(markers) + 1:03d}",
+                issue_type="empty_except",
+                rule_id="CodeQualityRule",
+                severity="medium",
+                line=line_no,
+                hint="Empty except block — add error handling or logging",
+                why="Empty except blocks silently swallow errors and make debugging harder",
+                confidence=0.95,
+                can_auto_fix=False,
+                snippet=snippet[:80],
+            ))
+
+        return markers if markers else None

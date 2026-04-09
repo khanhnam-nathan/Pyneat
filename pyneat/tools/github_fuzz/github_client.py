@@ -1,6 +1,6 @@
 """GitHub API client for downloading Python files from popular repos.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
 Uses the GitHub REST API (unauthenticated or with a PAT) to:
 - List all .py files in a repo's default branch
@@ -34,7 +34,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Tuple
 
-import json  # stdlib only — no requests dependency required
+import json  # stdlib only â€” no requests dependency required
 
 
 # ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ GITHUB_API = "https://api.github.com"
 # Raw file URL template
 RAW_URL_TEMPLATE = "https://raw.githubusercontent.com/{owner}/{repo}/{sha}/{path}"
 
-# Max file size (512 KB) — skip generated/binary files
+# Max file size (512 KB) â€” skip generated/binary files
 MAX_FILE_BYTES = 512 * 1024
 
 # Files to skip (generated, test infra, build artifacts)
@@ -197,7 +197,7 @@ class GitHubClient:
                 # Wait for reset
                 if self._last_rate_limit_reset:
                     wait = max(1, self._last_rate_limit_reset - int(time.time()) + 1)
-                    print(f"\n[RATE LIMIT EXCEEDED — waiting {wait}s]")
+                    print(f"\n[RATE LIMIT EXCEEDED â€” waiting {wait}s]")
                     time.sleep(min(wait, 120))
             self._stats.errors.append(f"403 for {path}")
             return {}
@@ -353,7 +353,7 @@ def download_repos_py_files(
             for gh_file in client.list_py_files(repo, max_files=max_files_per_repo):
                 content = client.download_file(gh_file)
                 if content is not None:
-                    # Basic validation — must be valid-ish Python
+                    # Basic validation â€” must be valid-ish Python
                     if _looks_like_python(content):
                         file_count += 1
                         if on_progress:

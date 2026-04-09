@@ -1,6 +1,6 @@
 """Rule for detecting performance issues using AST analysis.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import ast
@@ -35,31 +35,54 @@ class PerformanceRule(Rule):
     """
 
     KNOWN_SAFE_METHODS: frozenset = frozenset({
-        # Collection mutating methods
+        # === Collection mutating methods ===
         'append', 'extend', 'add', 'update', 'pop', 'popitem',
         'clear', 'remove', 'discard', 'insert', 'reverse', 'sort',
-        # Dict/view methods
+        'appendleft', 'extendleft', 'popleft', 'rotate',
+
+        # === Dict/View methods ===
         'get', 'setdefault', 'copy', 'keys', 'values', 'items',
-        # String methods
+
+        # === String methods ===
         'lower', 'upper', 'strip', 'lstrip', 'rstrip', 'split',
         'rsplit', 'splitlines', 'join', 'replace', 'find', 'rfind',
         'startswith', 'endswith', 'encode', 'decode', 'format',
         'zfill', 'center', 'ljust', 'rjust', 'capitalize', 'swapcase',
         'title', 'casefold', 'expandtabs', 'partition', 'rpartition',
-        # File/IO methods
-        'read', 'readline', 'readlines', 'write', 'flush', 'seek',
-        'tell', 'truncate', 'fileno', 'isatty',
-        # Collection methods
-        'copy', 'deepcopy', 'count', 'index', 'append', 'extend',
-        'difference', 'intersection', 'union', 'issubset', 'issuperset',
-        'symmetric_difference',
-        # Safe type conversion
-        'str', 'int', 'float', 'bool', 'list', 'dict', 'set', 'tuple',
-        'bytes', 'ascii', 'repr', 'hash', 'abs', 'round', 'min', 'max',
-        'sum', 'all', 'any', 'sorted', 'reversed', 'enumerate', 'filter', 'map',
-        # Other safe
         'isalpha', 'isdigit', 'isalnum', 'isspace', 'isupper', 'islower',
-        'lstrip', 'rstrip', 'encode', 'decode',
+        'isnumeric', 'isdecimal', 'isidentifier', 'istitle',
+
+        # === File/IO methods ===
+        'read', 'readline', 'readlines', 'write', 'flush', 'seek',
+        'tell', 'truncate', 'fileno', 'isatty', 'readable', 'writable',
+
+        # === Collection methods ===
+        'count', 'index', 'difference', 'intersection', 'union',
+        'issubset', 'issuperset', 'symmetric_difference', 'isdisjoint',
+
+        # === Safe builtin functions (explicitly safe) ===
+        'str', 'int', 'float', 'bool', 'list', 'dict', 'set', 'tuple',
+        'bytes', 'bytearray', 'ascii', 'repr', 'hash', 'abs', 'round',
+        'min', 'max', 'sum', 'all', 'any', 'sorted', 'reversed',
+        'enumerate', 'filter', 'map', 'zip', 'range', 'open',
+
+        # === Type checking & introspection (safe) ===
+        'len', 'type', 'dir', 'vars', 'callable', 'isinstance', 'issubclass',
+        'hasattr', 'getattr', 'setattr', 'delattr', 'iter', 'next', 'id',
+
+        # === Input/Output (safe) ===
+        'print', 'input', 'chr', 'ord',
+
+        # === Memory & Object (safe) ===
+        'deepcopy',
+
+        # === Math operations (explicitly safe - from math module) ===
+        'sqrt', 'sin', 'cos', 'tan', 'log', 'exp', 'floor', 'ceil',
+        'gcd', 'pow', 'fabs', 'fmod', 'modf', 'trunc',
+
+        # === Other safe builtins ===
+        'hex', 'oct', 'bin', 'complex', 'real', 'imag',
+        'divmod', 'slice', 'object', 'frozenset', 'memoryview',
     })
 
     def __init__(self, config: RuleConfig = None):
@@ -99,7 +122,7 @@ class PerformanceRule(Rule):
             repeated = self._find_repeated_method_calls(tree)
             for item in repeated:
                 changes.append(
-                    f"PERFORMANCE: Repeated {item}() call in loop — call once and reuse"
+                    f"PERFORMANCE: Repeated {item}() call in loop â€” call once and reuse"
                 )
 
             return self._create_result(code_file, content, changes)
@@ -169,7 +192,7 @@ class PerformanceRule(Rule):
         return False
 
     def _find_repeated_method_calls(self, tree: ast.AST) -> List[str]:
-        """Find methods called repeatedly inside loops that are NOT in safe list."""
+        """Find methods/calls called repeatedly inside loops that are NOT in safe list."""
         results: List[str] = []
         seen_in_loop: set[str] = set()
 
@@ -177,8 +200,14 @@ class PerformanceRule(Rule):
             if isinstance(node, (ast.For, ast.While)):
                 loop_methods: set[str] = set()
                 for child in ast.walk(node):
+                    # Check attribute calls: obj.method()
                     if isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute):
                         name = child.func.attr
+                        if name not in self.KNOWN_SAFE_METHODS:
+                            loop_methods.add(name)
+                    # Check builtin calls: func() where func is a Name
+                    elif isinstance(child, ast.Call) and isinstance(child.func, ast.Name):
+                        name = child.func.id
                         if name not in self.KNOWN_SAFE_METHODS:
                             loop_methods.add(name)
 

@@ -1,6 +1,6 @@
 """Rule for standardizing variable and class names.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,12 +15,15 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
-NAMINGCONVENTIONRULE CHỈ đổi tên CLASS DEFINITION (snake_case -> PascalCase).
+NAMINGCONVENTIONRULE CHỉ ĐỔI tên CLASS DEFINITION (snake_case -> PascalCase).
 KHÔNG đổi tên biến, function, hay references — tránh lỗi logic.
 
 Nếu muốn đổi tên đầy đủ (class + references), dùng AggressiveNamingRule.
+
+Extracted from user request: naming inconsistency detection is also provided
+via NamingInconsistencyRule for detecting same concept with different styles.
 """
 
 import re
@@ -43,11 +46,11 @@ class _CrossFileImportUpdater(cst.CSTTransformer):
     """Updates import statements and name references when a class is renamed.
 
     Handles:
-    - `from module import OldName`  →  `from module import NewName`
-    - `from module import OldName as Alias`  →  skip (user chose an alias)
-    - `from module import OldName as OldName`  →  `NewName as NewName`
-    - `import module; module.OldName`  →  `module.NewName`  (attribute access)
-    - Name references used as types / base classes  →  updated
+    - `from module import OldName`  â†’  `from module import NewName`
+    - `from module import OldName as Alias`  â†’  skip (user chose an alias)
+    - `from module import OldName as OldName`  â†’  `NewName as NewName`
+    - `import module; module.OldName`  â†’  `module.NewName`  (attribute access)
+    - Name references used as types / base classes  â†’  updated
     """
 
     def __init__(self, rename_map: dict[str, str]):
@@ -61,10 +64,10 @@ class _CrossFileImportUpdater(cst.CSTTransformer):
     def leave_ImportFrom(
         self, original: cst.ImportFrom, updated: cst.ImportFrom
     ) -> cst.ImportFrom | cst.RemovalSentinel:
-        # TẠM TẮT - Import update có thể gây lỗi nếu:
-        # 1. Import là một module chứ không phải class
-        # 2. Tên trùng với class nhưng là thứ khác
-        # Chỉ update khi CHẮC CHẮN là class reference
+        # Táº M Táº®T - Import update cÃ³ thá»ƒ gÃ¢y lá»—i náº¿u:
+        # 1. Import lÃ  má»™t module chá»© khÃ´ng pháº£i class
+        # 2. TÃªn trÃ¹ng vá»›i class nhÆ°ng lÃ  thá»© khÃ¡c
+        # Chá»‰ update khi CHáº®C CHáº®N lÃ  class reference
         return updated
 
     # --- Import (module.ClassName style) ------------------------------------
@@ -72,7 +75,7 @@ class _CrossFileImportUpdater(cst.CSTTransformer):
     def leave_Import(
         self, original: cst.Import, updated: cst.Import
     ) -> cst.Import:
-        # TẠM TẮT - Tương tự leave_ImportFrom
+        # Táº M Táº®T - TÆ°Æ¡ng tá»± leave_ImportFrom
         return updated
 
     # --- Attribute access: module.OldName -> module.NewName ----------------
@@ -104,8 +107,8 @@ class _CrossFileImportUpdater(cst.CSTTransformer):
 
         return updated
 
-    # NOTE: KHÔNG có leave_Name vì nó đổi TẤT CẢ name references,
-    # bao gồm cả biến thường trùng tên với class -> LỖI LOGIC nghiêm trọng
+    # NOTE: KHÃ”NG cÃ³ leave_Name vÃ¬ nÃ³ Ä‘á»•i Táº¤T Cáº¢ name references,
+    # bao gá»“m cáº£ biáº¿n thÆ°á»ng trÃ¹ng tÃªn vá»›i class -> Lá»–I LOGIC nghiÃªm trá»ng
 
 
 # ----------------------------------------------------------------------
@@ -155,15 +158,15 @@ class NamingTransformer(cst.CSTTransformer):
 class NamingConventionRule(Rule):
     """Enforces consistent naming conventions for classes ONLY.
 
-    CHỈ đổi tên CLASS DEFINITION từ snake_case -> PascalCase.
-    Ví dụ: class my_data -> class MyData
+    CHá»ˆ Ä‘á»•i tÃªn CLASS DEFINITION tá»« snake_case -> PascalCase.
+    VÃ­ dá»¥: class my_data -> class MyData
 
-    KHÔNG đổi:
-    - Tên biến thường
-    - Tên function
+    KHÃ”NG Ä‘á»•i:
+    - TÃªn biáº¿n thÆ°á»ng
+    - TÃªn function
     - Name references trong code
 
-    Cross-file updates bị TẮT mặc định để tránh phá vỡ các file khác.
+    Cross-file updates bá»‹ Táº®T máº·c Ä‘á»‹nh Ä‘á»ƒ trÃ¡nh phÃ¡ vá»¡ cÃ¡c file khÃ¡c.
     """
 
     def __init__(self, config: RuleConfig = None):
@@ -224,3 +227,123 @@ class NamingConventionRule(Rule):
         except Exception:
             pass
         return mapping
+
+
+# --------------------------------------------------------------------------
+# Naming Inconsistency Rule (NEW from user request)
+# Detects same concept with different naming styles in the same file.
+# e.g. userId and user_id both referring to the same entity.
+# --------------------------------------------------------------------------
+
+
+import ast
+from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass, field
+
+
+@dataclass
+class NamingConflict:
+    """Represents a naming inconsistency conflict."""
+    concept: str
+    snake_name: Optional[str] = None
+    camel_name: Optional[str] = None
+    pascal_name: Optional[str] = None
+    lines: List[int] = field(default_factory=list)
+
+
+class NamingInconsistencyRule(Rule):
+    """Detects naming inconsistencies within a file.
+
+    AI often generates code where the same concept is referred to by different
+    naming styles in the same file, e.g.:
+      - userId vs user_id
+      - DBHost vs db_host
+      - apiURL vs api_url
+
+    This rule detects these inconsistencies without modifying code.
+    Detection categories:
+      - User identifiers: userId, user_id, userName, user_name
+      - DB config: DBHost, db_host, db_name, dbName
+      - API config: apiURL, api_url, apiEndpoint, api_endpoint
+    """
+
+    # Concept patterns: regex -> concept name
+    CONCEPT_PATTERNS = [
+        # User-related
+        (r'\buser_?id\b', r'\buser_?name\b', r'\buser_?email\b', r'\buser_?token\b', 'user_identifier'),
+        # Database-related
+        (r'\bdb_?host\b', r'\bdb_?name\b', r'\bdb_?user\b', r'\bdatabase_?name\b', 'database_config'),
+        # API-related
+        (r'\bapi_?url\b', r'\bapi_?endpoint\b', r'\bapi_?key\b', r'\bapi_?token\b', 'api_config'),
+        # Config file/path
+        (r'\bconfig_?file\b', r'\bconfig_?path\b', r'\bcfg_?file\b', r'\bsetting_?path\b', 'config_path'),
+        # Server/host
+        (r'\bserver_?host\b', r'\bserver_?port\b', r'\bhost_?name\b', r'\bhost_?addr\b', 'server_config'),
+        # Request/response
+        (r'\brequest_?body\b', r'\brequest_?header\b', r'\bresponse_?data\b', r'\bresponse_?code\b', 'http_message'),
+    ]
+
+    def __init__(self, config: RuleConfig = None):
+        super().__init__(config)
+
+    @property
+    def description(self) -> str:
+        return (
+            "Detects naming inconsistencies where the same concept uses different "
+            "naming styles (snake_case vs camelCase) in the same file. "
+            "Helps identify AI-generated code that mixes naming conventions."
+        )
+
+    def apply(self, code_file: CodeFile) -> TransformationResult:
+        source = code_file.content
+        lines = source.splitlines()
+
+        # Scan for naming conflicts using regex
+        conflicts: List[NamingConflict] = []
+        concept_matches: Dict[str, List[Tuple[int, str]]] = {}
+
+        for concept_pattern in self.CONCEPT_PATTERNS:
+            concept_name = concept_pattern[-1]
+            patterns = concept_pattern[:-1]
+
+            for i, line in enumerate(lines, 1):
+                for pattern in patterns:
+                    matches = re.findall(pattern, line, re.IGNORECASE)
+                    for match in matches:
+                        if concept_name not in concept_matches:
+                            concept_matches[concept_name] = []
+                        concept_matches[concept_name].append((i, match))
+
+        # Analyze conflicts
+        for concept_name, matches in concept_matches.items():
+            if len(matches) < 2:
+                continue
+
+            snake_names = [(ln, n) for ln, n in matches if '_' in n.lower()]
+            camel_names = [(ln, n) for ln, n in matches if any(c.isupper() for c in n)]
+
+            if snake_names and camel_names:
+                conflict = NamingConflict(
+                    concept=concept_name,
+                    snake_name=snake_names[0][1],
+                    camel_name=camel_names[0][1],
+                    lines=[ln for ln, _ in matches],
+                )
+                conflicts.append(conflict)
+
+        # Generate changes report
+        changes = []
+        for conflict in conflicts:
+            if conflict.snake_name and conflict.camel_name:
+                hint = (
+                    f"NAMING-INCONSISTENCY: '{conflict.snake_name}' and '{conflict.camel_name}' "
+                    f"refer to the same concept ({conflict.concept}) — use consistent naming"
+                )
+            else:
+                hint = (
+                    f"NAMING-INCONSISTENCY: multiple naming styles found for '{conflict.concept}' "
+                    f"at lines {conflict.lines}"
+                )
+            changes.append(hint)
+
+        return self._create_result(code_file, source, changes)

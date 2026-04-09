@@ -1,0 +1,58 @@
+# Pre-commit hooks definition for PyNEAT
+#
+# Install:
+#   pip install pre-commit pyneat
+#   pre-commit install
+#
+# Update hooks:
+#   pre-commit autoupdate
+#
+# Usage:
+#   pre-commit run --all-files        # Run all hooks
+#   pre-commit run --files file.py    # Run on specific file
+#   pre-commit run pyneat-clean       # Run specific hook
+
+# Hook 1: Security scan
+- id: pyneat-security
+  name: PyNEAT Security Scan
+  description: >
+    Scan for security vulnerabilities in Python code.
+    Checks for hardcoded secrets, SQL injection, command injection,
+    eval/exec usage, insecure YAML loading, and more.
+  entry: pyneat check
+  language: system
+  files: \.py$
+  stages: [pre-commit, push]
+
+# Hook 2: Code cleaner (dry-run)
+- id: pyneat-clean
+  name: PyNEAT Code Cleaner
+  description: >
+    Clean AI-generated code patterns. Removes debug prints, fixes
+    security issues, standardizes imports, detects dead code.
+    Run with --dry-run to see changes without applying.
+  entry: pyneat clean --dry-run --diff
+  language: system
+  files: \.py$
+  stages: [pre-commit]
+
+# Hook 3: Check mode (no changes)
+- id: pyneat-check
+  name: PyNEAT Check Mode
+  description: >
+    Check code without making changes. Reports issues but
+    doesn't modify files.
+  entry: pyneat clean --check
+  language: system
+  files: \.py$
+  stages: [push]
+
+# Hook 4: Format imports
+- id: pyneat-format
+  name: PyNEAT Import Formatter
+  description: >
+    Clean and standardize imports using conservative package.
+  entry: python -m pyneat clean --package conservative --enable-import-cleaning
+  language: system
+  files: \.py$
+  stages: [commit]

@@ -1,0 +1,242 @@
+{
+  "name": "pyneat",
+  "displayName": "PyNEAT - AI Python Code Cleaner",
+  "description": "AI-powered Python code cleaner with security scanning, auto-fix, and quality improvements",
+  "version": "2.0.0",
+  "publisher": "pyneat",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pyneat/pyneat"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Linters",
+    "Formatters",
+    "Programming Languages",
+    "Security"
+  ],
+  "keywords": [
+    "python",
+    "ai",
+    "cleaner",
+    "security",
+    "linter",
+    "formatter",
+    "autofix",
+    "code-quality"
+  ],
+  "activationEvents": [
+    "onLanguage:python",
+    "onCommand:pyneat.clean",
+    "onCommand:pyneat.check",
+    "onCommand:pyneat.securityScan",
+    "workspaceContains:**/*.py"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "PyNEAT",
+      "properties": {
+        "pyneat.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable PyNEAT code cleaning"
+        },
+        "pyneat.package": {
+          "type": "string",
+          "enum": ["safe", "conservative", "destructive"],
+          "default": "safe",
+          "description": "Rule package to use"
+        },
+        "pyneat.autoFix": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically fix issues on save"
+        },
+        "pyneat.formatOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run PyNEAT clean on file save"
+        },
+        "pyneat.enableSecurityScan": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable security vulnerability scanning"
+        },
+        "pyneat.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notifications for detected issues"
+        },
+        "pyneat.debugMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug output"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "pyneat.clean",
+        "title": "PyNEAT: Clean Code",
+        "description": "Clean the current Python file with PyNEAT",
+        "category": "PyNEAT"
+      },
+      {
+        "command": "pyneat.cleanDir",
+        "title": "PyNEAT: Clean Directory",
+        "description": "Clean all Python files in the current directory",
+        "category": "PyNEAT"
+      },
+      {
+        "command": "pyneat.check",
+        "title": "PyNEAT: Security Check",
+        "description": "Run security scan on the current file",
+        "category": "PyNEAT"
+      },
+      {
+        "command": "pyneat.securityScan",
+        "title": "PyNEAT: Full Security Scan",
+        "description": "Run full security scan on workspace",
+        "category": "PyNEAT"
+      },
+      {
+        "command": "pyneat.dryRun",
+        "title": "PyNEAT: Dry Run",
+        "description": "Preview changes without applying them",
+        "category": "PyNEAT"
+      },
+      {
+        "command": "pyneat.listRules",
+        "title": "PyNEAT: List Rules",
+        "description": "Show all available PyNEAT rules",
+        "category": "PyNEAT"
+      },
+      {
+        "command": "pyneat.enableRule",
+        "title": "PyNEAT: Enable Rule",
+        "description": "Enable a specific PyNEAT rule",
+        "category": "PyNEAT"
+      },
+      {
+        "command": "pyneat.disableRule",
+        "title": "PyNEAT: Disable Rule",
+        "description": "Disable a specific PyNEAT rule",
+        "category": "PyNEAT"
+      },
+      {
+        "command": "pyneat.showReport",
+        "title": "PyNEAT: Show Report",
+        "description": "Display security and quality report",
+        "category": "PyNEAT"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "resourceExtname == .py",
+          "command": "pyneat.clean",
+          "group": "pyneat"
+        },
+        {
+          "when": "resourceExtname == .py",
+          "command": "pyneat.check",
+          "group": "pyneat"
+        },
+        {
+          "when": "resourceExtname == .py",
+          "command": "pyneat.dryRun",
+          "group": "pyneat"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "resourceExtname == .py",
+          "command": "pyneat.clean",
+          "group": "pyneat"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "pyneat.clean",
+          "when": "resourceExtname == .py"
+        },
+        {
+          "command": "pyneat.check",
+          "when": "resourceExtname == .py"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "pyneat.clean",
+        "key": "ctrl+shift+6",
+        "mac": "cmd+shift+6",
+        "when": "editorTextFocus && editorLangId == python"
+      },
+      {
+        "command": "pyneat.check",
+        "key": "ctrl+shift+7",
+        "mac": "cmd+shift+7",
+        "when": "editorTextFocus && editorLangId == python"
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "pyneat",
+        "owner": "pyneat",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^\\[([^\\]]+)\\]\\s+(.*):(\\d+):(\\d+):\\s+(.*)$",
+          "severity": 1,
+          "message": 5,
+          "file": 2,
+          "line": 3,
+          "column": 4
+        },
+        "severity": "error"
+      }
+    ],
+    "diagnosticCollection": [
+      {
+        "name": "pyneat",
+        "fileTypes": ["py"]
+      }
+    ],
+    "languages": [
+      {
+        "id": "pyneat-output",
+        "aliases": ["PyNEAT Output"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "pyneat-output",
+        "scopeName": "source.pyneat",
+        "path": "./syntaxes/pyneat-output.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^18.19.0",
+    "@types/vscode": "^1.75.0",
+    "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^2.21.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  }
+}

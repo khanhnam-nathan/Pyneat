@@ -1,6 +1,6 @@
 """Rule groupings and exports.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,12 +15,12 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 from pyneat.rules.base import Rule
 from pyneat.rules.imports import ImportCleaningRule
-from pyneat.rules.naming import NamingConventionRule
+from pyneat.rules.naming import NamingConventionRule, NamingInconsistencyRule
 from pyneat.rules.refactoring import RefactoringRule
 from pyneat.rules.security import SecurityScannerRule
 from pyneat.rules.security_registry import SECURITY_RULES_REGISTRY, get_security_rule, get_all_rule_ids
@@ -40,6 +40,8 @@ from pyneat.rules.match_case import MatchCaseRule
 from pyneat.rules.dataclass import DataclassSuggestionRule, DataclassAdderRule
 from pyneat.rules.init_protection import InitFileProtectionRule
 from pyneat.rules.fstring import FStringRule, StringConcatRule
+from pyneat.rules.ai_bugs import AIBugRule
+from pyneat.rules.duplication import CodeDuplicationRule
 
 # Rule groupings for easier discovery
 from pyneat.rules import safe

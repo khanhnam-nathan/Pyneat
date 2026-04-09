@@ -1,6 +1,6 @@
 """PyNeat GitHub Fuzz Testing Tool.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,11 +15,11 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
-Liên tục tải các file Python từ GitHub repos nổi tiếng, chạy pyneat lên
-chúng với mọi tổ hợp rule, phát hiện crash/regression và ghi chi tiết ra
-file debug phục vụ việc phân tích và sửa lỗi sau này.
+LiÃªn tá»¥c táº£i cÃ¡c file Python tá»« GitHub repos ná»•i tiáº¿ng, cháº¡y pyneat lÃªn
+chÃºng vá»›i má»i tá»• há»£p rule, phÃ¡t hiá»‡n crash/regression vÃ  ghi chi tiáº¿t ra
+file debug phá»¥c vá»¥ viá»‡c phÃ¢n tÃ­ch vÃ  sá»­a lá»—i sau nÃ y.
 
 Usage:
     python -m pyneat.tools.github_fuzz
@@ -88,7 +88,7 @@ class RuleCombination:
 
 # All combinations we'll test
 RULE_COMBINATIONS: List[RuleCombination] = [
-    # Base — safe rules only (default engine behaviour)
+    # Base â€” safe rules only (default engine behaviour)
     RuleCombination(
         id="base",
         name="safe_rules_base",

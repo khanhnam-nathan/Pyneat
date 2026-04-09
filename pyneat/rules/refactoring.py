@@ -1,6 +1,6 @@
 """Rule for refactoring complex code structures.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,19 +15,25 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import re
 from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
 from pyneat.rules.base import Rule
 
+# --------------------------------------------------------------------------
+# Pre-compiled patterns
+# --------------------------------------------------------------------------
+
+_RE_NESTED_IF = re.compile(r'if.*:\s*\n(\s+)if.*:\s*\n(\s+)if.*:\s*\n(\s+)if', re.MULTILINE)
+_RE_FUNC_DEF = re.compile(r'def\s+(?:async\s+)?(\w+)\s*\(')
+
 class RefactoringRule(Rule):
     """Refactors complex code structures like arrow anti-pattern."""
-    
+
     def __init__(self, config: RuleConfig = None):
         super().__init__(config)
-        self.nested_if_pattern = re.compile(r'if.*:\s*\n(\s+)if.*:\s*\n(\s+)if.*:\s*\n(\s+)if', re.MULTILINE)
     
     @property
     def description(self) -> str:
@@ -210,20 +216,20 @@ class RefactoringRule(Rule):
             # Class methods have indent=0 at their def line, so we must
             # handle this before the module-level break.
             if stripped.startswith('def ') or stripped.startswith('async def '):
-                match = re.search(r'def\s+(?:async\s+)?(\w+)\s*\(', stripped)
+                match = _RE_FUNC_DEF.search(stripped)
                 if match and match.group(1) in SPECIAL_METHODS:
                     return True
-                # Non-special function — stop searching.
+                # Non-special function â€” stop searching.
                 break
 
             current_indent = len(lines[j]) - len(lines[j].lstrip())
 
-            # Module-level code (0 indent, not a comment, not a function/class) — stop.
+            # Module-level code (0 indent, not a comment, not a function/class) â€” stop.
             if current_indent == 0 and not stripped.startswith('#') and \
                not stripped.startswith('class '):
                 break
 
-        # Check 2: Jinja2 pattern — `except: pass` immediately followed by `raise`.
+        # Check 2: Jinja2 pattern â€” `except: pass` immediately followed by `raise`.
         # Pattern: the except block body is only `pass`, and the next non-blank line
         # after it is a `raise` statement. This means the except is a "suppressor"
         # that lets execution fall through to raise a more informative error.
@@ -237,7 +243,7 @@ class RefactoringRule(Rule):
             if next_idx < len(lines):
                 next_stripped = lines[next_idx].strip()
                 if next_stripped.startswith('raise '):
-                    # This is the Jinja2 "suppressor" pattern — skip it
+                    # This is the Jinja2 "suppressor" pattern â€” skip it
                     return True
 
         return False

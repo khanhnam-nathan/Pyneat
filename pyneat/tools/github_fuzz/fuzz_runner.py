@@ -1,6 +1,6 @@
 """Core fuzz testing loop.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
 For each downloaded Python file, runs pyneat with all configured rule
 combinations, detecting crashes, regressions, and performance issues.
@@ -245,7 +245,7 @@ def _test_file_with_combination(
         thread.join(timeout=timeout_seconds)
 
         if thread.is_alive():
-            # Timeout — mark as timeout, engine may still be running
+            # Timeout â€” mark as timeout, engine may still be running
             elapsed_ms = (time.perf_counter() - start) * 1000
             return FuzzResult(
                 repo=repo,
@@ -312,7 +312,7 @@ def _test_file_with_combination(
                     transformed_snippet=result.transformed_content,
                 )
             else:
-                # Input was already invalid (Python 2 or broken) — not a regression
+                # Input was already invalid (Python 2 or broken) â€” not a regression
                 return FuzzResult(
                     repo=repo,
                     file_path=gh_file_path,
@@ -487,11 +487,11 @@ def _run_fuzz(config: FuzzConfig) -> List[FuzzResult]:
             file_queue.append((repo, gh_file, content))
 
     if config.dry_download:
-        print(f"[PyNeat Fuzz] Dry run — downloaded {len(file_queue)} files, skipping tests")
+        print(f"[PyNeat Fuzz] Dry run â€” downloaded {len(file_queue)} files, skipping tests")
         return []
 
     total_tests = len(file_queue) * total_combinations
-    print(f"  Collected {len(file_queue)} files × {total_combinations} = {total_tests} tests")
+    print(f"  Collected {len(file_queue)} files Ã— {total_combinations} = {total_tests} tests")
     print()
 
     # ---- Phase 2: Run fuzz tests ----
@@ -621,7 +621,7 @@ if __name__ == "__main__":
     results = test_single_file(content, file_path=args.file, combination_preset=args.preset)
 
     for r in results:
-        print(f"[{r.combination_id}] {r.status} — {r.elapsed_ms:.1f}ms")
+        print(f"[{r.combination_id}] {r.status} â€” {r.elapsed_ms:.1f}ms")
         if r.status in ("crash", "regression"):
             print(f"  {r.exception_type or r.syntax_error}: {r.exception_message or ''}")
             if r.traceback:

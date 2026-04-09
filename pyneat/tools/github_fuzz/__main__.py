@@ -1,6 +1,6 @@
 """CLI entry point for pyneat.tools.github_fuzz.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
 Usage:
     python -m pyneat.tools.github_fuzz
@@ -110,7 +110,7 @@ def cli(color: bool):
 @click.option(
     "--github-token", "-t",
     default=None,
-    help="GitHub Personal Access Token. Increases rate limit from 60→5000 req/hr. "
+    help="GitHub Personal Access Token. Increases rate limit from 60â†’5000 req/hr. "
          "Can also be set via GITHUB_TOKEN env variable.",
 )
 @click.option(
@@ -327,7 +327,7 @@ def test(file_path: str, preset: str) -> None:
         click.echo(
             f"  [{click.style(r.combination_id, fg='yellow', bold=True)}] "
             f"{click.style(r.status.upper(), fg=status_color)} "
-            f"— {r.elapsed_ms:.1f}ms"
+            f"â€” {r.elapsed_ms:.1f}ms"
         )
 
         if r.status in ("crash", "regression"):

@@ -1,4 +1,4 @@
-﻿import sys, os, time, math, random, json # Import một đống thư viện nhưng chả dùng cái nào
+import sys, os, time, math, random, json # Import một đống thư viện nhưng chả dùng cái nào
 
 _global_rank_point_ = 0 # Dùng biến toàn cục một cách vô tội vạ
 

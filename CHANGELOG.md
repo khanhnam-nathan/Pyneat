@@ -1,8 +1,51 @@
 # Changelog
 
-Tất cả thay đổi đáng chú ý của dự án này sẽ được ghi chép trong tệp này.
+All notable project changes will be documented in this file.
 
-Dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/) và [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+The project follows [Semantic Versioning](https://semver.org/) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## [2.2.0-beta] - 2026-04-09
+
+### Added
+
+#### Agent-to-Agent Handoff System
+- **PYNAGENT Markers**: Machine-readable markers for AI editor handoff
+- **Manifest Export**: JSON, SARIF 2.1.0, CodeClimate, Markdown formats
+- **LSP Integration**: VS Code, Neovim compatible code actions
+- **Marker Cleanup**: Automatic cleanup of resolved markers
+- **Export CLI**: `pyneat manifest <file> --format sarif|json|md|gjson`
+- **Verify CLI**: `pyneat verify --cleanup`
+
+#### 10 New AI Bug Detection Rules
+- **AI-BOUND**: Boundary Check - Unsafe array indexing without guards
+- **AI-RES**: Resource Leak - open() without context, HTTP without timeout
+- **AI-NAME**: Naming Inconsistency - userId vs user_id detection
+- **AI-PARAM**: Fake Parameter - Hallucinated function parameters
+- **AI-PKG**: Phantom Package - Non-existent PyPI package detection
+- **AI-IO**: Redundant I/O - Repeated API calls within same function
+- **CodeDuplicationRule**: Cross-file duplicate detection using AST normalization
+
+#### AgentMarker Enhancements
+- `end_line`: End line for multi-line markers
+- `requires_user_input`: Flag for issues needing user decision
+- `related_markers`: IDs of related markers for grouping
+
+#### Tests
+- 35 new tests for Agent-to-Agent system
+- 26 new tests for AI bug detection rules
+- Total: 458 tests passing
+
+### Changed
+
+- Version bumped to 2.2.0-beta
+- AgentMarker now imported from `pyneat.core.types`
+- Manifest export consolidated in `pyneat.core.manifest`
+
+### Fixed
+
+- AgentMarker forward reference in `types.py`
+- Missing Optional import in `quality.py`, `unused.py`, `redundant.py`
+- Regex pattern error in REDUNDANT_IO_PATTERNS
 
 ## [2.0.0-beta.2] - 2026-04-09
 
@@ -41,17 +84,26 @@ Dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/) và [Keep
 
 #### Rust Architecture Improvements
 - Tree-sitter Python grammar integration
-- Auto-fix system với fixer module
-- Diff generation cho code changes
+- Auto-fix system with fixer module
+- Diff generation for code changes
 - PyO3 extension module (cdylib)
+
+#### Ecosystem Components
+- **GitHub Actions**: CI/CD workflows (.github/workflows/)
+- **GitLab CI**: GitLab CI templates (.gitlab-ci/)
+- **Pre-commit Hooks**: Local and remote pre-commit configurations
+- **VS Code Extension**: Full IDE integration with commands and diagnostics
+- **LSP Server**: Language Server Protocol implementation for real-time analysis
+- **JetBrains Plugin**: Gradle configuration for IntelliJ-based IDEs
+- **Vim/Neovim Plugin**: Lua-based plugin with LSP integration
 
 ### Changed
 
 #### Performance Improvements
-- Rust binary build với LTO và strip symbols
-- Parallel scanning với Rayon
-- Pre-compiled regex patterns với OnceLock
-- Không có GIL contention
+- Rust binary built with LTO and strip symbols
+- Parallel scanning with Rayon
+- Pre-compiled regex patterns with OnceLock
+- No GIL contention
 
 ### Fixed
 
@@ -62,24 +114,24 @@ Dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/) và [Keep
 
 ### Added
 
-#### Tài liệu
-- Tạo CHANGELOG.md để theo dõi thay đổi phiên bản
-- Tạo CONTRIBUTING.md với hướng dẫn phát triển
-- Tạo CODE_OF_CONDUCT.md với quy tắc ứng xử cộng đồng
+#### Documentation
+- Created CHANGELOG.md to track version changes
+- Created CONTRIBUTING.md with development guidelines
+- Created CODE_OF_CONDUCT.md with community conduct rules
 
-#### Kiến trúc Rust (pyneat-rs)
-- Khởi tạo project Rust với PyO3 bindings
-- Implement 5 security rules cơ bản (SEC-001 ~ SEC-005):
+#### Rust Architecture (pyneat-rs)
+- Initialized Rust project with PyO3 bindings
+- Implemented 5 basic security rules (SEC-001 ~ SEC-005):
   - SEC-001: Command Injection Detection
   - SEC-002: SQL Injection Detection
   - SEC-003: Eval/Exec Usage Detection
   - SEC-004: Deserialization RCE Detection
   - SEC-005: Path Traversal Detection
-- Parallel scanning với Rayon
-- Pre-compiled regex patterns với OnceLock
-- Benchmark suite để so sánh Python vs Rust performance
+- Parallel scanning with Rayon
+- Pre-compiled regex patterns with OnceLock
+- Benchmark suite for Python vs Rust performance comparison
 
-#### Cấu trúc thư mục mới
+#### New Directory Structure
 ```
 pyneat-rs/
 ├── Cargo.toml
@@ -98,71 +150,71 @@ pyneat-rs/
 ### Changed
 
 #### Performance Improvements
-- Regex patterns được pre-compile 1 lần và reuse
-- Parallel pattern matching với Rayon
-- Không có GIL contention
+- Regex patterns pre-compiled once and reused
+- Parallel pattern matching with Rayon
+- No GIL contention
 
 ### Planned for 2.0.0 (Full Release)
 
-- [x] Tree-sitter Python grammar integration ✅
-- [x] Full 50+ security rules (SEC-001 ~ SEC-059) ✅
-- [x] Auto-fix system cho các vulnerabilities phổ biến ✅
-- [x] Quality rules (imports, naming, dead code) ✅
-- [ ] CLI integration với `--rust` flag
-- [ ] Binary wheels cho pip install pyneat[rust]
-- [ ] Windows wheels với proper Python 3.10+ support
+- [x] Tree-sitter Python grammar integration
+- [x] Full 50+ security rules (SEC-001 ~ SEC-059)
+- [x] Auto-fix system for common vulnerabilities
+- [x] Quality rules (imports, naming, dead code)
+- [ ] CLI integration with `--rust` flag
+- [ ] Binary wheels for pip install pyneat-cli[rust]
+- [ ] Windows wheels with proper Python 3.10+ support
 
 ## [2.0.0] - 2026-03-XX
 
 ### Added
 
 #### New Rules
-- `IsNotNoneRule` - Chuyển đổi các pattern `x is not None`
-- `MagicNumberRule` - Phát hiện và flag magic numbers
-- `RangeLenRule` - Sửa anti-pattern `range(len())`
-- `DeadCodeRule` - Xóa functions và classes không sử dụng qua AST analysis
-- `FStringRule` - Chuyển đổi `.format()` sang f-strings
-- `TypingRule` - Gợi ý type annotations cho functions không có typing
-- `MatchCaseRule` - Gợi ý chuyển đổi if-elif chains sang match-case (Python 3.10+)
-- `DataclassSuggestionRule` - Gợi ý `@dataclass` cho các class đơn giản
+- `IsNotNoneRule` - Convert `x is not None` patterns
+- `MagicNumberRule` - Detect and flag magic numbers
+- `RangeLenRule` - Fix `range(len())` anti-pattern
+- `DeadCodeRule` - Remove unused functions and classes via AST analysis
+- `FStringRule` - Convert `.format()` to f-strings
+- `TypingRule` - Suggest type annotations for functions without typing
+- `MatchCaseRule` - Suggest converting if-elif chains to match-case (Python 3.10+)
+- `DataclassSuggestionRule` - Suggest `@dataclass` for simple classes
 
 #### Rule System
-- Refactored comprehensive rule system với priority ordering
-- Cleaner CI/CD workflow với lint và stress tests
-- Enhanced isolated block processing cho nested code
-- Fixed Unicode encoding issues trong CLI output
+- Refactored comprehensive rule system with priority ordering
+- Cleaner CI/CD workflow with lint and stress tests
+- Enhanced isolated block processing for nested code
+- Fixed Unicode encoding issues in CLI output
 
 ### Changed
 
-- Refactored comprehensive rule system với priority ordering
-- Added comprehensive test samples cho real-world scenarios
-- Cleaner CI/CD workflow với lint và stress tests
-- Enhanced isolated block processing cho nested code
-- Fixed Unicode encoding issues trong CLI output
-- Fixed CI configuration để sử dụng proper Linux Python paths
-- Fixed compileall verification cho package integrity
+- Refactored comprehensive rule system with priority ordering
+- Added comprehensive test samples for real-world scenarios
+- Cleaner CI/CD workflow with lint and stress tests
+- Enhanced isolated block processing for nested code
+- Fixed Unicode encoding issues in CLI output
+- Fixed CI configuration to use proper Linux Python paths
+- Fixed compileall verification for package integrity
 
 ### Removed
 
-- Removed redundant test files cho leaner test suite
-- Simplified CI pipeline (single pytest run thay vì multiple jobs)
+- Removed redundant test files for leaner test suite
+- Simplified CI pipeline (single pytest run instead of multiple jobs)
 
 ## [1.0.0] - 2026-01-XX
 
 ### Added
 
-- Initial release với core cleaning rules:
+- Initial release with core cleaning rules:
   - ImportCleaningRule
   - NamingConventionRule
   - RefactoringRule
   - DebugCleaner
   - CommentCleaner
-- Security scanning với SecurityScannerRule
-- Security registry với 50+ security rules (SEC-001 ~ SEC-059)
-- CLI với Click framework
+- Security scanning with SecurityScannerRule
+- Security registry with 50+ security rules (SEC-001 ~ SEC-059)
+- CLI with Click framework
 - Pre-commit hooks integration
 - GitHub Actions workflow
 - 7-layer protection system
-- AST và CST caching
+- AST and CST caching
 - Semantic guards
 - Type shields

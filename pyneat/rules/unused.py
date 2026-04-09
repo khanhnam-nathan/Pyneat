@@ -1,6 +1,6 @@
 """Rule for removing genuinely unused imports using AST analysis + partial import splitting.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,15 +15,15 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import ast
 import re
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Optional
 import libcst as cst
 
-from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
+from pyneat.core.types import CodeFile, RuleConfig, TransformationResult, AgentMarker
 from pyneat.rules.base import Rule
 
 
@@ -34,12 +34,12 @@ class UnusedImportRule(Rule):
     referenced, removing only imports with no side effects and no usage.
 
     Also splits multi-name imports when some names are used and some aren't.
-    E.g., "import os, sys" where only os is used → converts to "import os".
+    E.g., "import os, sys" where only os is used â†’ converts to "import os".
 
     Skips imports marked with # pyneat: protected and imports in __all__.
     """
 
-    # Modules commonly used for side-effects — these individual names are protected
+    # Modules commonly used for side-effects â€” these individual names are protected
     SIDE_EFFECT_MODULES: frozenset = frozenset({
         'os', 'sys', 'builtins', '__future__',
     })
@@ -73,7 +73,7 @@ class UnusedImportRule(Rule):
             return self._create_result(code_file, new_content, changes)
 
         except SyntaxError:
-            # File has syntax errors — skip transformation
+            # File has syntax errors â€” skip transformation
             return self._create_result(code_file, code_file.content, [])
 
         except Exception as e:
@@ -169,7 +169,7 @@ class UnusedImportRule(Rule):
                 })
 
         for pr in partial_replacements:
-            lines[pr['line_idx']] = self._build_replacement_line(pr['node'], used_names)
+            lines[pr['line_idx']] = self._build_replacement_line(pr['node'], pr['used_names'])
 
         if not removed_import_indices and not partial_replacements:
             return content, []
@@ -330,3 +330,37 @@ class UnusedImportRule(Rule):
                         }):
                             return True
         return False
+
+    def mark_for_agent(self, code_file: CodeFile) -> Optional[List[AgentMarker]]:
+        """Return AgentMarkers for unused import issues."""
+        from typing import Optional
+        markers: List[AgentMarker] = []
+
+        try:
+            ast_tree = getattr(code_file, 'ast_tree', None) or ast.parse(code_file.content)
+        except SyntaxError:
+            return None
+
+        new_content, removed_names = self._remove_unused_imports(code_file.content, ast_tree)
+        lines = code_file.content.splitlines()
+
+        for name in removed_names:
+            for i, line in enumerate(lines):
+                if name in line and ('import' in line or 'from' in line):
+                    snippet = line.strip()[:80]
+                    markers.append(AgentMarker(
+                        marker_id=f"PYN-U{len(markers) + 1:03d}",
+                        issue_type="unused_import",
+                        rule_id="UnusedImportRule",
+                        severity="info",
+                        line=i + 1,
+                        param=name,
+                        hint=f"Import '{name}' is never used — remove it",
+                        why="Unused imports increase cognitive load and slow down module loading",
+                        confidence=0.9,
+                        can_auto_fix=True,
+                        snippet=snippet,
+                    ))
+                    break
+
+        return markers if markers else None

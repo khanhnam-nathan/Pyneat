@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "PyNEAT Output",
+    "patterns": [
+        {
+            "name": "pyneat.severity",
+            "match": "\\b(CRITICAL|HIGH|MEDIUM|LOW|INFO)\\b"
+        },
+        {
+            "name": "pyneat.rule",
+            "match": "\\[([A-Z]+-[0-9]+)\\]"
+        },
+        {
+            "name": "pyneat.file",
+            "match": "([A-Za-z]:\\\\)?[\\w\\\\]+\\.py"
+        },
+        {
+            "name": "pyneat.line",
+            "match": ":\\d+:"
+        }
+    ],
+    "scopeName": "source.pyneat"
+}

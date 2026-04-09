@@ -1,6 +1,6 @@
 """Domain types and data models.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,13 +15,88 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional, Tuple, Set
 
 from pathlib import Path
+
+
+# --------------------------------------------------------------------------
+# Agent-to-Agent Marker (Phase 2)
+# --------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class AgentMarker:
+    """Machine-readable marker for AI editor handoff.
+
+    Embedded as ``# PYNAGENT: {...}`` comment in source AND written to
+    ``.pyneat.manifest.json`` sidecar file so any AI editor can read it.
+    """
+    marker_id: str
+    issue_type: str
+    rule_id: str
+    severity: str = "medium"
+    line: int = 1
+    end_line: int = None  # NEW: end line for multi-line markers (defaults to line)
+    column: Optional[int] = None
+    param: Optional[str] = None
+    hint: str = ""
+    why: str = ""
+    confidence: float = 1.0
+    can_auto_fix: bool = False
+    fix_diff: Optional[str] = None
+    snippet: str = ""
+    cwe_id: Optional[str] = None
+    auto_fix_available: bool = False
+    auto_fix_before: Optional[str] = None
+    auto_fix_after: Optional[str] = None
+    requires_user_input: bool = False  # NEW: for issues needing user decision
+    related_markers: Tuple[str, ...] = ()  # NEW: IDs of related markers
+
+    def __post_init__(self):
+        # Auto-set end_line to line if not provided
+        if self.end_line is None:
+            object.__setattr__(self, 'end_line', self.line)
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = {}
+        for k, v in self.__dataclass_fields__.items():
+            val = getattr(self, k)
+            # Skip default values, but include end_line explicitly
+            if val is not None and val != v.default:
+                d[k] = val
+        return d
+
+    def to_json(self) -> str:
+        import json
+        return json.dumps(self.to_dict(), separators=(',', ':'))
+
+    def to_comment(self) -> str:
+        return f"# PYNAGENT: {self.to_json()}"
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AgentMarker":
+        known = {
+            'marker_id', 'issue_type', 'rule_id', 'severity', 'line',
+            'end_line', 'column', 'param', 'hint', 'why', 'confidence',
+            'can_auto_fix', 'fix_diff', 'snippet', 'cwe_id',
+            'auto_fix_available', 'auto_fix_before', 'auto_fix_after',
+            'requires_user_input', 'related_markers',
+        }
+        kwargs = {k: v for k, v in data.items() if k in known}
+        # Convert list to tuple for related_markers
+        if 'related_markers' in kwargs and isinstance(kwargs['related_markers'], list):
+            kwargs['related_markers'] = tuple(kwargs['related_markers'])
+        return cls(**kwargs)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "AgentMarker":
+        import json
+        return cls.from_dict(json.loads(json_str))
+
 
 # --------------------------------------------------------------------------
 # Security severity levels
@@ -326,7 +401,7 @@ class RuleConflict:
         rule_a: Name of the first rule.
         rule_b: Name of the second rule.
         line_range: Tuple of (start_line, end_line) that both rules modified.
-        severity: Conflict severity — 'high' (same lines), 'medium' (adjacent lines),
+        severity: Conflict severity â€” 'high' (same lines), 'medium' (adjacent lines),
                   'low' (shared blank lines). Defaults to 'medium'.
         description: Optional human-readable description of the conflict.
     """
@@ -402,6 +477,8 @@ class TransformationResult:
     security_findings: List[SecurityFinding] = field(default_factory=list)
     auto_fix_applied: List[str] = field(default_factory=list)
     dependency_findings: List[DependencyFinding] = field(default_factory=list)
+    # Agent-to-agent handoff (Phase 2)
+    agent_markers: List[AgentMarker] = field(default_factory=list)
 
     @property
     def has_changes(self) -> bool:

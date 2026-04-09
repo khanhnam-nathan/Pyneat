@@ -1,6 +1,6 @@
 """Rule for converting .format() and string concatenation to f-strings.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import re
@@ -23,6 +23,14 @@ from typing import List
 import libcst as cst
 
 from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
+
+# --------------------------------------------------------------------------
+# Pre-compiled patterns for fstring conversion
+# --------------------------------------------------------------------------
+
+_RE_FORMAT_SPEC = re.compile(r'\{(\d+)(:[^}]+)?\}')
+_RE_NAMED_FORMAT = re.compile(r'\{([^{}:]+)(:[^}]+)?\}')
+_RE_BARE_BRACES = re.compile(r'\{\}')
 from pyneat.rules.base import Rule
 
 
@@ -30,10 +38,10 @@ class FStringConverter(cst.CSTTransformer):
     """Converts .format() calls to f-strings.
 
     Handles:
-    - Numbered placeholders: "{0}", "{1}" → "{arg}"
-    - Auto-numbered placeholders: "{}", "{}" → "{arg0}", "{arg1}"
+    - Numbered placeholders: "{0}", "{1}" â†’ "{arg}"
+    - Auto-numbered placeholders: "{}", "{}" â†’ "{arg0}", "{arg1}"
     - Named placeholders: "{name}", "{age}" (already in f-string format)
-    - Format specs: "{value:d}", "{value:.2f}", "{value:,}" → parsed, output simplified
+    - Format specs: "{value:d}", "{value:.2f}", "{value:,}" â†’ parsed, output simplified
     - Complex expressions in placeholders: "{obj.attr}", "{func(arg)}" (passthrough)
     """
 
@@ -82,16 +90,11 @@ class FStringConverter(cst.CSTTransformer):
         # 1. Handle format specs: {value:d}, {value:.2f}, {value:,}, etc.
         # Remove format specs from placeholders (f-strings don't need them)
         # Pattern: {anything:format_spec} or {anything!conversion:format_spec}
-        content = re.sub(
-            r'\{(\d+)(:[^}]+)?\}',
+        content = _RE_FORMAT_SPEC.sub(
             lambda m: f'{{{int(m.group(1))}}}',
             content
         )
-        content = re.sub(
-            r'\{([^{}:]+)(:[^}]+)?\}',
-            r'{\1}',
-            content
-        )
+        content = _RE_NAMED_FORMAT.sub(r'{\1}', content)
 
         # 2. Replace auto-numbered {} placeholders with positional args
         auto_num = 0
@@ -110,7 +113,7 @@ class FStringConverter(cst.CSTTransformer):
 
         # Only replace {} (not {name}) - check for bare {}
         if '{}' in content:
-            content = re.sub(r'\{\}', replace_auto_num, content)
+            content = _RE_BARE_BRACES.sub(replace_auto_num, content)
 
         # 3. Use double quotes if single quotes appear in content
         if quote_char == "'" and "'" in content:

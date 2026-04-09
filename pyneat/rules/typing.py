@@ -1,6 +1,6 @@
 """Rule for suggesting type annotations and cleaning type-related issues.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import ast
@@ -207,11 +207,6 @@ class TypingRule(Rule):
     def _is_none_literal(self, node: ast.AST) -> bool:
         """Check if an AST node is a None literal."""
         if isinstance(node, ast.Constant) and node.value is None:
-            return True
-        # ast.NameConstant was removed in Python 3.8 (merged into ast.Constant)
-        # Use getattr to avoid AttributeError when running on Python 3.8+
-        _nc = getattr(ast, 'NameConstant', None)
-        if _nc is not None and isinstance(node, _nc) and node.value is None:
             return True
         return False
 

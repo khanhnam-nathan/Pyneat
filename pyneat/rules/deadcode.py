@@ -1,6 +1,6 @@
 """Rule for detecting and removing dead/unused code (functions, classes, methods).
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,14 +15,14 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import ast
 import re
 from typing import List, Set, Tuple, Optional
 
-from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
+from pyneat.core.types import CodeFile, RuleConfig, TransformationResult, AgentMarker
 from pyneat.rules.base import Rule
 from pyneat.core.scope_guard import ScopeGuard
 
@@ -136,10 +136,10 @@ class DeadCodeRule(Rule):
             all_references, content
         )
 
-        # Find dead branches (constant-condition branches) — report as suggestions
+        # Find dead branches (constant-condition branches) â€” report as suggestions
         dead_branch_items = self._find_dead_branches(tree, content)
 
-        # Layer 4: ScopeGuard — filter out items still referenced downstream
+        # Layer 4: ScopeGuard â€” filter out items still referenced downstream
         scope_guard = ScopeGuard()
         all_dead = dead_funcs + dead_classes
         safe_dead, scope_warnings = scope_guard.check_dead_code_safe(content, all_dead)
@@ -167,7 +167,7 @@ class DeadCodeRule(Rule):
             self._remove_lines(lines, start, end)
             removed_items.append(f"unused class: {class_name}")
 
-        # Mark dead branches as suggestions (don't auto-remove — too risky)
+        # Mark dead branches as suggestions (don't auto-remove â€” too risky)
         for branch in dead_branch_items:
             removed_items.append(f"Dead branch detected: {branch}")
 
@@ -386,7 +386,7 @@ class DeadCodeRule(Rule):
     def _has_side_effects(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
         """Check if function has side effects (yield, raise, I/O).
 
-        Only checks actual Call nodes — references to I/O names without calls
+        Only checks actual Call nodes â€” references to I/O names without calls
         (e.g. assigning the function to a variable) do not trigger side effects.
         """
         for child in ast.walk(node):
@@ -472,8 +472,8 @@ class DeadCodeRule(Rule):
         """Find dead branches from if/while/for with constant conditions.
 
         Detects (but does not auto-remove) patterns like:
-        - if False: / while False: — entire block is dead
-        - if True: ... else: ... — else branch is dead
+        - if False: / while False: â€” entire block is dead
+        - if True: ... else: ... â€” else branch is dead
 
         Auto-removal is disabled by default to avoid breaking code that relies
         on these patterns for scaffolding/placeholders.
@@ -502,7 +502,7 @@ class DeadCodeRule(Rule):
         """Get a human-readable reason for a dead branch."""
         if isinstance(node, ast.While):
             return f"while True: loop with no break (dead)"
-        return f"if False: — unreachable block"
+        return f"if False: â€” unreachable block"
 
     def _is_always_falsy(self, node: ast.AST) -> bool:
         """Check if a test is always falsy."""
@@ -515,3 +515,65 @@ class DeadCodeRule(Rule):
         if isinstance(node, ast.Constant) and node.value not in (False, 0, None, '', [], {}):
             return True
         return False
+
+    def mark_for_agent(self, code_file: CodeFile) -> Optional[List[AgentMarker]]:
+        """Return AgentMarkers for dead/unused code issues."""
+        import ast
+        from typing import Optional as Opt
+
+        markers: List[AgentMarker] = []
+
+        try:
+            ast_tree = getattr(code_file, 'ast_tree', None) or ast.parse(code_file.content)
+        except SyntaxError:
+            return None
+
+        defined_funcs, defined_classes = self._collect_definitions(ast_tree)
+        all_references = self._collect_references(ast_tree)
+        referenced_names = self._collect_name_references(ast_tree)
+        all_references.update(referenced_names)
+
+        dead_funcs, dead_classes = self._find_dead_code(
+            ast_tree, defined_funcs, defined_classes, all_references, code_file.content
+        )
+
+        scope_guard = ScopeGuard()
+        safe_dead, _ = scope_guard.check_dead_code_safe(code_file.content, dead_funcs + dead_classes)
+
+        for item in safe_dead:
+            item_type = item.get("type", "function")
+            item_name = item.get("name", "")
+            line_no = item.get("start", 1)
+            lines = code_file.content.splitlines()
+            snippet = lines[line_no - 1] if 0 < line_no <= len(lines) else ""
+
+            if item_type == "function":
+                markers.append(AgentMarker(
+                    marker_id=f"PYN-D{len(markers) + 1:03d}",
+                    issue_type="unused_function",
+                    rule_id="DeadCodeRule",
+                    severity="low",
+                    line=line_no,
+                    param=item_name,
+                    hint=f"Function '{item_name}()' is never called — remove it or mark it with a decorator",
+                    why=f"Dead code increases maintenance burden and confuses readers",
+                    confidence=0.85,
+                    can_auto_fix=False,
+                    snippet=snippet[:80],
+                ))
+            else:
+                markers.append(AgentMarker(
+                    marker_id=f"PYN-D{len(markers) + 1:03d}",
+                    issue_type="unused_class",
+                    rule_id="DeadCodeRule",
+                    severity="low",
+                    line=line_no,
+                    param=item_name,
+                    hint=f"Class '{item_name}' is never instantiated — remove it or mark it with a decorator",
+                    why=f"Unused class increases cognitive load and maintenance burden",
+                    confidence=0.85,
+                    can_auto_fix=False,
+                    snippet=snippet[:80],
+                ))
+
+        return markers if markers else None

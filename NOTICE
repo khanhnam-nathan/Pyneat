@@ -1,0 +1,103 @@
+# NOTICE File — PyNEAT
+
+```
+PyNEAT — Python AI Code Verification Tool
+Copyright (c) 2024-2026 PyNEAT Authors
+https://pyneat.dev
+```
+
+---
+
+## About PyNEAT
+
+PyNEAT is a Python AI code verification tool that detects and removes AI-generated code artifacts, dead code, security vulnerabilities, and other code quality issues.
+
+---
+
+## Copyright Notice
+
+```
+Copyright (c) 2024-2026 PyNEAT Authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, contact: n.khanhnamfw@gmail.com
+```
+
+---
+
+## Third-Party Components
+
+PyNEAT includes or depends upon the following third-party open source software:
+
+### Core Dependencies
+
+| Component | License | Copyright |
+|-----------|---------|-----------|
+| **libCST** | BSD-3-Clause | Copyright (c) Instagram, Inc. |
+| **click** | BSD-3-Clause | Copyright (c) Pallets |
+
+### Testing Dependencies
+
+| Component | License | Copyright |
+|-----------|---------|-----------|
+| **pytest** | MIT | Copyright (c) Holger Krekel and pytest-dev team |
+| **pytest-asyncio** | Apache-2.0 OR BSD-2-Clause | Copyright (c) pytest-asyncio contributors |
+
+### Development Dependencies
+
+| Component | License | Copyright |
+|-----------|---------|-----------|
+| **pre-commit** | MIT | Copyright (c) pre-commit team |
+| **setuptools** | MIT OR Apache-2.0 | Copyright (c) Python Packaging Authority |
+
+---
+
+## Open Source Licenses
+
+### GNU Affero General Public License v3 (AGPLv3)
+
+PyNEAT is distributed under the terms of the GNU AGPLv3 license.
+
+The full text of the AGPLv3 license is available at:
+- https://www.gnu.org/licenses/agpl-3.0.html
+- See the `LICENSE` file in this repository
+
+### Third-Party Licenses
+
+- **BSD-3-Clause**: See https://opensource.org/licenses/BSD-3-Clause
+- **MIT**: See https://opensource.org/licenses/MIT
+- **Apache-2.0**: See https://www.apache.org/licenses/LICENSE-2.0
+
+---
+
+## Contact Information
+
+For questions regarding this notice or PyNEAT licensing:
+
+- **Email**: n.khanhnamfw@gmail.com
+- **Website**: https://pyneat.dev
+- **GitHub**: https://github.com/pyneat/pyneat
+
+---
+
+## Trademark Notice
+
+"PyNEAT" is a trademark of the PyNEAT Authors. Use of this trademark requires written permission from the PyNEAT Authors, except as permitted under the AGPLv3 license or applicable open source fair use provisions.
+
+See `TRADEMARK.md` for more information.
+
+---
+
+*This file was last updated: 2026-04-08*

@@ -1,0 +1,245 @@
+# PyNEAT GitLab CI Template
+#
+# Include this template in your .gitlab-ci.yml:
+#
+# include:
+#   - project: 'pyneat/pyneat'
+#     ref: main
+#     file: '/templates/pyneat.yml'
+#
+# Or use as standalone .gitlab-ci.yml
+
+variables:
+  PYNEAT_VERSION: "2.0.0"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - .venv/
+
+stages:
+  - security
+  - quality
+  - test
+  - build
+  - deploy
+
+# ===========================================
+# Security Scan Job
+# ===========================================
+pyneat-security:
+  stage: security
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir pyneat==${PYNEAT_VERSION}
+  script:
+    - pyneat check . --output-format sarif --output security-results.sarif || true
+  artifacts:
+    when: always
+    reports:
+      sast: security-results.sarif
+    paths:
+      - security-results.sarif
+      - security-report.html
+    expire_in: 1 week
+  allow_failure: true  # Don't block pipeline on warnings
+
+  # Optional: Schedule daily scans
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - "**/*.py"
+
+# ===========================================
+# Security Scan with Full Report
+# ===========================================
+pyneat-security-report:
+  stage: security
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir pyneat[security]==${PYNEAT_VERSION}
+  script:
+    - pyneat report --output security-report.html
+  coverage: '/Total.*:.*?(\d+\.\d+)%/'
+  artifacts:
+    when: always
+    paths:
+      - security-report.html
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# ===========================================
+# Code Quality Check (Safe Mode)
+# ===========================================
+pyneat-quality-safe:
+  stage: quality
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir pyneat==${PYNEAT_VERSION}
+  script:
+    - pyneat clean . --package safe --check --diff
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - "**/*.py"
+  allow_failure: true
+
+# ===========================================
+# Code Quality Check (Conservative)
+# ===========================================
+pyneat-quality-conservative:
+  stage: quality
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir pyneat==${PYNEAT_VERSION}
+  script:
+    - pyneat clean . --package conservative --diff
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - when: manual
+  allow_failure: true
+
+# ===========================================
+# Security Scan in Merge Request
+# ===========================================
+pyneat-mr-security:
+  stage: security
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir pyneat==${PYNEAT_VERSION}
+  script:
+    - pyneat check $CI_MERGE_REQUEST_DIFF_BASE_PATH --output mr-security.sarif
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  artifacts:
+    when: always
+    reports:
+      sast: mr-security.sarif
+    paths:
+      - mr-security.sarif
+  coverage: '/SEC-\d+/'
+  allow_failure: true
+
+# ===========================================
+# Run Tests
+# ===========================================
+pyneat-tests:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir -e ".[dev]"
+  script:
+    - pytest tests/ -v --tb=short --cov=pyneat --cov-report=xml --cov-report=html
+  coverage: '/TOTAL.*\s+(\d+\%)$/'
+  artifacts:
+    when: always
+    paths:
+      - coverage.xml
+      - htmlcov/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "push"
+
+# ===========================================
+# Test Multiple Python Versions
+# ===========================================
+pyneat-tests-multi:
+  stage: test
+  image: python:3.12-slim
+  parallel:
+    matrix:
+      - PYTHON_VERSION: "3.10"
+      - PYTHON_VERSION: "3.11"
+      - PYTHON_VERSION: "3.12"
+  before_script:
+    - python${PYTHON_VERSION} -m pip install --no-cache-dir -e ".[dev]"
+  script:
+    - python${PYTHON_VERSION} -m pytest tests/ -v --tb=short
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - "**/*.py"
+
+# ===========================================
+# Build Distribution
+# ===========================================
+pyneat-build:
+  stage: build
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir maturin
+  script:
+    - maturin build --release --out dist
+  artifacts:
+    paths:
+      - dist/*.whl
+      - dist/*.tar.gz
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_TAG  # Only on tags
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# ===========================================
+# Publish to PyPI
+# ===========================================
+pyneat-publish:
+  stage: deploy
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir twine
+  script:
+    - twine upload dist/* --token $PYPI_TOKEN
+  environment:
+    name: pypi
+    url: https://pypi.org/project/pyneat/
+  rules:
+    - if: $CI_COMMIT_TAG  # Only on tags
+  needs:
+    - pyneat-build
+
+# ===========================================
+# Security Dashboard (Requires GitLab Ultimate)
+# ===========================================
+pyneat-security-dashboard:
+  stage: security
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir pyneat==${PYNEAT_VERSION}
+  script:
+    - pyneat check . --output-format json --output security-results.json
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  artifacts:
+    reports:
+      security: security-results.json
+  allow_failure: true
+
+# ===========================================
+# Dependency Scanning
+# ===========================================
+pyneat-deps-scan:
+  stage: security
+  image: python:3.12-slim
+  before_script:
+    - pip install --no-cache-dir pyneat[security]==${PYNEAT_VERSION}
+  script:
+    - pyneat security-db update
+    - pyneat check . --check-dependencies
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - "requirements*.txt"
+        - "pyproject.toml"
+        - "setup.py"
+  allow_failure: true

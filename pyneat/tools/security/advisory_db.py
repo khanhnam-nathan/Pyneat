@@ -1,6 +1,6 @@
 """Security advisory database integration.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
 Provides access to:
 - NVD CVE Database (National Vulnerability Database)
@@ -74,7 +74,7 @@ class AdvisoryRecord:
     package: str
     vulnerable_version_range: str  # <1.0.0, >=2.0.0,<3.0.0
     patched_version: Optional[str]
-    опубликовано_at: str
+    Ð¾Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ð½Ð¾_at: str
     html_url: str
     references: List[str]
 
@@ -508,7 +508,7 @@ class GitHubAdvisoryDB:
                 "package": v.package,
                 "vulnerable_version_range": v.vulnerable_version_range,
                 "patched_version": v.patched_version,
-                " опубликовано_at": v. опубликовано_at,
+                " Ð¾Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ð½Ð¾_at": v. Ð¾Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ð½Ð¾_at,
                 "html_url": v.html_url,
                 "references": v.references,
             } for k, v in self._cache.items()}
@@ -698,7 +698,7 @@ class GitHubAdvisoryDB:
                                 package=package_name,
                                 vulnerable_version_range=vuln_range,
                                 patched_version=patched,
-                                опубликовано_at=published_at,
+                                Ð¾Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ð½Ð¾_at=published_at,
                                 html_url=html_url,
                                 references=references,
                             ))

@@ -1,0 +1,9 @@
+node_modules/
+src/
+.vscodeignore
+.vscode-test/
+.gitignore
+.git/
+*.ts
+*.tsbuildinfo
+*.map

@@ -1,6 +1,6 @@
 """Rule for suggesting @dataclass decorator for simple classes.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import ast
@@ -25,6 +25,15 @@ import libcst as cst
 
 from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
 from pyneat.rules.base import Rule
+
+# --------------------------------------------------------------------------
+# Pre-compiled patterns for dataclass detection
+# --------------------------------------------------------------------------
+
+_RE_DATACLASS_IMPORT = re.compile(r'from\s+dataclasses\s+import\s+.*\bdataclass\b')
+_RE_DATACLASS_MODULE = re.compile(r'import\s+dataclasses\b')
+_RE_FROM_DC_IMPORT = re.compile(r'from\s+dataclasses\s+import')
+_RE_ADD_DC_TO_IMPORT = re.compile(r'(from\s+dataclasses\s+import\s+)([^\n]+)')
 
 
 class DataclassSuggestionRule(Rule):
@@ -223,7 +232,7 @@ class DataclassAdder(cst.CSTTransformer):
 
 
 # ----------------------------------------------------------------------
-# DataclassAdderRule — actual conversion
+# DataclassAdderRule â€” actual conversion
 # ----------------------------------------------------------------------
 
 
@@ -247,7 +256,11 @@ class DataclassAdderRule(Rule):
                 return self._create_result(code_file, content, changes)
 
             try:
-                tree = ast.parse(content)
+                # Use cached AST if available (RuleEngine pre-parses)
+                if hasattr(code_file, 'ast_tree') and code_file.ast_tree is not None:
+                    tree = code_file.ast_tree
+                else:
+                    tree = ast.parse(content)
             except SyntaxError as e:
                 return self._create_error_result(code_file, f"Syntax error: {e}")
 
@@ -282,20 +295,15 @@ class DataclassAdderRule(Rule):
     def _ensure_dataclass_import(self, content: str) -> str:
         """Add 'from dataclasses import dataclass' if not already present."""
         has_import = bool(
-            re.search(r'from\s+dataclasses\s+import\s+.*\bdataclass\b', content) or
-            re.search(r'import\s+dataclasses\b', content)
+            _RE_DATACLASS_IMPORT.search(content) or
+            _RE_DATACLASS_MODULE.search(content)
         )
         if has_import:
             return content
 
-        has_from_dataclasses = re.search(r'from\s+dataclasses\s+import', content)
+        has_from_dataclasses = _RE_FROM_DC_IMPORT.search(content)
         if has_from_dataclasses:
-            return re.sub(
-                r'(from\s+dataclasses\s+import\s+)([^\n]+)',
-                r'\1dataclass, \2',
-                content,
-                count=1
-            )
+            return _RE_ADD_DC_TO_IMPORT.sub(r'\1dataclass, \2', content, count=1)
 
         lines = content.splitlines(keepends=True)
         import_line = "from dataclasses import dataclass\n"

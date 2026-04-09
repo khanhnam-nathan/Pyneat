@@ -1,6 +1,6 @@
 """Rule for detecting and auto-fixing security vulnerabilities in AI-generated code.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
 Handles the full 50+ rule security pack across 5 severity levels:
   - Critical: Command Injection, SQL Injection, Eval/Exec, Deserialization RCE, Path Traversal
@@ -36,12 +36,73 @@ import libcst as cst
 
 from pyneat.core.types import (
     CodeFile, RuleConfig, TransformationResult, SecurityFinding,
-    SecuritySeverity, CWE_SEVERITY_MAP, OWASP_SEVERITY_MAP
+    SecuritySeverity, CWE_SEVERITY_MAP, OWASP_SEVERITY_MAP,
+    AgentMarker
 )
 from pyneat.rules.base import Rule
 from pyneat.rules.security_registry import (
     SECURITY_RULES_REGISTRY, get_security_rule, get_all_rule_ids
 )
+
+# --------------------------------------------------------------------------
+# Pre-compiled regex patterns for performance
+# --------------------------------------------------------------------------
+
+PATTERN_COMMAND_INJECTION = re.compile(
+    r'(os\.system\s*\(|subprocess\.run\s*\([^)]*shell\s*=\s*True|os\.popen\s*\()'
+)
+PATTERN_DEBUG_MODE = re.compile(
+    r'(^DEBUG\s*=\s*True|^DEBUG\s*=\s*["\']True["\']|'
+    r'app\.config\s*\[\s*["\']DEBUG["\']\s*\]\s*=\s*True|'
+    r'app\.run\s*\([^)]*debug\s*=\s*True)',
+    re.MULTILINE
+)
+PATTERN_INSECURE_SSL = re.compile(r'ssl\._create_unverified_context\s*\(')
+PATTERN_XXE = re.compile(
+    r'(lxml\.etree\.parse\s*\(|xml\.etree\.ElementTree\.parse\s*\(|'
+    r'xml\.dom\.minidom\.parse\s*\()'
+)
+PATTERN_MKTEMP = re.compile(r'tempfile\.mktemp\s*\(')
+PATTERN_SQL_CONCAT = re.compile(r'(cursor|db)\.execute\s*\(.*?\+', re.DOTALL)
+PATTERN_RENDER_TEMPLATE_STRING = re.compile(r'render_template_string')
+PATTERN_REQUESTS_METHOD = re.compile(r'requests\.(get|post|put|delete|patch)\s*\(')
+PATTERN_REDIRECT = re.compile(r'redirect\s*\(')
+PATTERN_LDAP_INJECTION = re.compile(r'ldap.*search.*\+', re.IGNORECASE)
+PATTERN_MASS_ASSIGNMENT = re.compile(r'\*\*\s*(?:request|input)\.(?:json|form|data)')
+PATTERN_RACE_CONDITION = re.compile(r'os\.path\.exists.*?os\.(?:remove|unlink|mkdir)', re.DOTALL)
+PATTERN_MKTEMP_GENERIC = re.compile(r'tempfile\.mktemp')
+PATTERN_JWT_VERIFY_FALSE = re.compile(r'jwt\.decode.*verify\s*=\s*False', re.IGNORECASE)
+PATTERN_SET_COOKIE = re.compile(r'set_cookie')
+PATTERN_CREDENTIALS_IN_URL = re.compile(r'://[^:]+:[^@]+@')
+PATTERN_PICKLE_LOADS = re.compile(r'pickle\.(loads|load)\s*\(')
+PATTERN_YAML_UNSAFE = re.compile(r'yaml\.load\s*\([^)]*(?<!Loader=)(?<!loader=)')
+
+# Weak crypto: precompiled (used in _scan_weak_crypto loop)
+_PATTERNS_WEAK_CRYPTO = [
+    (re.compile(r'hashlib\.md5'), "SEC-011", "MD5 is weak for cryptographic purposes"),
+    (re.compile(r'hashlib\.sha1'), "SEC-011", "SHA1 is weak for cryptographic purposes"),
+    (re.compile(r'random\.(choice|choices|random|randint)'), "SEC-019", "random module is not cryptographically secure"),
+]
+
+# Info disclosure: precompiled (used in _scan_information_disclosure loop)
+_PATTERNS_INFO_DISCLOSURE = [
+    (re.compile(r'(?:print|logging|return)\s*\([^)]*traceback\.format_exc'),
+     "Stack trace exposed to users - information disclosure"),
+    (re.compile(r'app\[(?:"DEBUG"|\'DEBUG\')\]\s*=\s*(?:True|true|1)'),
+     "DEBUG configuration exposed"),
+    (re.compile(r'return\s+(?:jsonify|render_template)\([^)]*(?:str\s*\(\s*e\s*\)|error)'),
+     "Exception details returned to user - information disclosure"),
+]
+
+# Missing security headers: framework patterns
+_PATTERN_FLASK = re.compile(r'@app\.route|Flask\(')
+_PATTERN_DJANGO = re.compile(r'from django|import django')
+_PATTERN_FASTAPI = re.compile(r'FastAPI\(|@app\.|@router\.')
+_PATTERN_SECURITY_HEADERS = re.compile(
+    r'X-Frame-Options|X-Content-Type-Options|Content-Security-Policy|'
+    r'Access-Control-Allow|@security_headers|SecurityHeaders'
+)
+_PATTERN_FSTRING_BRACE = re.compile(r'\{([^}]+)\}')
 
 
 class SecurityScannerRule(Rule):
@@ -186,10 +247,7 @@ class SecurityScannerRule(Rule):
                 skip_lines.add(i)
 
         # Command Injection: os.system, subprocess shell=True, os.popen
-        for match in re.finditer(
-            r'(os\.system\s*\(|subprocess\.run\s*\([^)]*shell\s*=\s*True|os\.popen\s*\()',
-            content
-        ):
+        for match in PATTERN_COMMAND_INJECTION.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             if line_no - 1 in skip_lines:
                 continue
@@ -200,12 +258,7 @@ class SecurityScannerRule(Rule):
             )
 
         # Debug Mode Enabled
-        for match in re.finditer(
-            r'(^DEBUG\s*=\s*True|^DEBUG\s*=\s*["\']True["\']|'
-            r'app\.config\s*\[\s*["\']DEBUG["\']\s*\]\s*=\s*True|'
-            r'app\.run\s*\([^)]*debug\s*=\s*True)',
-            content, re.MULTILINE
-        ):
+        for match in PATTERN_DEBUG_MODE.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             if line_no - 1 in skip_lines:
                 continue
@@ -216,10 +269,7 @@ class SecurityScannerRule(Rule):
             )
 
         # Insecure SSL context
-        for match in re.finditer(
-            r'ssl\._create_unverified_context\s*\(',
-            content
-        ):
+        for match in PATTERN_INSECURE_SSL.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group())
             self._add_finding(
@@ -228,11 +278,7 @@ class SecurityScannerRule(Rule):
             )
 
         # XXE: lxml.etree.parse from external source
-        for match in re.finditer(
-            r'(lxml\.etree\.parse\s*\(|xml\.etree\.ElementTree\.parse\s*\(|'
-            r'xml\.dom\.minidom\.parse\s*\()',
-            content
-        ):
+        for match in PATTERN_XXE.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group())
             self._add_finding(
@@ -241,7 +287,7 @@ class SecurityScannerRule(Rule):
             )
 
         # Insecure temporary files
-        for match in re.finditer(r'tempfile\.mktemp\s*\(', content):
+        for match in PATTERN_MKTEMP.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group())
             self._add_finding(
@@ -252,7 +298,7 @@ class SecurityScannerRule(Rule):
     def _scan_sql_injection(self, content: str, lines: List[str]) -> None:
         """Detect SQL injection via string concatenation."""
         # Simple patterns - check for cursor.execute with string concat
-        for match in re.finditer(r'(cursor|db)\.execute\s*\(.*?\+', content, re.DOTALL):
+        for match in PATTERN_SQL_CONCAT.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:150])
             self._add_finding(
@@ -263,7 +309,7 @@ class SecurityScannerRule(Rule):
     def _scan_xss_and_template_injection(self, content: str, lines: List[str]) -> None:
         """Detect XSS and template injection."""
         # render_template_string
-        for match in re.finditer(r'render_template_string', content):
+        for match in PATTERN_RENDER_TEMPLATE_STRING.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, "render_template_string(...)")
             self._add_finding(
@@ -274,7 +320,7 @@ class SecurityScannerRule(Rule):
     def _scan_ssrf(self, content: str, lines: List[str]) -> None:
         """Detect Server-Side Request Forgery."""
         # Simple: check for requests.get/post and similar with url= parameters
-        for match in re.finditer(r'requests\.(get|post|put|delete|patch)\s*\(', content):
+        for match in PATTERN_REQUESTS_METHOD.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:80])
             self._add_finding(
@@ -285,7 +331,7 @@ class SecurityScannerRule(Rule):
     def _scan_open_redirect(self, content: str, lines: List[str]) -> None:
         """Detect open redirect vulnerabilities."""
         # redirect function with user input
-        for match in re.finditer(r'redirect\s*\(', content):
+        for match in PATTERN_REDIRECT.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:80])
             self._add_finding(
@@ -296,7 +342,7 @@ class SecurityScannerRule(Rule):
     def _scan_ldap_injection(self, content: str, lines: List[str]) -> None:
         """Detect LDAP injection."""
         # ldap search with string concat
-        for match in re.finditer(r'ldap.*search.*\+', content, re.IGNORECASE):
+        for match in PATTERN_LDAP_INJECTION.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:150])
             self._add_finding(
@@ -307,7 +353,7 @@ class SecurityScannerRule(Rule):
     def _scan_mass_assignment(self, content: str, lines: List[str]) -> None:
         """Detect mass assignment patterns."""
         # **request.json, **request.form
-        for match in re.finditer(r'\*\*\s*(?:request|input)\.(?:json|form|data)', content):
+        for match in PATTERN_MASS_ASSIGNMENT.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:150])
             self._add_finding(
@@ -318,7 +364,7 @@ class SecurityScannerRule(Rule):
     def _scan_race_conditions(self, content: str, lines: List[str]) -> None:
         """Detect TOCTOU race conditions."""
         # Simple pattern: os.path.exists followed by file operations
-        for match in re.finditer(r'os\.path\.exists.*?os\.(?:remove|unlink|mkdir)', content, re.DOTALL):
+        for match in PATTERN_RACE_CONDITION.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:150])
             self._add_finding(
@@ -328,7 +374,7 @@ class SecurityScannerRule(Rule):
 
     def _scan_insecure_temp_files(self, content: str, lines: List[str]) -> None:
         """Detect insecure temporary file usage."""
-        for match in re.finditer(r'tempfile\.mktemp', content):
+        for match in PATTERN_MKTEMP_GENERIC.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:80])
             self._add_finding(
@@ -339,7 +385,7 @@ class SecurityScannerRule(Rule):
     def _scan_jwt_none(self, content: str, lines: List[str]) -> None:
         """Detect JWT verification bypass."""
         # jwt.decode with verify=False
-        for match in re.finditer(r'jwt\.decode.*verify\s*=\s*False', content, re.IGNORECASE):
+        for match in PATTERN_JWT_VERIFY_FALSE.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:150])
             self._add_finding(
@@ -349,7 +395,7 @@ class SecurityScannerRule(Rule):
 
     def _scan_cookie_flags(self, content: str, lines: List[str]) -> None:
         """Detect cookies without security flags."""
-        for match in re.finditer(r'set_cookie', content):
+        for match in PATTERN_SET_COOKIE.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:80])
             self._add_finding(
@@ -360,7 +406,7 @@ class SecurityScannerRule(Rule):
     def _scan_password_in_url(self, content: str, lines: List[str]) -> None:
         """Detect credentials passed in URL."""
         # Check for password in URL pattern: ://user:pass@
-        for match in re.finditer(r'://[^:]+:[^@]+@', content):
+        for match in PATTERN_CREDENTIALS_IN_URL.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:100])
             self._add_finding(
@@ -370,20 +416,15 @@ class SecurityScannerRule(Rule):
 
     def _scan_weak_crypto(self, content: str, lines: List[str]) -> None:
         """Detect weak cryptography usage (MD5, SHA1, random for security)."""
-        patterns = [
-            (r'hashlib\.md5', "SEC-011", "MD5 is weak for cryptographic purposes"),
-            (r'hashlib\.sha1', "SEC-011", "SHA1 is weak for cryptographic purposes"),
-            (r'random\.(choice|choices|random|randint)', "SEC-019", "random module is not cryptographically secure"),
-        ]
-        for pattern, rule_id, msg in patterns:
-            for match in re.finditer(pattern, content):
+        for pattern, rule_id, msg in _PATTERNS_WEAK_CRYPTO:
+            for match in pattern.finditer(content):
                 line_no = content[:match.start()].count('\n') + 1
                 snippet = self._get_snippet(lines, line_no, match.group()[:80])
                 self._add_finding(rule_id, line_no, line_no, snippet, msg)
 
     def _scan_pickle_rce(self, content: str, lines: List[str]) -> None:
         """Detect pickle.loads() RCE risk."""
-        for match in re.finditer(r'pickle\.(loads|load)\s*\(', content):
+        for match in PATTERN_PICKLE_LOADS.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:80])
             self._add_finding(
@@ -393,7 +434,7 @@ class SecurityScannerRule(Rule):
 
     def _scan_yaml_unsafe(self, content: str, lines: List[str]) -> None:
         """Detect yaml.load() without SafeLoader."""
-        for match in re.finditer(r'yaml\.load\s*\([^)]*(?<!Loader=)(?<!loader=)', content):
+        for match in PATTERN_YAML_UNSAFE.finditer(content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:80])
             self._add_finding(
@@ -403,44 +444,23 @@ class SecurityScannerRule(Rule):
 
     def _scan_information_disclosure(self, content: str, lines: List[str]) -> None:
         """Detect information disclosure patterns."""
-        patterns = [
-            # Stack trace in error response
-            (r'(?:print|logging|return)\s*\([^)]*traceback\.format_exc',
-             "Stack trace exposed to users - information disclosure"),
-            # Config with debug enabled
-            (r'app\[(?:"DEBUG"|\'DEBUG\')\]\s*=\s*(?:True|true|1)',
-             "DEBUG configuration exposed"),
-            # Verbose error with exception
-            (r'return\s+(?:jsonify|render_template)\([^)]*(?:str\s*\(\s*e\s*\)|error)',
-             "Exception details returned to user - information disclosure"),
-        ]
-        for pattern, msg in patterns:
-            for match in re.finditer(pattern, content):
+        for pattern, msg in _PATTERNS_INFO_DISCLOSURE:
+            for match in pattern.finditer(content):
                 line_no = content[:match.start()].count('\n') + 1
                 snippet = self._get_snippet(lines, line_no, match.group()[:150])
                 self._add_finding("SEC-041", line_no, line_no, snippet, msg)
 
     def _scan_missing_security_headers(self, content: str, lines: List[str]) -> None:
         """Detect missing security headers (check absence, not presence)."""
-        # Look for patterns that indicate no security headers configured
-        flask_pattern = re.compile(r'@app\.route|Flask\(')
-        django_pattern = re.compile(r'from django|import django')
-        fastapi_pattern = re.compile(r'FastAPI\(|@app\.|@router\.')
-
         framework = None
-        if flask_pattern.search(content):
+        if _PATTERN_FLASK.search(content):
             framework = "Flask"
-        elif django_pattern.search(content):
+        elif _PATTERN_DJANGO.search(content):
             framework = "Django"
-        elif fastapi_pattern.search(content):
+        elif _PATTERN_FASTAPI.search(content):
             framework = "FastAPI"
 
-        # Check for security header configuration absence
-        has_security_headers = bool(re.search(
-            r'X-Frame-Options|X-Content-Type-Options|Content-Security-Policy|'
-            r'Access-Control-Allow|@security_headers|SecurityHeaders',
-            content
-        ))
+        has_security_headers = bool(_PATTERN_SECURITY_HEADERS.search(content))
 
         if framework and not has_security_headers:
             # Add SEC-043 for missing security headers
@@ -901,9 +921,7 @@ class _SecurityTransformer(cst.CSTTransformer):
             if op in cmd:
                 return None
 
-        import re
-        fstring_pattern = re.compile(r'\{([^}]+)\}')
-        matches = list(fstring_pattern.finditer(cmd))
+        matches = list(_PATTERN_FSTRING_BRACE.finditer(cmd))
 
         if not matches:
             return [cst.SimpleString(f'"{cmd}"')]
@@ -1197,3 +1215,31 @@ class _SecurityTransformer(cst.CSTTransformer):
         if isinstance(node, cst.SimpleString):
             return node.value.strip('"\'')
         return ""
+
+    def mark_for_agent(self, code_file: CodeFile) -> Optional[List[AgentMarker]]:
+        """Return AgentMarkers for security issues."""
+        from typing import Optional
+
+        markers: List[AgentMarker] = []
+
+        for finding in self.secret_findings:
+            if finding.file and finding.start_line > 0:
+                lines = code_file.content.splitlines()
+                snippet = lines[finding.start_line - 1].strip() if 0 < finding.start_line <= len(lines) else ""
+
+                markers.append(AgentMarker(
+                    marker_id=finding.rule_id.replace("SEC-", "PYN-SEC"),
+                    issue_type="security_issue",
+                    rule_id="SecurityScannerRule",
+                    severity=finding.severity,
+                    line=finding.start_line,
+                    hint="; ".join(finding.fix_constraints[:1]) if finding.fix_constraints else "",
+                    why=finding.problem,
+                    confidence=finding.confidence,
+                    can_auto_fix=finding.can_auto_fix,
+                    snippet=snippet[:80] if snippet else finding.snippet[:80],
+                    cwe_id=finding.cwe_id,
+                    auto_fix_available=finding.auto_fix_available,
+                ))
+
+        return markers if markers else None

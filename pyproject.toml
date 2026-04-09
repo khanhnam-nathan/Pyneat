@@ -1,23 +1,26 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0", "wheel", "maturin>=1.5.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyneat"
-version = "2.0.0"
-description = "Neat Python AI Code Cleaner — removes AI-generated code artifacts, dead code, and security vulnerabilities"
-license = {text = "GNU AGPL-3.0-or-later"}
+name = "pyneat-cli"
+version = "2.2.1-beta"
+description = "LibCST-powered Python cleaner: security scanning, structural refactors, auto-fix, and PYNAGENT markers for AI editors (not just a formatter)."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "click>=8.0.0",
-    "libcst>=0.4.0",
+license = {text = "AGPL-3.0-or-later"}
+authors = [
+    {name = "PyNEAT Team", email = "n.khanhnam@gmail.com"}
+]
+keywords = [
+    "ai", "code-cleaner", "python", "linter", "formatter",
+    "security", "vulnerability-scanner", "dead-code",
+    "refactoring", "ast", "libcst", "auto-fix"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Affero General Public License v3 (AGPLv3)",
-    "Natural Language :: Chinese (Simplified)",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -28,20 +31,88 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Code Generators",
     "Topic :: Software Development :: Quality Assurance",
-    "Keywords :: ai-code-cleaner python-cleaner ast-refactoring dead-code security",
+    "Topic :: Software Development :: Pre-processors",
+    "Topic :: Security",
+    "Typing :: Typed",
 ]
 
-[project.scripts]
-pyneat = "pyneat.cli:cli"
+dependencies = [
+    "click>=8.0.0",
+    "libcst>=0.4.0",
+]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
 ]
 pre-commit = [
     "pre-commit>=3.0.0",
 ]
+security = [
+    "bandit>=1.7.0",
+]
+server = [
+    "pyneat-cli[security]",
+]
+all = [
+    "pyneat-cli[dev,pre-commit,security,server]",
+]
+
+[project.urls]
+Homepage = "https://github.com/pyneat/pyneat"
+Documentation = "https://pyneat.readthedocs.io"
+Repository = "https://github.com/pyneat/pyneat"
+Issues = "https://github.com/pyneat/pyneat/issues"
+Changelog = "https://github.com/pyneat/pyneat/blob/main/CHANGELOG.md"
+Sponsor = "https://github.com/sponsors/pyneat"
+
+[project.scripts]
+pyneat = "pyneat.cli:cli"
+
+[tool.setuptools]
+packages = [
+    "pyneat",
+    "pyneat.core",
+    "pyneat.plugin",
+    "pyneat.rules",
+    "pyneat.rules.security_pack",
+    "pyneat.scanner",
+    "pyneat.tools",
+    "pyneat.tools.github_fuzz",
+    "pyneat.tools.security",
+    "pyneat.utils",
+]
+
+[tool.setuptools.package-data]
+pyneat = ["pyneat/**/*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["pyneat"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
 
 [tool.pyneat]
 # Default rule settings for pyneat clean / pyneat clean-dir

@@ -1,6 +1,6 @@
 """Command-line interface for AI Cleaner.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import sys
@@ -50,6 +50,7 @@ from pyneat.rules.range_len_pattern import RangeLenRule
 from pyneat.rules.typing import TypingRule
 from pyneat.rules.match_case import MatchCaseRule
 from pyneat.rules.dataclass import DataclassSuggestionRule
+from pyneat.rules.ai_bugs import AIBugRule
 
 # ----------------------------------------------------------------------
 # Helpers
@@ -126,7 +127,7 @@ def _build_engine(config: dict,
     rules = []
 
     # ===================================================================
-    # Package: safe (default) — always enabled, won't break code
+    # Package: safe (default) â€” always enabled, won't break code
     # ===================================================================
     rules.extend([
         IsNotNoneRule(RuleConfig(enabled=True)),
@@ -135,10 +136,11 @@ def _build_engine(config: dict,
         TypingRule(RuleConfig(enabled=True)),
         CodeQualityRule(RuleConfig(enabled=True)),
         PerformanceRule(RuleConfig(enabled=True)),
+        AIBugRule(RuleConfig(enabled=True)),  # AI bug pattern detector (arXiv:2512.05239)
     ])
 
     # ===================================================================
-    # Package: conservative — adds cleanup rules (safe to use)
+    # Package: conservative â€” adds cleanup rules (safe to use)
     # ===================================================================
     if package in ('conservative', 'destructive'):
         if enable_unused or config.get("enable_unused_imports", False):
@@ -151,7 +153,7 @@ def _build_engine(config: dict,
         if enable_magic_numbers or config.get("enable_magic_numbers", False):
             rules.append(MagicNumberRule(RuleConfig(enabled=True)))
 
-    # debug_clean_mode: CLI flag — applies to ALL packages (even safe/conservative)
+    # debug_clean_mode: CLI flag â€” applies to ALL packages (even safe/conservative)
     effective_mode = debug_clean_mode
     if effective_mode == 'off':
         cfg_mode = config.get("debug_clean_mode")
@@ -161,7 +163,7 @@ def _build_engine(config: dict,
         rules.append(DebugCleaner(mode=effective_mode))
 
     # ===================================================================
-    # Package: destructive — adds aggressive rules (may break code)
+    # Package: destructive â€” adds aggressive rules (may break code)
     # ===================================================================
     if package == 'destructive':
         if enable_import_cleaning or config.get("enable_import_cleaning", False):
@@ -238,6 +240,7 @@ def cli(color: str):
 @click.option('--diff', '-d', is_flag=True, help='Show unified diff of changes')
 @click.option('--check-conflicts', is_flag=True, help='Detect overlapping modifications between rules')
 @click.option('--clear-cache', is_flag=True, help='Clear the module-level AST cache before processing')
+@click.option('--export-manifest', is_flag=True, help='Export .pyneat.manifest.json sidecar file with markers for AI editors')
 def clean(input_file: str, output: str, in_place: bool, verbose: bool,
           package: str,
           enable_all: bool,
@@ -252,7 +255,7 @@ def clean(input_file: str, output: str, in_place: bool, verbose: bool,
           enable_refactoring: bool,
           enable_comment_clean: bool,
           debug_mode: str, dry_run: bool, diff: bool,
-          check_conflicts: bool, clear_cache: bool):
+          check_conflicts: bool, clear_cache: bool, export_manifest: bool):
     """Clean AI-generated code."""
     input_path = Path(input_file)
 
@@ -294,6 +297,37 @@ def clean(input_file: str, output: str, in_place: bool, verbose: bool,
     if not result.success:
         click.echo(f"[ERROR] Error: {result.error}", err=True)
         return 1
+
+    # Handle manifest export using agent_markers from engine
+    if export_manifest:
+        from pyneat.core.manifest import ManifestExporter
+        all_markers = list(result.agent_markers)
+        for i, finding in enumerate(result.security_findings):
+            existing_ids = {m.marker_id for m in all_markers}
+            marker_id = f"PYN-S{i + 1:03d}"
+            if marker_id not in existing_ids:
+                from pyneat.core.types import AgentMarker as TypesAgentMarker
+                all_markers.append(TypesAgentMarker(
+                    marker_id=marker_id,
+                    issue_type="security_issue",
+                    rule_id="SecurityScannerRule",
+                    severity=finding.severity,
+                    line=finding.start_line,
+                    hint="; ".join(finding.fix_constraints[:1]) if finding.fix_constraints else "",
+                    why=finding.problem,
+                    confidence=finding.confidence,
+                    can_auto_fix=finding.can_auto_fix,
+                    snippet=finding.snippet[:80] if finding.snippet else "",
+                    cwe_id=finding.cwe_id,
+                    auto_fix_available=finding.auto_fix_available,
+                ))
+        if all_markers:
+            exporter = ManifestExporter()
+            for m in all_markers:
+                exporter.add_marker(m, input_path, result.original.content)
+            manifest_path = exporter.write(input_path)
+            if manifest_path:
+                click.echo(f"[MANIFEST] Written: {manifest_path}")
 
     # Handle --dry-run and --diff modes
     if dry_run:
@@ -1321,6 +1355,247 @@ def security_db(update, status, force):
         click.secho("  Update complete!", fg="green")
         click.echo("  Run 'pyneat security-db --status' to verify.")
 
+    return 0
+
+
+@cli.command(name='manifest')
+@click.argument('source_file', type=click.Path(exists=True))
+@click.option('--output', '-o', type=click.Path(), help='Output file path (default inferred from --format)')
+@click.option('--show', is_flag=True, help='Print output to stdout')
+@click.option('--format', '-f', 'output_format',
+              type=click.Choice(['json', 'sarif', 'codeclimate', 'markdown', 'gjson']),
+              default='json', help='Output format (default: json)')
+def manifest(source_file: str, output: str, show: bool, output_format: str):
+    """Export all issues for SOURCE_FILE in a specified format.
+
+    Runs the full rule engine against SOURCE_FILE and exports all AgentMarkers
+    to the chosen format. AI editors (Cursor, Copilot, Claude Code...) can
+    read all formats for handoff and automated fixing.
+
+    Supported formats:
+      json         PyNEAT native JSON (.pyneat.manifest.json) — default
+      sarif         SARIF 2.1.0 — GitHub Code Scanning, Azure DevOps, GitLab
+      codeclimate   Code Climate format — GitHub PR reviews, Code Climate Quality
+      markdown      Human-readable Markdown table — PR comments, Slack, docs
+      gjson         Graph JSON — LSP-native, optimized for IDE navigation
+
+    Examples:
+        pyneat manifest app.py                  # JSON manifest (default)
+        pyneat manifest app.py --format sarif   # SARIF for GitHub Actions
+        pyneat manifest . --format markdown     # Markdown report
+        pyneat manifest app.py --format gjson --show  # Preview GJSON
+        pyneat manifest app.py -f codeclimate -o issues.json
+    """
+    from pyneat.core.engine import RuleEngine
+    from pyneat.core.manifest import (
+        ManifestExporter, AgentMarker, MarkerParser,
+        export_to_sarif, export_to_codeclimate,
+        export_to_markdown, export_to_gjson,
+    )
+    from pyneat.rules.security import SecurityScannerRule
+    from pyneat.rules.deadcode import DeadCodeRule
+    from pyneat.rules.unused import UnusedImportRule
+    from pyneat.rules.quality import CodeQualityRule
+    from pyneat.rules.redundant import RedundantExpressionRule
+    from pyneat.rules.ai_bugs import AIBugRule
+    import json
+
+    src_path = Path(source_file)
+    engine = RuleEngine([
+        SecurityScannerRule(),
+        DeadCodeRule(),
+        UnusedImportRule(),
+        CodeQualityRule(),
+        RedundantExpressionRule(),
+        AIBugRule(),
+    ])
+
+    result = engine.process_file(src_path)
+
+    # Use agent_markers populated by engine from mark_for_agent() calls.
+    # Each rule's mark_for_agent() returns markers for issues it detected.
+    all_markers: List[AgentMarker] = list(result.agent_markers)
+
+    # Security findings from security_findings are already covered by
+    # SecurityScannerRule.mark_for_agent(), but we add them as fallback
+    # so the manifest always has security markers even if mark_for_agent()
+    # is not yet implemented for a rule.
+    for i, finding in enumerate(result.security_findings):
+        # Avoid duplicates if SecurityScannerRule already added via mark_for_agent
+        existing_ids = {m.marker_id for m in all_markers}
+        marker_id = f"PYN-S{i + 1:03d}"
+        if marker_id not in existing_ids:
+            all_markers.append(AgentMarker(
+                marker_id=marker_id,
+                issue_type="security_issue",
+                rule_id="SecurityScannerRule",
+                severity=finding.severity,
+                line=finding.start_line,
+                hint="; ".join(finding.fix_constraints[:1]) if finding.fix_constraints else "",
+                why=finding.problem,
+                confidence=finding.confidence,
+                can_auto_fix=finding.can_auto_fix,
+                snippet=finding.snippet[:80] if finding.snippet else "",
+                cwe_id=finding.cwe_id,
+                auto_fix_available=finding.auto_fix_available,
+                auto_fix_before=finding.auto_fix_before,
+                auto_fix_after=finding.auto_fix_after,
+            ))
+
+    if not all_markers:
+        click.secho("[INFO] No issues found.", fg="cyan")
+        return 0
+
+    # Build output path and content based on format
+    ext_map = {"json": ".json", "sarif": ".sarif",
+               "codeclimate": ".codeclimate.json", "markdown": ".md",
+               "gjson": ".gjson"}
+    ext = ext_map.get(output_format, ".json")
+
+    if output:
+        output_path = Path(output)
+    else:
+        base = src_path.with_suffix("")
+        output_path = base.with_name(f"{base.name}.pyneat{ext}")
+
+    # Serialize to chosen format
+    if output_format == "json":
+        exporter = ManifestExporter()
+        for m in all_markers:
+            exporter.add_marker(m, src_path, result.original.content)
+        manifest_path = exporter.write(src_path)
+        if not manifest_path:
+            click.secho("[INFO] No issues found.", fg="cyan")
+            return 0
+        if not output:
+            output_path = manifest_path
+        else:
+            import shutil
+            shutil.copy2(manifest_path, output_path)
+        output_content: str = output_path.read_text(encoding="utf-8")
+
+    elif output_format == "sarif":
+        sarif_data = export_to_sarif(all_markers, src_path)
+        output_content = json.dumps(sarif_data, indent=2, ensure_ascii=False)
+        output_path.write_text(output_content, encoding="utf-8")
+
+    elif output_format == "codeclimate":
+        cc_data = export_to_codeclimate(all_markers, src_path)
+        output_content = json.dumps(cc_data, indent=2, ensure_ascii=False)
+        output_path.write_text(output_content, encoding="utf-8")
+
+    elif output_format == "markdown":
+        output_content = export_to_markdown(all_markers, src_path)
+        output_path.write_text(output_content, encoding="utf-8")
+
+    elif output_format == "gjson":
+        gjson_data = export_to_gjson(all_markers, src_path)
+        output_content = json.dumps(gjson_data, indent=2, ensure_ascii=False)
+        output_path.write_text(output_content, encoding="utf-8")
+
+    click.echo(f"[OK] {output_format.upper()} written to: {output_path}")
+    if show:
+        click.echo("")
+        click.echo(output_content)
+
+    return 0
+
+
+@cli.command(name='verify')
+@click.argument('target', type=click.Path(exists=True))
+@click.option('--cleanup', is_flag=True, help='Remove resolved markers from source files')
+@click.option('--file', '-f', 'target_file', type=click.Path(exists=True),
+              help='Verify a specific file instead of running on all files')
+@click.option('--dry-run', is_flag=True, help='Show what would be cleaned up without modifying files')
+def verify(target: str, cleanup: bool, target_file: str, dry_run: bool):
+    """Verify and clean up PYNAGENT markers.
+
+    Verifies that PYNAGENT markers in source files still correspond to real issues.
+    Removes stale markers when issues have been fixed by another AI editor.
+
+    Examples:
+        pyneat verify app.py
+        pyneat verify . --cleanup       # Scan all files and remove resolved markers
+        pyneat verify app.py --dry-run  # Show what would be cleaned without modifying
+    """
+    from pyneat.core.marker_cleanup import MarkerCleanup
+    from pyneat.core.manifest import MarkerParser
+    import json
+
+    target_path = Path(target if not target_file else target_file)
+    cleanup_mgr = MarkerCleanup()
+    total_removed = 0
+    total_still_active = 0
+
+    files_to_check: List[Path] = []
+    if target_path.is_file():
+        files_to_check = [target_path]
+    else:
+        files_to_check = list(target_path.rglob("*.py"))
+        files_to_check = [f for f in files_to_check if not any(
+            s in f.parts for s in ["__pycache__", ".venv", "venv", ".git"]
+        )]
+
+    for fp in sorted(files_to_check):
+        content = fp.read_text(encoding="utf-8")
+        markers = MarkerParser.from_source(content)
+
+        if not markers:
+            continue
+
+        click.echo(f"\n[VERIFY] {fp}")
+
+        # Try to resolve markers by running the engine
+        from pyneat.core.engine import RuleEngine
+        from pyneat.rules.security import SecurityScannerRule
+        from pyneat.rules.deadcode import DeadCodeRule
+        from pyneat.rules.unused import UnusedImportRule
+        from pyneat.rules.quality import CodeQualityRule
+        from pyneat.rules.redundant import RedundantExpressionRule
+
+        engine = RuleEngine([
+            SecurityScannerRule(),
+            DeadCodeRule(),
+            UnusedImportRule(),
+            CodeQualityRule(),
+            RedundantExpressionRule(),
+        ])
+
+        result = engine.process_file(fp)
+
+        # Build set of lines with real issues
+        real_issue_lines: set = set()
+        for finding in result.security_findings:
+            real_issue_lines.add(finding.start_line)
+
+        # Check each marker
+        for m in markers:
+            if m.line in real_issue_lines:
+                click.echo(f"  [ACTIVE]  {m.marker_id} line {m.line}: {m.hint}")
+                total_still_active += 1
+            else:
+                click.echo(f"  [STALE]   {m.marker_id} line {m.line}: {m.hint}")
+                total_removed += 1
+
+        # Clean up if requested
+        if cleanup and not dry_run:
+            remaining_issues = []
+            for m in markers:
+                remaining_issues.append({
+                    "line": m.line,
+                    "issue_type": m.issue_type,
+                    "rule_id": m.rule_id,
+                })
+            new_content, removed_ids = cleanup_mgr.remove_stale_markers(
+                fp, remaining_issues
+            )
+            fp.write_text(new_content, encoding="utf-8")
+            if removed_ids:
+                click.echo(f"  [CLEANUP] Removed {len(removed_ids)} marker(s) from {fp}")
+
+    click.echo(f"\n[OK] Total: {total_still_active} active, {total_removed} stale markers")
+    if dry_run and total_removed > 0:
+        click.echo("[DRY-RUN] Run with --cleanup to remove stale markers")
     return 0
 
 

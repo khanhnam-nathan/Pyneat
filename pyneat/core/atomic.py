@@ -1,6 +1,6 @@
-"""Atomic file writer — ensures no data loss on crash.
+"""Atomic file writer â€” ensures no data loss on crash.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,9 +15,9 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
-All writes go through a temporary file → compile check → atomic rename.
+All writes go through a temporary file â†’ compile check â†’ atomic rename.
 On any failure the original file remains untouched.
 """
 
@@ -64,7 +64,7 @@ atexit.register(_cleanup_tmp_files)
 # --------------------------------------------------------------------------
 
 class AtomicWriter:
-    """Writes files atomically: tmp → compile → rename.
+    """Writes files atomically: tmp â†’ compile â†’ rename.
 
     Guarantees the original file is never corrupted, even if:
     - The process crashes mid-write
@@ -96,7 +96,7 @@ class AtomicWriter:
         UTF8_BOM = "\ufeff"
         normalized_content = content.lstrip(UTF8_BOM)
 
-        # No-op: content unchanged — skip write entirely
+        # No-op: content unchanged â€” skip write entirely
         try:
             current_raw = file_path.read_bytes()
             current = current_raw.decode("utf-8-sig")
@@ -115,7 +115,7 @@ class AtomicWriter:
             tmp_path.write_text(normalized_content, encoding="utf-8")
             _register_tmp(tmp_path)
 
-            # Full compile check — write to tmp so we can compile from file
+            # Full compile check â€” write to tmp so we can compile from file
             try:
                 compile_check_path = tmp_path.with_suffix(".compile_check.py")
                 try:
@@ -132,7 +132,7 @@ class AtomicWriter:
                 _TMP_PATTERNS.discard(tmp_path)
                 return False
 
-            # Atomic rename — this is the only point where original is modified
+            # Atomic rename â€” this is the only point where original is modified
             tmp_path.replace(file_path)
             _TMP_PATTERNS.discard(tmp_path)
             logger.debug("AtomicWriter: successfully wrote %s", file_path)

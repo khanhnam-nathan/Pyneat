@@ -1,0 +1,157 @@
+name: PyNEAT Security & Quality
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  security-scan:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ['3.10', '3.11', '3.12']
+
+      - name: Install PyNEAT
+        run: pip install pyneat-cli
+
+      - name: Run Security Scan
+        run: pyneat check . --output-format sarif --output security-results.sarif
+
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: security-results.sarif
+          category: pyneat-security
+
+      - name: Security Report
+        run: pyneat report
+
+  quality-check:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyNEAT
+        run: pip install pyneat-cli
+
+      - name: Run Quality Check (Safe Mode)
+        run: pyneat clean . --package safe --check --diff
+
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyneat-results
+          path: |
+            pyneat-results.json
+            pyneat-report.html
+
+  lint-and-format:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install formatters
+        run: pip install black isort
+
+      - name: Check formatting
+        run: |
+          black --check .
+          isort --check .
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pip install pytest pytest-asyncio
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
+  build-wheels:
+    name: Build Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheels
+        run: |
+          pip install maturin
+          maturin build --release --out dist
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels
+          path: dist/*.whl
+
+  pre-commit-ci:
+    name: Pre-commit CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files
+
+  publish:
+    name: Publish to PyPI
+    needs: [test, quality-check, build-wheels]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/project/pyneat/
+    permissions:
+      id-token: write  # Required for trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheels
+        run: |
+          pip install maturin
+          maturin build --release --out dist
+
+      - name: Publish to PyPI
+        uses: PyO3/maturin-action@v1
+        with:
+          command: publish
+          args: --token ${{ secrets.PYPI_TOKEN }}

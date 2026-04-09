@@ -1,16 +1,16 @@
 """Comprehensive semantic integrity tests for PyNEAT.
 
 Detects bugs by verifying that cleaned code is semantically equivalent to
-the original — same AST structure, same runtime behavior, no new type errors.
+the original â€” same AST structure, same runtime behavior, no new type errors.
 
 Strategy:
-  1. Syntax preservation   — cleaned code must parse/compile
-  2. AST structural guard  — only expected node types change
-  3. Runtime equivalence   — original and cleaned produce identical output
-  4. Round-trip stability — cleaning twice yields the same result
-  5. Type regression       — no new mypy/pyright errors (Layer 6)
-  6. Fuzz robustness     — no crash on malformed inputs
-  7. Rule edge cases       — per-rule boundary testing
+  1. Syntax preservation   â€” cleaned code must parse/compile
+  2. AST structural guard  â€” only expected node types change
+  3. Runtime equivalence   â€” original and cleaned produce identical output
+  4. Round-trip stability â€” cleaning twice yields the same result
+  5. Type regression       â€” no new mypy/pyright errors (Layer 6)
+  6. Fuzz robustness     â€” no crash on malformed inputs
+  7. Rule edge cases       â€” per-rule boundary testing
 """
 
 from __future__ import annotations
@@ -89,7 +89,7 @@ def _strip_and_key(tree: ast.AST) -> str:
 # --------------------------------------------------------------------------
 
 class TestSyntaxPreservation:
-    """Every cleaned file must be valid Python — no syntax errors."""
+    """Every cleaned file must be valid Python â€” no syntax errors."""
 
     @pytest.mark.parametrize("snippet", [
         "x = 1",
@@ -143,7 +143,7 @@ class TestSyntaxPreservation:
 # --------------------------------------------------------------------------
 
 class TestASTStructure:
-    """Cleaned code must have the same AST structure — except for allowed nodes."""
+    """Cleaned code must have the same AST structure â€” except for allowed nodes."""
 
     # Allowed structural changes per-rule-category
     ALLOWED_BY_CATEGORY: dict[str, Set[str]] = {
@@ -228,7 +228,7 @@ class TestRuntimeEquivalence:
         ("results = []\n"
          "for i in range(3): results.append(i*2)\n"
          "print(results)", [{}]),
-        # Dead code removed — behavior unchanged
+        # Dead code removed â€” behavior unchanged
         ("def unused(): return 999\n"
          "def used(): return 42\n"
          "print(used())", [{}]),
@@ -284,7 +284,7 @@ class TestRuntimeEquivalence:
 # --------------------------------------------------------------------------
 
 class TestRoundTripStability:
-    """Cleaning twice must converge — idempotent."""
+    """Cleaning twice must converge â€” idempotent."""
 
     @pytest.mark.parametrize("code", [
         "x = 1\ny = 2\nz = 3\n",
@@ -419,11 +419,11 @@ class TestFuzzRobustness:
 
     def test_unicode_and_emojis_no_crash(self, tmp_path: Path):
         snippets = [
-            "café = 'café'",
-            "name = 'Αλφα'",
-            "emoji = '🎉'",
-            "x = 'café Ω'",
-            "# comment with 日本語",
+            "cafÃ© = 'cafÃ©'",
+            "name = 'Î‘Î»Ï†Î±'",
+            "emoji = 'ðŸŽ‰'",
+            "x = 'cafÃ© Î©'",
+            "# comment with æ—¥æœ¬èªž",
         ]
         for s in snippets:
             result = _build().process_code_file(
@@ -433,7 +433,7 @@ class TestFuzzRobustness:
 
     @pytest.mark.parametrize("snippet", SNIPPETS[:5])
     def test_all_rules_combined_no_crash(self, snippet: str):
-        """Run engine with ALL rules enabled — hardest stress test."""
+        """Run engine with ALL rules enabled â€” hardest stress test."""
         # Only safe rules enabled in _build(), so use a full engine
         from pyneat.cli import _build_engine
         full_engine = _build_engine(
@@ -455,7 +455,7 @@ class TestFuzzRobustness:
 # --------------------------------------------------------------------------
 
 class TestDeadCodeRuleEdgeCases:
-    """DeadCodeRule must be conservative — only remove truly dead code."""
+    """DeadCodeRule must be conservative â€” only remove truly dead code."""
 
     @pytest.mark.parametrize("code,should_remove", [
         # Truly unused
@@ -478,9 +478,9 @@ class TestDeadCodeRuleEdgeCases:
         ("@app.route('/')\ndef handler(): pass", False),
         # In __main__
         ("def helper(): pass\n\nif __name__ == '__main__':\n    helper()", False),
-        # Side effects — these should NOT be removed
-        ("def f(): print('side')\n\nprint(1)", False),  # print = side effect → keep
-        ("def f(): raise ValueError()\n\nprint(1)", False),  # raise = side effect → keep
+        # Side effects â€” these should NOT be removed
+        ("def f(): print('side')\n\nprint(1)", False),  # print = side effect â†’ keep
+        ("def f(): raise ValueError()\n\nprint(1)", False),  # raise = side effect â†’ keep
         # Private (underscore)
         ("def _unused(): pass\n\nprint(1)", True),  # conservative: remove
     ])
@@ -645,7 +645,7 @@ class TestRealWorldSnippets:
 
             def main():
                 get_user(1)  # reference to prevent dead removal
-                index()       # decorated → never removed
+                index()       # decorated â†’ never removed
         """),
         # Data processing
         textwrap.dedent("""\

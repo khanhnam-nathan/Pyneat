@@ -17,7 +17,7 @@ serde_json = "1.0"
 rayon = "1.8"
 ahash = "0.8"
 walkdir = "2.4"
-pyo3 = { version = "0.28", features = ["extension-module"] }
+pyo3 = { version = "0.28", features = ["extension-module", "abi3-py39"] }
 
 # Tree-sitter for AST parsing
 tree-sitter = "0.23"

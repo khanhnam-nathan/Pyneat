@@ -1,6 +1,6 @@
 """Central registry for all 50+ security rules.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
 This registry contains metadata for every security rule, including:
 - Severity classification (critical/high/medium/low/info)
@@ -56,13 +56,13 @@ class SecurityRuleMetadata:
 
 
 # --------------------------------------------------------------------------
-# Registry data — all 50+ rules
+# Registry data â€” all 50+ rules
 # --------------------------------------------------------------------------
 
 SECURITY_RULES_REGISTRY: Dict[str, SecurityRuleMetadata] = {
 
     # ========================================================================
-    # CRITICAL (5 rules) — Must fix immediately
+    # CRITICAL (5 rules) â€” Must fix immediately
     # ========================================================================
 
     "SEC-001": SecurityRuleMetadata(

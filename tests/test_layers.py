@@ -317,7 +317,7 @@ class TestConflictDetection:
 
 
 # --------------------------------------------------------------------------
-# Layer 3: Rule Logic — ALLOWED_SEMANTIC_NODES
+# Layer 3: Rule Logic â€” ALLOWED_SEMANTIC_NODES
 # --------------------------------------------------------------------------
 
 class TestAllowedSemanticNodes:
@@ -377,7 +377,7 @@ class TestEndToEndLayers:
 
         result = engine.process_file(f)
 
-        # Safe rule — no changes needed (content unchanged)
+        # Safe rule â€” no changes needed (content unchanged)
         assert result.success is True
         assert f.read_bytes() == b"x = 1\n"
 

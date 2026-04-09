@@ -7587,7 +7587,7 @@ class DataFrame(NDFrame, OpsMixin):
         inplace : bool, default False
             Whether to modify the DataFrame rather than creating a new one.
         ignore_index : bool, default ``False``
-            If ``True``, the resulting axis will be labeled 0, 1, …, n - 1.
+            If ``True``, the resulting axis will be labeled 0, 1, â€¦, n - 1.
 
             .. versionadded:: 2.0.0
 
@@ -7774,7 +7774,7 @@ class DataFrame(NDFrame, OpsMixin):
         inplace : bool, default ``False``
             Whether to modify the DataFrame rather than creating a new one.
         ignore_index : bool, default ``False``
-            If ``True``, the resulting axis will be labeled 0, 1, …, n - 1.
+            If ``True``, the resulting axis will be labeled 0, 1, â€¦, n - 1.
 
         Returns
         -------
@@ -8058,7 +8058,7 @@ class DataFrame(NDFrame, OpsMixin):
              Puts NaNs at the beginning if `first`; `last` puts NaNs at the
              end.
         ignore_index : bool, default False
-             If True, the resulting axis will be labeled 0, 1, …, n - 1.
+             If True, the resulting axis will be labeled 0, 1, â€¦, n - 1.
         key : callable, optional
             Apply the key function to the values
             before sorting. This is similar to the `key` argument in the
@@ -8380,7 +8380,7 @@ class DataFrame(NDFrame, OpsMixin):
             If True and sorting by level and index is multilevel, sort by other
             levels too (in order) after sorting by specified level.
         ignore_index : bool, default False
-            If True, the resulting axis will be labeled 0, 1, …, n - 1.
+            If True, the resulting axis will be labeled 0, 1, â€¦, n - 1.
         key : callable, optional
             If not None, apply the key function to the index values
             before sorting. This is similar to the `key` argument in the
@@ -13312,7 +13312,7 @@ class DataFrame(NDFrame, OpsMixin):
             on same row of the frame must have matching length.
 
         ignore_index : bool, default False
-            If True, the resulting index will be labeled 0, 1, …, n - 1.
+            If True, the resulting index will be labeled 0, 1, â€¦, n - 1.
 
         Returns
         -------

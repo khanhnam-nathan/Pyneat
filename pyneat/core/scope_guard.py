@@ -1,6 +1,6 @@
-"""Scope guard — tracks variable/function lifecycle using LibCST ScopeProvider.
+"""Scope guard â€” tracks variable/function lifecycle using LibCST ScopeProvider.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
 Prevents dead-code removal rules from deleting items that are still referenced
 later in the file (e.g. a variable used after its apparent "definition" point
@@ -121,7 +121,7 @@ class ScopeGuard:
             A 2-tuple of (is_safe, reason).
         """
         if not _LIBCST_AVAILABLE:
-            return True, "libcst not available — skipping scope check"
+            return True, "libcst not available â€” skipping scope check"
 
         try:
             wrapper = self._get_wrapper(code_content)

@@ -1,0 +1,76 @@
+"""
+PyNEAT Demo: Security Vulnerabilities Detection and Fix
+====================================================
+
+This demo shows PyNEAT's security scanning capabilities.
+
+SCAN RESULTS:
+=============
+
+CRITICAL VULNERABILITIES DETECTED (4):
+--------------------------------------
+1. [SEC-001] Command Injection - Line 35
+   Code: os.system(f"cat {filename}")
+   Fix: Use subprocess.run() with list arguments
+
+2. [SEC-002] SQL Injection - Line 27
+   Code: query = f"SELECT * FROM users WHERE id = {user_id}"
+   Fix: Use parameterized queries (placeholders)
+
+3. [SEC-002] SQL Injection - Line 194
+   Code: query = f"DELETE FROM users WHERE id = {user_id}"
+   Fix: Use parameterized queries (placeholders)
+
+4. [SEC-004] Pickle Deserialization - Line 48
+   Code: pickle.loads(data)
+   Fix: Use json.loads() for data exchange
+
+HIGH VULNERABILITIES DETECTED (10):
+----------------------------------
+1. [SEC-010] Hardcoded Secret - Line 71
+   api_key = "sk_live_abc123xyz789..."
+
+2. [SEC-010] Hardcoded Secret - Line 74
+   db_password = "admin123"
+
+3. [SEC-010] Hardcoded Secret - Line 77
+   jwt_secret = "my_super_secret..."
+
+4. [SEC-011] Weak Crypto (MD5) - Line 81
+   Fix: Use hashlib.sha256()
+
+5. [SEC-011] Weak Crypto (SHA1) - Line 89
+   Fix: Use hashlib.sha256()
+
+6. [SEC-014] YAML Unsafe Load - Line 55
+   yaml.load(config_str)
+   Fix: Use yaml.safe_load()
+
+7. [SEC-014] YAML Unsafe Load - Line 196
+   Fix: Use yaml.safe_load()
+
+8. [SEC-010] Weak SECRET_KEY - Line 78
+   Fix: Use secrets.token_urlsafe(32)
+
+9. [SEC-010] Hardcoded Password - Line 80
+   Fix: Use os.environ.get('PASSWORD')
+
+10. [SEC-011] Weak Crypto Algorithm - Line 198
+    Fix: Use hashlib.sha256()
+
+AI BUG PATTERNS DETECTED:
+-------------------------
+- Resource Leak: open() without context manager (Line 162)
+- Empty except block (Line 170)
+- Magic numbers: 100, 300 (Lines 144-147)
+- Mutable default argument (Line 179)
+- Redundant I/O: file read 3 times (Lines 211-213)
+
+RUN COMMAND:
+============
+pyneat check demo_security_vulnerabilities.py
+
+TO FIX:
+=======
+pyneat clean demo_security_vulnerabilities.py --enable-security
+"""

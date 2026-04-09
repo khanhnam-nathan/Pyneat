@@ -1,6 +1,6 @@
 """Debug logging for fuzz test results.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -49,7 +49,7 @@ RESET = "\033[0m"
 
 
 # ---------------------------------------------------------------------------
-# FuzzLogger — main logging class
+# FuzzLogger â€” main logging class
 # ---------------------------------------------------------------------------
 
 class FuzzLogger:
@@ -241,7 +241,7 @@ class FuzzLogger:
 
         ts_display = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        rule(f"PYNEAT FUZZ TEST REPORT — {ts_display}")
+        rule(f"PYNEAT FUZZ TEST REPORT â€” {ts_display}")
         divider()
         lines.append(
             f"Files tested  : {self._total_files_tested}  |  "
@@ -285,20 +285,20 @@ class FuzzLogger:
                 lines.append(f"Context : combination_id={c.get('combination', '?')}")
 
                 if c.get("original_snippet"):
-                    lines.append("─── Code snippet ────────────────────────────────────")
+                    lines.append("â”€â”€â”€ Code snippet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€")
                     snippet = c.get("original_snippet", "")
                     for ln in snippet.split("\n")[:20]:
                         lines.append(f"  {ln}")
-                    lines.append("─── Transformed (may be partial) ────────────────────")
+                    lines.append("â”€â”€â”€ Transformed (may be partial) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€")
                     t_snippet = c.get("transformed_snippet", "")
                     for ln in t_snippet.split("\n")[:20]:
                         lines.append(f"  {ln}")
 
                 if c.get("traceback"):
-                    lines.append("─── Stack trace ─────────────────────────────────────")
+                    lines.append("â”€â”€â”€ Stack trace â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€")
                     lines.append(c["traceback"])
 
-                lines.append(f"{BOLD}─── Recommendation ─────────────────────────────────────{RESET}")
+                lines.append(f"{BOLD}â”€â”€â”€ Recommendation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€{RESET}")
                 rec = _suggest_fix(c.get("exception_type", ""), c.get("exception_message", ""))
                 lines.append(rec)
 
@@ -314,18 +314,18 @@ class FuzzLogger:
                 lines.append(f"Syntax  : {r.get('syntax_error', '?')}")
 
                 if r.get("original_snippet"):
-                    lines.append("─── Original code ────────────────────────────────────")
+                    lines.append("â”€â”€â”€ Original code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€")
                     for ln in r["original_snippet"].split("\n")[:15]:
                         lines.append(f"  {ln}")
 
                 if r.get("transformed_snippet"):
-                    lines.append("─── Transformed (broken) ────────────────────────────")
+                    lines.append("â”€â”€â”€ Transformed (broken) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€")
                     for ln in r["transformed_snippet"].split("\n")[:15]:
                         lines.append(f"  {ln}")
 
         # ---- Unsupported (Python 2 / invalid input) ----
         if self._unsupported:
-            rule("UNSUPPORTED (Python 2 / invalid input — not a regression)")
+            rule("UNSUPPORTED (Python 2 / invalid input â€” not a regression)")
             for i, u in enumerate(self._unsupported, 1):
                 lines.append("")
                 lines.append(f"{BOLD}=== UNSUPPORTED #{i}{RESET}")
@@ -339,7 +339,7 @@ class FuzzLogger:
             rule("SLOW FILES (> 5 seconds)")
             for s in self._slow_files:
                 lines.append(
-                    f"  {s['repo']}/{s['file']} — "
+                    f"  {s['repo']}/{s['file']} â€” "
                     f"{s.get('elapsed_ms', '?')}ms  [{s.get('combination', '')}]"
                 )
 
@@ -392,7 +392,7 @@ def _suggest_fix(exception_type: str, message: str) -> str:
     if "AttributeError" in exception_type or "'NoneType'" in message:
         return (
             "Null check missing. Add guard for None values before accessing attributes. "
-            "Check for 'None' nodes in AST traversal — use isinstance(x, SomeType) or "
+            "Check for 'None' nodes in AST traversal â€” use isinstance(x, SomeType) or "
             "if x is not None before accessing x.name / x.attr"
         )
     if "TypeError" in exception_type:
@@ -403,7 +403,7 @@ def _suggest_fix(exception_type: str, message: str) -> str:
             )
         if "unsupported operand" in msg_lower:
             return "Type mismatch in binary operation. Check operand types in CST transformer."
-        return "Type error — verify argument types passed to LibCST nodes match expected types."
+        return "Type error â€” verify argument types passed to LibCST nodes match expected types."
     if "IndexError" in exception_type:
         return (
             "Index out of range. Check list/sequence access in rule logic. "
@@ -411,27 +411,27 @@ def _suggest_fix(exception_type: str, message: str) -> str:
         )
     if "KeyError" in exception_type:
         return (
-            "Dict key not found. Check dictionary access — use dict.get(key) "
+            "Dict key not found. Check dictionary access â€” use dict.get(key) "
             "or check 'key in dict' before access."
         )
     if "ValueError" in exception_type:
         return (
-            "Invalid value. Check value constraints in rule logic — "
+            "Invalid value. Check value constraints in rule logic â€” "
             "e.g., CST node type checks may be failing."
         )
     if "SyntaxError" in exception_type:
         return (
-            "Generated code is invalid Python. Check LibCST transformer output — "
+            "Generated code is invalid Python. Check LibCST transformer output â€” "
             "ensure nodes are properly formed and matched (opening/closing parens, etc.)"
         )
     if "RecursionError" in exception_type:
         return (
-            "Infinite recursion detected. Check CST visitor/transformer — "
+            "Infinite recursion detected. Check CST visitor/transformer â€” "
             "ensure leave_X methods return updated nodes and don't re-trigger visits."
         )
     if "libcst" in msg_lower or "cst" in msg_lower:
         return (
-            "LibCST transformation error. Check CST node structure — "
+            "LibCST transformation error. Check CST node structure â€” "
             "ensure nodes are properly cloned/wrapped when modifying the tree."
         )
     return (

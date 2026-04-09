@@ -1,6 +1,6 @@
 """Rule for detecting and flagging magic numbers in code.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,14 +15,37 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
 import re
+from functools import lru_cache
 from typing import List, Tuple
 
 from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
 from pyneat.rules.base import Rule
+
+# --------------------------------------------------------------------------
+# Pre-compiled static patterns for magic number detection
+# --------------------------------------------------------------------------
+
+_RE_STATIC_PATTERNS = [
+    re.compile(r'localhost[:\s]*\d+', re.IGNORECASE),
+    re.compile(r'version[:\s]*\d+', re.IGNORECASE),
+    re.compile(r'v\d+'),
+    re.compile(r'http[s]?://'),
+    re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}'),
+    re.compile(r'0x[0-9a-fA-F]+'),
+    re.compile(r'#\w{6}'),
+]
+
+# Pre-compiled pattern for magic number detection: integers with 3+ digits (>= 100)
+_RE_MAGIC_NUMBER = re.compile(r'\b([1-9]\d{2,})\b(?!\s*=)')
+
+
+@lru_cache(maxsize=128)
+def _compile_port_pattern(number: str):
+    return re.compile(r'port[:\s]*' + re.escape(number), re.IGNORECASE)
 
 
 class MagicNumberRule(Rule):
@@ -64,11 +87,7 @@ class MagicNumberRule(Rule):
         """Find magic numbers and add comment flags."""
         # Pattern for magic numbers: integers with 3+ digits (>= 100)
         # Excludes: numbers in strings, comments, variable names
-        MAGIC_NUM_RE = re.compile(
-            r'\b([1-9]\d{2,})\b(?!\s*=)',  # 100 or more, but not in assignment like CONST = 100
-        )
-
-        matches = list(MAGIC_NUM_RE.finditer(content))
+        matches = list(_RE_MAGIC_NUMBER.finditer(content))
         if not matches:
             return content, 0
 
@@ -130,20 +149,13 @@ class MagicNumberRule(Rule):
 
     def _is_common_pattern(self, context: str, number: str) -> bool:
         """Check if this is a common pattern like port, IP, version."""
-        # Common patterns that have legitimate multi-digit numbers
-        patterns = [
-            r'port[:\s]*' + number,
-            r'localhost[:\s]*' + number,
-            r'version[:\s]*' + number,
-            r'v' + number,
-            r'http[s]?://',
-            r'\d{1,3}\.\d{1,3}\.\d{1,3}',  # IP-like patterns
-            r'0x[0-9a-fA-F]',  # Hex numbers
-            r'#\w{6}',  # Color codes
-        ]
+        # Check port first (dynamic, use cached compiled pattern)
+        if _compile_port_pattern(number).search(context):
+            return True
 
-        for pattern in patterns:
-            if re.search(pattern, context, re.IGNORECASE):
+        # Static pre-compiled patterns
+        for compiled_re in _RE_STATIC_PATTERNS:
+            if compiled_re.search(context):
                 return True
 
         return False

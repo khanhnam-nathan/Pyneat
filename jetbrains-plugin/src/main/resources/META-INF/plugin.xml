@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin url="https://github.com/pyneat/pyneat">
+
+    <!-- Plugin Metadata -->
+    <id>com.pyneat</id>
+    <name>PyNEAT - AI Code Cleaner</name>
+    <vendor>PyNEAT Authors</vendor>
+    <vendorUrl>https://github.com/pyneat/pyneat</vendorUrl>
+    <description>
+        <![CDATA[
+        <h2>PyNEAT - AI Python Code Cleaner</h2>
+        <p>
+            PyNEAT is an AI-Generated Python Code Cleaner that automatically detects
+            and fixes security vulnerabilities, removes AI artifacts, and cleans up code
+            quality issues.
+        </p>
+        <h3>Features</h3>
+        <ul>
+            <li>50+ Security Rules (SQL injection, command injection, secrets)</li>
+            <li>AI Bug Pattern Detection (magic numbers, empty excepts)</li>
+            <li>Auto-fix with semantic guard</li>
+            <li>Agent-to-Agent Handoff for AI editors</li>
+            <li>LSP Integration</li>
+        </ul>
+        <h3>Usage</h3>
+        <p>Right-click on a Python file and select "PyNEAT: Check" or "PyNEAT: Clean"</p>
+        ]]>
+    </description>
+    <version>2.2.0</version>
+    <change-notes>
+        <![CDATA[
+        <h3>2.2.0-beta</h3>
+        <ul>
+            <li>Added Agent-to-Agent Handoff System</li>
+            <li>10 New AI Bug Detection Rules</li>
+            <li>Improved LSP Integration</li>
+            <li>Manifest Export (JSON, SARIF, CodeClimate)</li>
+        </ul>
+        ]]>
+    </change-notes>
+
+    <!-- Dependencies -->
+    <depends>com.intellij.modules.python</depends>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <!-- Optional Dependencies -->
+    <idea-version since-build="241" until-build="243.*"/>
+
+    <!-- Application Components -->
+    <application-components>
+        <component>
+            <implementation-class>com.pyneat.PyneatApplicationComponent</implementation-class>
+            <interface-class>com.pyneat.PyneatComponent</interface-class>
+        </component>
+    </application-components>
+
+    <!-- Project Components -->
+    <project-components>
+        <component>
+            <implementation-class>com.pyneat.PyneatProjectComponent</implementation-class>
+            <interface-class>com.pyneat.PyneatProjectComponentInterface</interface-class>
+        </component>
+    </project-components>
+
+    <!-- Actions -->
+    <actions>
+        <!-- Analyze Action -->
+        <action id="Pyneat.AnalyzeAction" class="com.pyneat.actions.PyneatAnalyzeAction"
+                text="PyNEAT: Check"
+                description="Run PyNEAT security and code quality check">
+            <add-to-group group-id="CodeMenuGroup" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift P"/>
+        </action>
+
+        <!-- Clean Action -->
+        <action id="Pyneat.CleanAction" class="com.pyneat.actions.PyneatCleanAction"
+                text="PyNEAT: Clean"
+                description="Auto-fix code issues with PyNEAT">
+            <add-to-group group-id="CodeMenuGroup" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift O"/>
+        </action>
+
+        <!-- Export Manifest Action -->
+        <action id="Pyneat.ExportManifestAction" class="com.pyneat.actions.PyneatExportManifestAction"
+                text="PyNEAT: Export Manifest"
+                description="Export PYNAGENT manifest for AI editors">
+            <add-to-group group-id="CodeMenuGroup" anchor="last"/>
+        </action>
+    </actions>
+
+    <!-- Extensions -->
+    <extensions xmlns="com.intellij">
+        <!-- Language Extension -->
+        <languageSupport language="Python" implementationClass="com.pyneat.PyneatLanguageSupport"/>
+
+        <!-- Intention Actions -->
+        <intentionAction>
+            <category>PyNEAT</category>
+            <className>com.pyneat.intentions.PyneatQuickFixIntention</className>
+        </intentionAction>
+    </extensions>
+
+</idea-plugin>

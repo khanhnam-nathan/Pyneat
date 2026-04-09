@@ -1,6 +1,6 @@
 """Rule for removing redundant expressions that AI code generators commonly produce.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,14 +15,14 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 """
 
-from typing import List
+from typing import List, Any, Optional
 
 import libcst as cst
 
-from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
+from pyneat.core.types import CodeFile, RuleConfig, TransformationResult, AgentMarker
 from pyneat.rules.base import Rule
 
 
@@ -64,6 +64,45 @@ class RedundantExpressionRule(Rule):
             return self._create_error_result(
                 code_file, f"RedundantExpressionRule failed: {str(e)}"
             )
+
+    def mark_for_agent(self, code_file: CodeFile) -> Optional[List[AgentMarker]]:
+        """Return AgentMarkers for redundant expression issues."""
+        import libcst as cst
+        from typing import Optional
+
+        markers: List[AgentMarker] = []
+
+        try:
+            if hasattr(code_file, 'cst_tree') and code_file.cst_tree is not None:
+                tree = code_file.cst_tree
+            else:
+                tree = cst.parse_module(code_file.content)
+        except Exception:
+            return None
+
+        transformer = _RedundantMarkerVisitor()
+        tree.visit(transformer)
+        lines = code_file.content.splitlines()
+
+        for item in transformer.redundant_items:
+            line_no = item.get("line", 1)
+            snippet = lines[line_no - 1].strip() if 0 < line_no <= len(lines) else ""
+
+            markers.append(AgentMarker(
+                marker_id=f"PYN-R{len(markers) + 1:03d}",
+                issue_type="redundant_expr",
+                rule_id="RedundantExpressionRule",
+                severity="info",
+                line=line_no,
+                param=item.get("expr", ""),
+                hint=item.get("hint", "Simplify redundant expression"),
+                why="Redundant expressions add noise and reduce code clarity",
+                confidence=0.95,
+                can_auto_fix=True,
+                snippet=snippet[:80],
+            ))
+
+        return markers if markers else None
 
 
 # ----------------------------------------------------------------------
@@ -187,4 +226,45 @@ class _RedundantTransformer(cst.CSTTransformer):
             if isinstance(arg_val, cst.Set):
                 return arg_val
 
+        return None
+
+
+class _RedundantMarkerVisitor(cst.CSTVisitor):
+    """CST visitor that collects redundant expression locations for agent markers."""
+
+    def __init__(self):
+        super().__init__()
+        self.redundant_items: List[dict] = []
+
+    def visit_Comparison(self, node: cst.Comparison) -> None:
+        left = node.left
+        if len(node.comparisons) != 1:
+            return
+        target = node.comparisons[0]
+        op = target.operator
+        right = target.comparator
+
+        if isinstance(op, cst.Equal):
+            rv = self._get_literal(right)
+            if rv in (True, False):
+                self.redundant_items.append({
+                    "line": node.lineno or 1,
+                    "expr": f"== {rv}",
+                    "hint": f"'{rv}' comparison is redundant — use implicit boolean",
+                })
+        elif isinstance(op, cst.NotEqual):
+            rv = self._get_literal(right)
+            if rv in (True, False):
+                self.redundant_items.append({
+                    "line": node.lineno or 1,
+                    "expr": f"!= {rv}",
+                    "hint": f"'!= {rv}' comparison is redundant — use 'not' instead",
+                })
+
+    def _get_literal(self, node: cst.BaseExpression) -> Any:
+        if isinstance(node, cst.Name):
+            if node.value == "True":
+                return True
+            if node.value == "False":
+                return False
         return None

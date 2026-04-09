@@ -1,6 +1,6 @@
-"""Semantic diffing guard — detects unintended semantic changes in code transformations.
+"""Semantic diffing guard â€” detects unintended semantic changes in code transformations.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
 Compares AST structure (ignoring position metadata) before and after a rule runs.
 If the executable semantics drift in ways the rule didn't explicitly declare as
@@ -31,7 +31,7 @@ from typing import Optional, Set, List, Tuple
 logger = logging.getLogger(__name__)
 
 
-# Nodes whose presence changes the runtime semantics — removing them is dangerous
+# Nodes whose presence changes the runtime semantics â€” removing them is dangerous
 _CRITICAL_NODE_TYPES: Set[str] = {
     "Assign",           # variable assignment
     "AnnAssign",        # annotated assignment
@@ -225,6 +225,36 @@ class SemanticDiffGuard:
                     target = getattr(node, "target", None)
                     if isinstance(target, ast.Name):
                         name = getattr(target, "id", None) or ""
+                elif node_type == "AugAssign":
+                    target = getattr(node, "target", None)
+                    if isinstance(target, ast.Name):
+                        name = getattr(target, "id", None) or ""
+                elif node_type == "Import":
+                    names = getattr(node, "names", [])
+                    if names:
+                        alias = names[0]
+                        name = getattr(alias, "name", None) or "import"
+                elif node_type == "ImportFrom":
+                    module = getattr(node, "module", None)
+                    name = getattr(module, "name", None) if module else "from"
+                elif node_type == "Delete":
+                    # Delete nodes - extract deleted names from targets
+                    targets = getattr(node, "targets", [])
+                    if targets:
+                        first = targets[0]
+                        if isinstance(first, ast.Name):
+                            name = getattr(first, "id", None) or "del_target"
+                        elif isinstance(first, ast.Attribute):
+                            # del obj.attr
+                            attr_name = getattr(first.attr, "s", None) or getattr(first.attr, "value", None)
+                            name = f"attr:{attr_name or 'unknown'}"
+                        elif isinstance(first, ast.Subscript):
+                            # del obj[key]
+                            name = "del_subscript"
+                        else:
+                            name = "del_target"
+                    else:
+                        name = "delete"
 
                 key = name or f"<anon:{node_type}>"
                 inventory.setdefault(node_type, {})[key] = lineno

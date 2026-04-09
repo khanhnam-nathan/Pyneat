@@ -1,6 +1,6 @@
 """PyNeat - Neat Python AI Code Cleaner.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: n.khanhnam@gmail.com
 
 A quick-start example:
 
@@ -75,7 +75,7 @@ from .rules.init_protection import InitFileProtectionRule
 # Security registry
 from .rules.security_registry import SECURITY_RULES_REGISTRY, get_security_rule, get_all_rule_ids
 
-__version__ = "2.0.0"
+__version__ = "2.2.0-beta"
 
 __all__ = [
     # Core
@@ -84,13 +84,13 @@ __all__ = [
     # Security types
     'SecuritySeverity', 'SecurityFinding', 'DependencyFinding',
     'CWE_SEVERITY_MAP', 'OWASP_SEVERITY_MAP',
-    # Rules — Default-on (safe)
+    # Rules â€" Default-on (safe)
     'SecurityScannerRule', 'CodeQualityRule', 'PerformanceRule',
     'TypingRule', 'RangeLenRule', 'IsNotNoneRule',
-    # Rules — Conservative (use --enable-* flags)
+    # Rules â€" Conservative (use --enable-* flags)
     'UnusedImportRule', 'InitFileProtectionRule', 'FStringRule',
     'DataclassSuggestionRule', 'MagicNumberRule',
-    # Rules — Destructive (use --enable-* flags, can break code)
+    # Rules â€" Destructive (use --enable-* flags, can break code)
     'ImportCleaningRule', 'NamingConventionRule', 'RefactoringRule',
     'DebugCleaner', 'CommentCleaner', 'RedundantExpressionRule',
     'DeadCodeRule', 'MatchCaseRule',
@@ -125,7 +125,7 @@ def clean_code(
     enable_security: bool = False,
     check_conflicts: bool = False,
     path: Optional[Path] = None,
-    # Aggressive rules — must be explicitly enabled
+    # Aggressive rules â€" must be explicitly enabled
     enable_import_cleaning: bool = False,
     enable_naming: bool = False,
     enable_refactoring: bool = False,
@@ -133,7 +133,7 @@ def clean_code(
 ) -> str:
     """Clean Python source code and return the transformed result.
 
-    This is the simplest way to use PyNeat — just pass a code string.
+    This is the simplest way to use PyNeat â€" just pass a code string.
 
     Args:
         content: The Python source code to clean.
@@ -164,12 +164,12 @@ def clean_code(
     """
     path = path or Path("<string>")
 
-    # SAFE rules — always available, on by default for safe fixes
+    # SAFE rules â€" always available, on by default for safe fixes
     rules: List[Any] = []
     if fix_is_not_none:
         rules.append(IsNotNoneRule(RuleConfig(enabled=True)))
 
-    # CONSERVATIVE rules — opt-in
+    # CONSERVATIVE rules â€" opt-in
     if remove_debug:
         rules.append(DebugCleaner(mode="safe"))
     if fix_redundant:
@@ -184,7 +184,7 @@ def clean_code(
     if enable_security:
         rules.append(SecurityScannerRule(RuleConfig(enabled=True)))
 
-    # DESTRUCTIVE rules — opt-in, must be explicitly enabled
+    # DESTRUCTIVE rules â€" opt-in, must be explicitly enabled
     if enable_import_cleaning:
         rules.append(ImportCleaningRule(RuleConfig(enabled=True)))
     if enable_naming:
@@ -216,7 +216,7 @@ def clean_file(
     remove_dead_code: bool = False,
     remove_unused_imports: bool = False,
     enable_security: bool = False,
-    # Aggressive rules — must be explicitly enabled
+    # Aggressive rules â€" must be explicitly enabled
     enable_import_cleaning: bool = False,
     enable_naming: bool = False,
     enable_refactoring: bool = False,
@@ -271,7 +271,7 @@ def clean_file(
     if enable_security:
         rules.append(SecurityScannerRule(RuleConfig(enabled=True)))
 
-    # DESTRUCTIVE rules — opt-in
+    # DESTRUCTIVE rules â€" opt-in
     if enable_import_cleaning:
         rules.append(ImportCleaningRule(RuleConfig(enabled=True)))
     if enable_naming:
