@@ -13,6 +13,10 @@ homepage = "https://pyneat.dev"
 name = "pyneat_rs"
 crate-type = ["cdylib"]
 
+[[bin]]
+name = "pyneat_rs_cli"
+path = "src/main.rs"
+
 [dependencies]
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
