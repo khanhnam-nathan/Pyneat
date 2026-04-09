@@ -23,6 +23,12 @@
 | `--enable-performance` | `PerformanceRule` | Detects inefficient loops and patterns |
 | `--enable-unused` | `UnusedImportRule` | Removes genuinely unused imports via AST analysis |
 | `--enable-redundant` | `RedundantExpressionRule` | Simplifies `x == True`, `str(str(x))`, etc. |
+| `--enable-dead-code` | `DeadCodeRule` | Removes unused functions and classes via AST analysis |
+| `--enable-fstring` | `FStringRule` | Converts `.format()` and string concatenation to f-strings |
+| `--enable-range-len` | `RangeLenRule` | Fixes `range(len())` anti-pattern with direct iteration |
+| `--enable-typing` | `TypingRule` | Suggests type annotations for untyped functions |
+| `--enable-match-case` | `MatchCaseRule` | Suggests converting if-elif chains to match-case (Python 3.10+) |
+| `--enable-dataclass` | `DataclassSuggestionRule` | Suggests `@dataclass` for simple data classes |
 
 ### What It Fixes
 
@@ -32,7 +38,12 @@
 |----------|---------|
 | **New Rule** | `IsNotNoneRule` - Converts `x is not None` patterns |
 | **New Rule** | `MagicNumberRule` - Detects and flags magic numbers |
-| **New Rule** | `RangeLenRule` - Fixes `range(len())` anti-patterns |
+| **New Rule** | `RangeLenRule` - Fixes `range(len())` anti-pattern |
+| **New Rule** | `DeadCodeRule` - Removes unused functions and classes via AST analysis |
+| **New Rule** | `FStringRule` - Converts `.format()` to f-strings |
+| **New Rule** | `TypingRule` - Suggests type annotations for untyped functions |
+| **New Rule** | `MatchCaseRule` - Suggests match-case for if-elif chains (Python 3.10+) |
+| **New Rule** | `DataclassSuggestionRule` - Suggests `@dataclass` for simple classes |
 | **Improvement** | Refactored comprehensive rule system with priority ordering |
 | **Improvement** | Added comprehensive test samples for real-world scenarios |
 | **Improvement** | Cleaner CI/CD workflow with lint and stress tests |
@@ -63,6 +74,8 @@ When enabled, detects and auto-fixes security vulnerabilities in AI-generated co
 | Vulnerability | Detection | Auto-fix |
 |-------------|-----------|----------|
 | Command Injection | `os.system()`, `subprocess.run(shell=True)` | Warning only |
+| SQL Injection | String concatenation in SQL queries | Warning only |
+| Eval/Exec | Dynamic code execution | Warning only |
 | YAML Unsafe Load | `yaml.load()` without Loader | **Auto-fixed to SafeLoader** |
 | Weak Crypto | `random` for tokens, `hashlib.md5/sha1` | Warning only |
 | Pickle Deserialize | `pickle.loads()` | Warning only (RCE risk) |
@@ -71,6 +84,23 @@ When enabled, detects and auto-fixes security vulnerabilities in AI-generated co
 | Hardcoded Secrets | `api_key`, `password`, `token` in code | Warning + env vars suggestion |
 | Template Injection | `render_template_string()` | Warning only (SSTI risk) |
 | Empty except blocks | `except: pass` | **Auto-fixed to `raise`** |
+| Path Traversal | `open()` with user input | Warning only |
+| XXE | XML parsing without safe settings | Warning only |
+
+### Rust Acceleration (`--rust`)
+
+For maximum performance, enable the Rust scanner:
+
+```bash
+pip install pyneat[rust]
+pyneat clean your_file.py --rust
+```
+
+The Rust backend uses:
+- **tree-sitter** for AST parsing
+- **Pre-compiled regex** patterns
+- **Rayon** for parallel processing
+- **No GIL contention** for true parallelism
 
 ## Installation
 
@@ -188,12 +218,7 @@ Or copy the full template from [`.github/workflows/pyneat.yml`](.github/workflow
 
 ## VSCode Extension
 
-See [`vscode-extension/`](vscode-extension/) for the full VSCode extension with:
-
-- Command Palette integration
-- Real-time diagnostics
-- Quick Fix suggestions
-- Auto-clean on save
+> **Coming Soon** — VSCode extension is planned for v3.0.0. Track progress at the [GitHub Issues](https://github.com/YOUR_USERNAME/pyneat/issues) page.
 
 ## Development
 
@@ -208,17 +233,32 @@ pytest tests/
 python -m build
 ```
 
+## Architecture: 7-Layer Protection System
+
+PyNeat implements a comprehensive 7-layer protection system:
+
+| Layer | Component | Description |
+|-------|-----------|-------------|
+| 1 | **AST Guard** | Validates code structure before processing |
+| 2 | **Semantic Guard** | Preserves code semantics during transformations |
+| 3 | **Type Shield** | Prevents type-related regressions |
+| 4 | **Atomic Operations** | Ensures atomic transformations |
+| 5 | **Scope Guard** | Isolates changes within safe boundaries |
+| 6 | **Type Checking** | Validates with mypy/pyright |
+| 7 | **Fuzz Testing** | Stress tests with malformed inputs |
+
 ## Editions & Commercial Support
 
 PyNeat is built with a dual-licensing / freemium model to support both independent developers and large-scale enterprise codebases.
 
 ### PyNeat Community (Current Version)
-* **Status:** Free & Open Source (MIT License)
-* **Engine:** Pure Python orchestrator
+* **Status:** Free & Open Source (GNU AGPLv3)
+* **Engine:** Pure Python + Rust hybrid (pyneat-rs)
 * **Best for:** Individual developers, students, and small projects
+* **Rust coverage:** ~30% of rules (security + quality)
 
 ### PyNeat Standard (Available Upon Request)
-* **Engine:** Rewritten in Rust (`pyneat-rs`) for extreme performance
+* **Engine:** Full Rust (`pyneat-rs`) for extreme performance
 * **Features:** Multi-threading, 50x-100x faster, deep CI/CD integration
 * **Best for:** Mid-sized teams and repositories with 1,000+ files
 
@@ -226,8 +266,26 @@ PyNeat is built with a dual-licensing / freemium model to support both independe
 * **Features:** Everything in Standard, Custom Ruleset API, Audit Reports, Dedicated SLA
 * **Best for:** Large enterprises
 
-**Interested in Standard or Enterprise?** Contact: `khanhnam.copywriting@gmail.com`
+**Commercial License Exemption:** If you cannot comply with AGPLv3
+(e.g., proprietary SaaS, closed-source embedding), contact the author
+for a commercial license. Email: `khanhnam.copywriting@gmail.com`
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+PyNeat is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License,
+or (at your option) any later version.
+
+PyNeat is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+AGPLv3 with Commercial Exception: Commercial use of this software
+(e.g., bundling in paid products, SaaS services) is permitted,
+provided that you comply with the open source obligations under AGPLv3 §11.
+Contact the author for alternative licensing arrangements.

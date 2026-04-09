@@ -1,6 +1,25 @@
-"""Rule for suggesting @dataclass decorator for simple classes."""
+"""Rule for suggesting @dataclass decorator for simple classes.
+
+Copyright (c) 2024-2026 PyNEAT Authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, contact: license@pyneat.dev
+"""
 
 import ast
+import re
 from typing import List, Tuple, Optional
 import libcst as cst
 
@@ -29,12 +48,15 @@ class DataclassSuggestionRule(Rule):
             if not content.strip():
                 return self._create_result(code_file, content, changes)
 
-            try:
-                tree = ast.parse(content)
-            except SyntaxError:
-                return self._create_result(code_file, content, changes)
+            # Use cached AST if available (RuleEngine pre-parses)
+            if hasattr(code_file, 'ast_tree') and code_file.ast_tree is not None:
+                tree = code_file.ast_tree
+            else:
+                try:
+                    tree = ast.parse(content)
+                except SyntaxError:
+                    return self._create_result(code_file, content, changes)
 
-            # Find classes that could be dataclasses
             candidates = self._find_dataclass_candidates(tree, content)
 
             for class_name, line_no, reason in candidates:
@@ -56,18 +78,15 @@ class DataclassSuggestionRule(Rule):
 
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
-                # Skip private classes
                 if node.name.startswith('_'):
                     continue
 
-                # Skip classes that already have dataclass or other decorators
                 if any(self._has_dataclass_or_typed_decorator(d) for d in node.decorator_list):
                     continue
 
-                # Analyze the class
                 analysis = self._analyze_class(node)
 
-                if analysis['score'] >= 7:  # Threshold for suggestion
+                if analysis['score'] >= 7:
                     reason = self._get_suggestion_reason(analysis)
                     candidates.append((node.name, node.lineno, reason))
 
@@ -99,11 +118,9 @@ class DataclassSuggestionRule(Rule):
 
         for item in node.body:
             if isinstance(item, ast.AnnAssign):
-                # Type-annotated assignment = attribute
                 analysis['attributes'].append(item)
                 analysis['score'] += 2
             elif isinstance(item, ast.Assign):
-                # Unannotated assignment = possible attribute
                 analysis['attributes'].append(item)
                 analysis['score'] += 1
             elif isinstance(item, ast.FunctionDef):
@@ -111,7 +128,6 @@ class DataclassSuggestionRule(Rule):
 
                 if item.name == '__init__':
                     analysis['has_init'] = True
-                    # Check if init is simple (just assigns parameters)
                     if self._is_simple_init(item):
                         analysis['score'] += 3
                 elif item.name == '__repr__':
@@ -121,9 +137,8 @@ class DataclassSuggestionRule(Rule):
                 elif item.name == '__str__':
                     analysis['has_str'] = True
                 elif item.name.startswith('__') and item.name.endswith('__'):
-                    pass  # Skip dunder methods
+                    pass
                 else:
-                    # Non-dunder method suggests it's not a simple data class
                     analysis['complex_methods'] += 1
                     analysis['score'] -= 2
 
@@ -134,16 +149,13 @@ class DataclassSuggestionRule(Rule):
         if len(node.args.args) == 0:
             return False
 
-        # Count assignments in body
         assign_count = 0
         for child in ast.walk(node):
             if isinstance(child, ast.Assign):
                 assign_count += 1
             elif isinstance(child, ast.Expr) and isinstance(child.value, ast.Call):
-                # Allow method calls like self._init()
                 pass
 
-        # Simple init: number of assigns roughly matches number of args
         return assign_count >= len(node.args.args) * 0.5
 
     def _get_suggestion_reason(self, analysis: dict) -> Optional[str]:
@@ -162,6 +174,11 @@ class DataclassSuggestionRule(Rule):
         return "candidate for dataclass"
 
 
+# ----------------------------------------------------------------------
+# LibCST Transformer
+# ----------------------------------------------------------------------
+
+
 class DataclassAdder(cst.CSTTransformer):
     """LibCST transformer to add @dataclass decorator."""
 
@@ -169,27 +186,29 @@ class DataclassAdder(cst.CSTTransformer):
         super().__init__()
         self.class_names = set(class_names)
         self.conversions: List[str] = []
+        self._needs_dataclass_import = False
 
     def leave_ClassDef(self, original: cst.ClassDef, updated: cst.ClassDef) -> cst.ClassDef:
         """Add @dataclass decorator to target classes."""
-        if original.name.value in self.class_names:
-            # Check if already has @dataclass
-            has_dataclass = any(
-                self._is_dataclass_decorator(d)
-                for d in updated.decorator_list
-            )
+        if original.name.value not in self.class_names:
+            return updated
 
-            if not has_dataclass:
-                # Add @dataclass decorator
-                new_decorator = cst.Decorator(
-                    decorator=cst.Name(value='dataclass')
-                )
-                new_decorators = [new_decorator] + list(updated.decorator_list)
-                self.conversions.append(f"Added @dataclass to {original.name.value}")
+        has_dataclass = any(
+            self._is_dataclass_decorator(d)
+            for d in updated.decorators
+        )
 
-                return updated.with_changes(decorator_list=new_decorators)
+        if has_dataclass:
+            return updated
 
-        return updated
+        new_decorator = cst.Decorator(
+            decorator=cst.Name(value='dataclass')
+        )
+        new_decorators = [new_decorator] + list(updated.decorators)
+        self.conversions.append(f"Added @dataclass to {original.name.value}")
+        self._needs_dataclass_import = True
+
+        return updated.with_changes(decorators=new_decorators)
 
     def _is_dataclass_decorator(self, node: cst.CSTNode) -> bool:
         """Check if decorator is @dataclass or similar."""
@@ -203,8 +222,17 @@ class DataclassAdder(cst.CSTTransformer):
         return False
 
 
+# ----------------------------------------------------------------------
+# DataclassAdderRule — actual conversion
+# ----------------------------------------------------------------------
+
+
 class DataclassAdderRule(Rule):
-    """Actually adds @dataclass decorator to appropriate classes."""
+    """Actually adds @dataclass decorator to appropriate classes.
+
+    Also ensures 'from dataclasses import dataclass' is present when adding
+    the decorator to a class that doesn't already import it.
+    """
 
     @property
     def description(self) -> str:
@@ -220,25 +248,26 @@ class DataclassAdderRule(Rule):
 
             try:
                 tree = ast.parse(content)
-            except SyntaxError:
-                return self._create_result(code_file, content, changes)
+            except SyntaxError as e:
+                return self._create_error_result(code_file, f"Syntax error: {e}")
 
-            # Find candidates
             candidates = self._find_candidates(tree)
             if not candidates:
                 return self._create_result(code_file, content, changes)
 
-            # Apply transformation using LibCST
-            try:
-                module = cst.parse_module(content)
-                transformer = DataclassAdder([name for name, _, _ in candidates])
-                new_module = module.visit(transformer)
+            module = cst.parse_module(content)
+            transformer = DataclassAdder([name for name, _, _ in candidates])
+            new_module = module.visit(transformer)
 
-                if transformer.conversions:
-                    changes.extend(transformer.conversions)
-                    content = new_module.code
-            except Exception:
-                pass
+            if not transformer.conversions:
+                return self._create_result(code_file, content, changes)
+
+            content = new_module.code
+
+            if transformer._needs_dataclass_import:
+                content = self._ensure_dataclass_import(content)
+
+            changes.extend(transformer.conversions)
 
             return self._create_result(code_file, content, changes)
 
@@ -249,3 +278,36 @@ class DataclassAdderRule(Rule):
         """Find classes that should be dataclasses."""
         rule = DataclassSuggestionRule()
         return rule._find_dataclass_candidates(tree, "")
+
+    def _ensure_dataclass_import(self, content: str) -> str:
+        """Add 'from dataclasses import dataclass' if not already present."""
+        has_import = bool(
+            re.search(r'from\s+dataclasses\s+import\s+.*\bdataclass\b', content) or
+            re.search(r'import\s+dataclasses\b', content)
+        )
+        if has_import:
+            return content
+
+        has_from_dataclasses = re.search(r'from\s+dataclasses\s+import', content)
+        if has_from_dataclasses:
+            return re.sub(
+                r'(from\s+dataclasses\s+import\s+)([^\n]+)',
+                r'\1dataclass, \2',
+                content,
+                count=1
+            )
+
+        lines = content.splitlines(keepends=True)
+        import_line = "from dataclasses import dataclass\n"
+
+        insert_at = 0
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped and not stripped.startswith('#'):
+                if stripped.startswith(('"', "'")):
+                    continue
+                insert_at = i
+                break
+
+        lines.insert(insert_at, import_line)
+        return ''.join(lines)

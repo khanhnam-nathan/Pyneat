@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Rust Scanner",
+    "files": 200,
+    "total_findings": 920,
+    "min_time": 0.0087676,
+    "max_time": 0.0143461,
+    "avg_time": 0.01014087,
+    "median_time": 0.009825750000000001,
+    "std_dev": 0.0016340081517884515,
+    "files_per_sec": 20354.680304302467,
+    "mb_per_sec": 335.61755654660385
+  },
+  {
+    "name": "Python Scanner (Pure)",
+    "files": 200,
+    "total_findings": 920,
+    "min_time": 0.0084178,
+    "max_time": 0.0117798,
+    "avg_time": 0.00959555,
+    "median_time": 0.00941055,
+    "std_dev": 0.0010270795979648102,
+    "files_per_sec": 21252.74293213468,
+    "mb_per_sec": 350.42523616980867
+  }
+]

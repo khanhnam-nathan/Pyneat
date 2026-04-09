@@ -1,4 +1,22 @@
-"""Rule for refactoring complex code structures."""
+"""Rule for refactoring complex code structures.
+
+Copyright (c) 2024-2026 PyNEAT Authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, contact: license@pyneat.dev
+"""
 
 import re
 from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
@@ -87,7 +105,7 @@ class RefactoringRule(Rule):
 
                 # Add early return for negative case
                 new_lines.append(f"if not ({condition}):")
-                new_lines.append("    return 'Default_Value'  # TODO: Replace with actual default")
+                new_lines.append("    return None  # type: ignore")
                 new_lines.append("")
                 new_lines.append(line)  # Keep original if
 
@@ -124,7 +142,12 @@ class RefactoringRule(Rule):
         return max_nesting
     
     def _fix_empty_except(self, content: str) -> tuple:
-        """Fix empty except blocks by adding a raise instead of silently swallowing errors."""
+        """Fix empty except blocks by adding a raise instead of silently swallowing errors.
+
+        SKIPS: except blocks inside __getattr__, __getitem__, __setitem__,
+        __delitem__, on_invalid, and other special methods where silent-fail
+        is the intended behavior (e.g., Jinja2 Undefined objects).
+        """
         changes = []
         lines = content.split('\n')
         new_lines = []
@@ -132,13 +155,21 @@ class RefactoringRule(Rule):
 
         while i < len(lines):
             line = lines[i]
-            if 'except:' in line and i + 1 < len(lines) and lines[i + 1].strip() == 'pass':
+            # Only match BARE except: blocks (not except Exception:, except AttributeError:, etc.)
+            # Bare except is almost always wrong; typed except should be handled case-by-case
+            if line.strip() == 'except:' and i + 1 < len(lines) and lines[i + 1].strip() == 'pass':
+                # Detect if we're inside a special method where silent-fail is intentional
+                if self._is_special_method_context(lines, i):
+                    new_lines.append(line)
+                    new_lines.append(lines[i + 1])
+                    i += 2
+                    continue
+
                 # Calculate the base indentation of the except line
                 base_indent = len(line) - len(line.lstrip())
                 body_indent = ' ' * (base_indent + 4)  # Body is one level deeper
 
                 new_lines.append(line.replace('except:', 'except Exception as e:'))
-                new_lines.append(f"{body_indent}# TODO: Add proper error handling")
                 new_lines.append(f"{body_indent}raise RuntimeError('Unhandled exception') from e")
                 changes.append("Fixed empty except block")
                 i += 2  # Skip the pass line
@@ -147,6 +178,69 @@ class RefactoringRule(Rule):
                 i += 1
 
         return '\n'.join(new_lines), changes
+
+    def _is_special_method_context(self, lines: list, except_line_idx: int) -> bool:
+        """Detect if an except block is inside a special method where silent-fail is intentional.
+
+        Examples: __getattr__, __getitem__, __setitem__, on_invalid, etc.
+        In these methods, `except: pass` is a common pattern for graceful degradation.
+
+        Also detects the Jinja2 pattern: `except: pass` followed by `raise` on the next line,
+        which is an intentional "try one thing, fall through if it fails" pattern.
+        """
+        SPECIAL_METHODS = frozenset({
+            '__getattr__', '__getitem__', '__setitem__', '__delitem__',
+            '__getattribute__', '__setattr__', '__delattr__',
+            '__init__', '__call__',
+            'on_invalid', 'fail', '_fail', 'fail_silently',
+            '_getattr', '_getitem', '_missing',
+            'getattr', 'getitem', 'resolve',
+            'Undefined', 'undefined',
+        })
+
+        # Scan backwards through class bodies and function bodies to find
+        # the containing method/function. Keep going until we hit module-level
+        # code (indent=0, not a comment, and not a function/class definition).
+        for j in range(except_line_idx - 1, -1, -1):
+            stripped = lines[j].strip()
+            if not stripped:
+                continue
+
+            # Check if it's a function definition FIRST (before indent check).
+            # Class methods have indent=0 at their def line, so we must
+            # handle this before the module-level break.
+            if stripped.startswith('def ') or stripped.startswith('async def '):
+                match = re.search(r'def\s+(?:async\s+)?(\w+)\s*\(', stripped)
+                if match and match.group(1) in SPECIAL_METHODS:
+                    return True
+                # Non-special function — stop searching.
+                break
+
+            current_indent = len(lines[j]) - len(lines[j].lstrip())
+
+            # Module-level code (0 indent, not a comment, not a function/class) — stop.
+            if current_indent == 0 and not stripped.startswith('#') and \
+               not stripped.startswith('class '):
+                break
+
+        # Check 2: Jinja2 pattern — `except: pass` immediately followed by `raise`.
+        # Pattern: the except block body is only `pass`, and the next non-blank line
+        # after it is a `raise` statement. This means the except is a "suppressor"
+        # that lets execution fall through to raise a more informative error.
+        # We should NOT touch this pattern.
+        pass_line_idx = except_line_idx + 1
+        if pass_line_idx < len(lines) and lines[pass_line_idx].strip() == 'pass':
+            # Look at the next non-blank line after `pass`
+            next_idx = pass_line_idx + 1
+            while next_idx < len(lines) and not lines[next_idx].strip():
+                next_idx += 1
+            if next_idx < len(lines):
+                next_stripped = lines[next_idx].strip()
+                if next_stripped.startswith('raise '):
+                    # This is the Jinja2 "suppressor" pattern — skip it
+                    return True
+
+        return False
     
     def _fix_eval_usage(self, content: str) -> tuple:
         """Replace dangerous eval() with safer alternatives."""

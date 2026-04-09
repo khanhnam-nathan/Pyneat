@@ -1,5 +1,22 @@
 """Rule to prevent removing critical imports from __init__.py files.
 
+Copyright (c) 2024-2026 PyNEAT Authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, contact: license@pyneat.dev
+
 In Python's import system, an import in __init__.py can be "used" for two reasons:
 1. Direct usage in the module code
 2. Re-exporting as part of the public API (listed in __all__)
@@ -11,7 +28,6 @@ Bug fixed: chatterbot_init.py had `from .chatterbot import ChatBot` removed
 because ChatBot wasn't used inside the file - but it WAS needed for
 `__all__ = ('ChatBot',)`, making it a public API re-export.
 """
-
 import ast
 import re
 from typing import List, Set, Tuple
@@ -50,8 +66,13 @@ class InitFileProtectionRule(Rule):
             if not is_init:
                 return self._create_result(code_file, content, changes)
 
+            # Use cached AST if available (RuleEngine pre-parses)
+            ast_tree = None
+            if hasattr(code_file, 'ast_tree') and code_file.ast_tree is not None:
+                ast_tree = code_file.ast_tree
+
             # Parse and analyze
-            new_content, protected = self._protect_init_imports(content)
+            new_content, protected = self._protect_init_imports(content, ast_tree)
 
             for name in protected:
                 changes.append(f"Protected __init__ re-export: {name}")
@@ -77,10 +98,10 @@ class InitFileProtectionRule(Rule):
             return True
         return False
 
-    def _protect_init_imports(self, content: str) -> Tuple[str, List[str]]:
+    def _protect_init_imports(self, content: str, ast_tree=None) -> Tuple[str, List[str]]:
         """Add protection markers to __all__-related imports."""
         try:
-            tree = ast.parse(content)
+            tree = ast.parse(content) if ast_tree is None else ast_tree
         except SyntaxError:
             return content, []
 

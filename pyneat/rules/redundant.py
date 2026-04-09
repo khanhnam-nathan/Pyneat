@@ -1,4 +1,22 @@
-"""Rule for removing redundant expressions that AI code generators commonly produce."""
+"""Rule for removing redundant expressions that AI code generators commonly produce.
+
+Copyright (c) 2024-2026 PyNEAT Authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, contact: license@pyneat.dev
+"""
 
 from typing import List
 
@@ -27,10 +45,14 @@ class RedundantExpressionRule(Rule):
         try:
             content = code_file.content
 
-            try:
-                tree = cst.parse_module(content)
-            except Exception:
-                return self._create_result(code_file, content, [])
+            # Use cached CST tree if available (RuleEngine pre-parses)
+            if hasattr(code_file, 'cst_tree') and code_file.cst_tree is not None:
+                tree = code_file.cst_tree
+            else:
+                try:
+                    tree = cst.parse_module(content)
+                except Exception:
+                    return self._create_result(code_file, content, [])
 
             transformer = _RedundantTransformer()
             new_tree = tree.visit(transformer)
