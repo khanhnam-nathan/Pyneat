@@ -1,39 +1,80 @@
-# Pre-commit configuration for PyNeat
-# Install: pre-commit install
-# Usage: pre-commit run --all-files
-# Docs: https://pre-commit.com/
+# Pre-commit configuration for PyNEAT
+#
+# Install:
+#   pip install pre-commit pyneat
+#   pre-commit install
+#
+# Update hooks:
+#   pre-commit autoupdate
 
 repos:
+  # PyNEAT - AI Code Cleaner
   - repo: local
     hooks:
+      # Security scan - fast, runs on all files
+      - id: pyneat-security
+        name: PyNEAT Security Scan
+        description: Scan for security vulnerabilities in Python code
+        entry: pyneat check
+        language: system
+        files: \.py$
+        stages: [pre-commit, push]
+
+      # Code quality check - dry-run mode
       - id: pyneat-clean
-        name: PyNeat AI Code Cleaner
-        description: Remove AI-generated code artifacts (print, pdb, empty TODOs, unused imports, etc.)
-        entry: py clean --in-place --verbose
+        name: PyNEAT Code Cleaner
+        description: Clean AI-generated code patterns, remove debug prints, fix security issues
+        entry: pyneat clean --dry-run --diff
         language: system
-        types: [python]
-        pass_filenames: true
-        args: ['--enable-unused', '--enable-redundant']
+        files: \.py$
         stages: [pre-commit]
 
-  - repo: local
-    hooks:
-      - id: pyneat-scan
-        name: PyNeat Security Scan
-        description: Scan for security issues in AI-generated code
-        entry: py clean --in-place --enable-security --enable-quality --verbose
+      # Auto-generate PYNAGENT manifest (does not modify source code)
+      - id: pyneat-manifest
+        name: PyNEAT Manifest Generator
+        description: Generate .pyneat.manifest.json for AI editors (non-blocking)
+        entry: pyneat clean --export-manifest --dry-run
         language: system
-        types: [python]
-        pass_filenames: true
-        stages: [pre-push]
-
-  - repo: local
-    hooks:
-      - id: pyneat-diff
-        name: PyNeat Preview (Dry Run)
-        description: Show diff of changes without modifying files (for CI)
-        entry: py clean --dry-run --diff
-        language: system
-        types: [python]
-        pass_filenames: true
+        files: \.py$
         stages: [pre-commit]
+        # Non-blocking: manifest generation failure does not abort commit
+        always_run: false
+        pass_filenames: true
+
+      # Check for common issues
+      - id: pyneat-check
+        name: PyNEAT Check Mode
+        description: Check code without making changes
+        entry: pyneat clean --check
+        language: system
+        files: \.py$
+        stages: [push]
+
+  # Standard Python tools
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  - repo: https://github.com/psf/black
+    rev: 24.1.1
+    hooks:
+      - id: black
+        language_version: python3.12
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile, black]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=120, --ignore=E501,W503]

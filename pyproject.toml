@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyneat"
-version = "2.0.0"
+version = "2.2.1"
 description = "Neat Python AI Code Cleaner — removes AI-generated code artifacts, dead code, and security vulnerabilities"
 license = {text = "GNU AGPL-3.0-or-later"}
 readme = "README.md"
@@ -52,3 +52,6 @@ enable_quality = false
 enable_performance = false
 enable_unused_imports = true
 enable_redundant = true
+
+# Auto export PYNAGENT manifest on clean/clean-dir
+export_manifest = true
