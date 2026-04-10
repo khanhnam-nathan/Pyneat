@@ -1,6 +1,6 @@
-﻿"""Orchestrates the application of multiple rules.
+"""Orchestrates the application of multiple rules.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 # ----------------------------------------------------------------------
-# Module-level cache singleton — persists across RuleEngine instances
+# Module-level cache singleton  persists across RuleEngine instances
 # Keyed by (content_hash, file_path) so the same file reused across
 # engine instances benefits from the cache
 # ----------------------------------------------------------------------
@@ -180,7 +180,7 @@ class RuleEngine:
                 try:
                     with open(file_path, 'r', encoding=encoding) as f:
                         raw = f.read()
-                    # Strip BOM — PyNEAT always writes UTF-8 without BOM
+                    # Strip BOM  PyNEAT always writes UTF-8 without BOM
                     BOM = "\ufeff"
                     content = raw.lstrip(BOM)
                     break
@@ -355,7 +355,7 @@ class RuleEngine:
         Uses the tree cache to avoid re-parsing the same content across
         multiple rules. Each unique content is parsed once (AST + CST).
         """
-        # Check cache first — avoid re-parsing if this content was already processed
+        # Check cache first  avoid re-parsing if this content was already processed
         cached = self.get_cached_trees(code_file.content)
         if cached:
             cached_ast, cached_cst = cached
@@ -415,7 +415,7 @@ class RuleEngine:
             if result.success:
                 current_content = result.transformed_content
 
-                # Layer 1+: Guard — if a rule produces output that can't be parsed/compiled, revert
+                # Layer 1+: Guard  if a rule produces output that can't be parsed/compiled, revert
                 try:
                     # Fast check with ast.parse
                     ast.parse(current_content)
@@ -428,7 +428,7 @@ class RuleEngine:
                     finally:
                         Path(tmp_name).unlink(missing_ok=True)
                 except (SyntaxError, py_compile.PyCompileError) as e:
-                    # Rule produced invalid output — skip this rule, keep current content
+                    # Rule produced invalid output  skip this rule, keep current content
                     err_lineno = getattr(e, "lineno", None)
                     err_msg = str(e.args[0]) if e.args else str(e)
                     logger.warning(
@@ -438,7 +438,7 @@ class RuleEngine:
                     all_changes.append(f"SKIPPED {rule.name}: syntax error (line {getattr(e, 'lineno', '?')})")
                     continue
 
-                # Layer 1+: Guard — don't lose required __future__ imports
+                # Layer 1+: Guard  don't lose required __future__ imports
                 if self._removed_future_imports(before, current_content):
                     logger.warning(
                         "Rule '%s' attempted to remove a __future__ import in %s. Skipping rule.",
@@ -447,7 +447,7 @@ class RuleEngine:
                     all_changes.append(f"SKIPPED {rule.name}: would remove __future__ import")
                     continue
 
-                # Layer 5: Semantic diffing — detect unintended structural changes
+                # Layer 5: Semantic diffing  detect unintended structural changes
                 allowed_nodes = rule.allowed_semantic_nodes
                 is_safe, diff_messages = self.semantic_guard.is_safe(
                     before, current_content, allowed_nodes
@@ -457,7 +457,7 @@ class RuleEngine:
                         "Rule '%s' produced unsafe semantic changes in %s: %s. Skipping rule.",
                         rule.name, cf.path, diff_messages,
                     )
-                    all_changes.append(f"SKIPPED {rule.name}: semantic safety failed — {diff_messages[0]}")
+                    all_changes.append(f"SKIPPED {rule.name}: semantic safety failed  {diff_messages[0]}")
                     current_content = before
                     continue
 

@@ -9,4 +9,4 @@
 
 ### Changes
 - Version bumped to 2.2.1
-- Copyright year updated to 2025-2026
+- Copyright year updated to 2026

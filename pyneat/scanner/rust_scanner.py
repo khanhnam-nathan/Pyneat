@@ -3,7 +3,7 @@
 This module provides a Python wrapper around the Rust-based pyneat-rs scanner,
 enabling high-performance security scanning using tree-sitter and regex patterns.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 """
 
 import json

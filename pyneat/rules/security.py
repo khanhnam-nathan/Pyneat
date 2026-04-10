@@ -1,6 +1,6 @@
 """Rule for detecting and auto-fixing security vulnerabilities in AI-generated code.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
