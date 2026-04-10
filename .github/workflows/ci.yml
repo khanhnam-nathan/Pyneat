@@ -6,7 +6,8 @@ name: CI Tests
 
 on:
   push:
-    branches: [main, master, develop]
+    # Default development branch is main (do not use master for new work).
+    branches: [main, develop]
     paths:
       - '**.py'
       - '.github/workflows/*.yml'
@@ -23,6 +24,7 @@ jobs:
     name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13']
 
@@ -107,9 +109,11 @@ jobs:
           pip install --upgrade pip
           pip install -e .
 
+      # No --diff: full unified diffs for the whole package are huge on CI and can
+      # destabilize runners; dry-run alone proves the CLI + engine run on Linux.
       - name: Run PyNeat on itself (dry-run)
         run: |
-          python -m pyneat clean-dir pyneat --dry-run --diff
+          python -m pyneat clean-dir pyneat --dry-run
 
       - name: Verify package sources compile
         run: |
@@ -129,18 +133,23 @@ jobs:
           python-version: '3.12'
 
       - name: Install PyNEAT
-        run: pip install pyneat-cli
+        run: |
+          pip install --upgrade pip
+          pip install -e .
 
+      # Must not pass --diff: with --diff, clean-dir returns early and never writes manifest.
       - name: Export Manifest
         run: |
-          python -m pyneat clean-dir . --export-manifest --diff
+          python -m pyneat clean-dir pyneat --export-manifest
 
       - name: Upload Manifest Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pyneat-manifest
-          path: '*.pyneat.manifest.json'
+          path: |
+            **/.pyneat.manifest.json
+            **/*.pyneat.manifest.json
           retention-days: 7
 
       - name: Commit Manifest Changes
@@ -148,10 +157,10 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          if git diff --quiet; then
+          find . -not -path './.git/*' \( -name '.pyneat.manifest.json' -o -name '*.pyneat.manifest.json' \) -print -exec git add -f {} \;
+          if git diff --cached --quiet; then
             echo "No manifest changes to commit"
           else
-            git add '*.pyneat.manifest.json'
             git commit -m "ci: auto-update .pyneat.manifest.json [skip ci]" || echo "Commit failed (possibly no changes)"
           fi
         continue-on-error: true

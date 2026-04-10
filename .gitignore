@@ -21,6 +21,10 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+.cursor/
+
+# Rust build (local)
+pyneat-rs/target/
 
 # Test artifacts
 *.clean.py
