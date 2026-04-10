@@ -1528,31 +1528,40 @@ def _get_menu_suggestions(last_command: str, context: str) -> Dict[str, tuple]:
 
 def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple], ctx: click.Context) -> None:
     """Handle user's menu choice - run the command directly."""
-    # Command map: key -> (feature_name, command_name)
+    # Command map: key -> command_name
     choice_map = {
-        'A': ('check', 'check'),
-        'B': ('explain', 'explain'),
-        'C': ('clean', 'clean'),
-        'D': ('report', 'report'),
+        'A': 'check',
+        'B': 'explain',
+        'C': 'clean',
+        'D': 'report',
     }
 
     if choice in choice_map:
-        feature, cmd_name = choice_map[choice]
+        cmd_name = choice_map[choice]
         click.echo("")
         click.echo(f"  Running: {click.style('pyneat ' + cmd_name + ' --help', fg='cyan', bold=True)}")
         click.echo("")
         
-        # Lấy subcommand từ CLI group và invoke nó
+        # Lấy CLI group từ parent context
         try:
-            sub_cmd = ctx.command.commands.get(cmd_name)
+            cli_ctx = ctx.parent
+            if cli_ctx is None:
+                cli_ctx = click.get_current_context()
+            
+            sub_cmd = cli_ctx.command.commands.get(cmd_name)
             if sub_cmd:
-                ctx.invoke(sub_cmd, ['--help'])
+                # Tạo context mới với --help
+                sub_ctx = sub_cmd.make_context(cmd_name, ['--help'])
+                sub_cmd.invoke(sub_ctx)
             else:
                 click.echo(f"  {click.style('[!]', fg='red')} Command '{cmd_name}' not found")
-        except SystemExit:
+        except SystemExit as e:
+            # Help command thường exit(0) - không hiển thị lỗi
             pass
         except Exception as e:
-            click.echo(f"  {click.style('[!]', fg='red')} Error: {e}")
+            # Chỉ hiển thị lỗi nếu có message thực sự
+            if str(e) and str(e) != '0':
+                click.echo(f"  {click.style('[!]', fg='red')} Error: {e}")
     else:
         click.echo("")
         click.echo(f"  {click.style('[!]', fg='yellow', bold=True)} Invalid option.")
