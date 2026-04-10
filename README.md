@@ -1,6 +1,6 @@
 # PyNeat: The Anti-Spaghetti Code Cleaner
 
-**PyNeat 2.3.0** is an aggressive, AST-based Python code refactoring tool designed to clean up messy, legacy, or AI-generated code. Unlike standard formatters that only fix whitespace, PyNeat performs deep structural surgery on your logic in a single optimized pass using LibCST.
+**PyNeat 2.4.0** is an aggressive, AST-based Python code refactoring tool designed to clean up messy, legacy, or AI-generated code. Unlike standard formatters that only fix whitespace, PyNeat performs deep structural surgery on your logic in a single optimized pass using LibCST.
 
 ## Features
 
@@ -87,6 +87,33 @@ Aggressive rules that **may break code** — always review changes:
 - `--dry-run` + `--diff` — preview changes before writing
 - `--backup` + `--in-place` — safe file modification
 - `--export-manifest` — auto-export PYNAGENT manifest
+
+### Interactive Feature Menu
+After running `check` or `clean`, an interactive menu appears with smart suggestions:
+- Shows 4-7 relevant features based on the last command
+- Option names in English, descriptions in Vietnamese
+- Press Enter or q to skip
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  EXPLORE MORE FEATURES                     │
+└─────────────────────────────────────────────────────────────┘
+
+[3] 🧹 Clean Code
+    Thêm type hints, xóa unused imports, số magic, debug prints...
+    → pyneat clean file.py
+
+[2] 📖 Explain Rule
+    Nguyên nhân, cách fix, CWE/OWASP, verification steps...
+    → pyneat explain SEC-001
+
+[4] 📊 Export Report (JSON/SARIF)
+    Tích hợp CI/CD: GitHub Code Scanning, GitLab SAST...
+    → pyneat report . -f sarif -o security.sarif
+
+[q] Exit - return to terminal
+[Enter] Skip this menu
+```
 
 ### Pre-commit + GitHub Actions
 - Auto-generate `.pyneat.manifest.json` on commit
