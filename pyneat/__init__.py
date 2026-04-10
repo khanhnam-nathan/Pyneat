@@ -85,7 +85,7 @@ from .rules.ai_bugs import AIBugRule
 from .rules.duplication import CodeDuplicationRule
 from .rules.naming import NamingInconsistencyRule
 
-__version__ = "2.2.2"
+__version__ = "2.3.0"
 
 __all__ = [
     # Core

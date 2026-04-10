@@ -311,7 +311,7 @@ scripts\setup-pre-commit.bat
 Add code quality checks to your CI/CD pipeline:
 
 ```yaml
-# .github/workflows/pyneat.yml
+# .github/workflows/ci.yml
 name: PyNeat Code Quality
 on: [push, pull_request]
 jobs:
@@ -326,7 +326,7 @@ jobs:
         run: pyneat clean-dir . --dry-run
 ```
 
-Or copy the full template from [`.github/workflows/pyneat.yml`](.github/workflows/pyneat.yml).
+Or copy the full template from [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## VSCode Extension
 
