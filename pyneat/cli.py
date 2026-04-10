@@ -1468,13 +1468,13 @@ def show_feature_menu(last_command: str = "", context: str = "") -> None:
     click.echo("  ────────────────────────────────────────────────────────────")
     click.echo("")
 
-    # Chờ input
+    # Chờ input - giữ nguyên hoa/thường vì dùng phím A, B, C, D
     try:
-        choice = input("  Select option (Enter to exit): ").strip().lower()
+        choice = input("  Select option (Enter to exit): ").strip().upper()
     except (EOFError, KeyboardInterrupt):
-        choice = 'q'
+        choice = 'Q'
 
-    if choice in ('q', 'quit', 'exit', ''):
+    if choice in ('Q', 'QUIT', 'EXIT', ''):
         return
 
     # Xử lý lựa chọn
