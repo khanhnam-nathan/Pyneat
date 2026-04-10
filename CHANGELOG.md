@@ -4,6 +4,17 @@ Tất cả thay đổi đáng chú ý của dự án này sẽ được ghi ché
 
 Dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/) và [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.4.0] - 2026-04-10
+
+### Added
+
+#### Interactive Feature Menu
+- Menu hiển thị sau mỗi lệnh `check` và `clean`
+- Gợi ý thông minh theo context (thay đổi tùy command vừa chạy)
+- 7 tính năng: Security Check, Explain Rule, Clean Code, Export Report, View Diff, View Rules, Configure
+- Option tiếng Anh, mô tả tiếng Việt (chuyên nghiệp)
+- Nhấn Enter hoặc q để thoát
+
 ## [2.3.0] - 2026-04-10
 
 ### Added

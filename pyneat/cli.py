@@ -374,6 +374,9 @@ def clean(input_file: str, output: str, in_place: bool, verbose: bool,
         click.echo(f"[ERROR] Write failed: {str(e)}", err=True)
         return 1
 
+    # Hiển thị menu gợi ý tính năng khác
+    show_feature_menu("clean", f"{len(result.changes_made)} changes made")
+
     return 0
 
 
@@ -802,6 +805,7 @@ def check(target, severity, cvss, output, format, fail_on, skip_deps, verbose, u
 
     start_time = time.time()
     all_findings: List[SecurityFinding] = []
+    rust_findings: List[SecurityFinding] = []  # Rust scanner results
     total_files = 0
 
     # Scan code files
@@ -861,9 +865,76 @@ def check(target, severity, cvss, output, format, fail_on, skip_deps, verbose, u
 
     elapsed = time.time() - start_time
 
+    # --------------------------------------------------------------------------
+    # Merge Rust scanner results into all_findings
+    # --------------------------------------------------------------------------
+    # rust_results is a list of dicts from the Rust scanner, keyed by byte offset
+    # We need to convert them to SecurityFinding objects and add to all_findings
+    rust_findings: List[SecurityFinding] = []
+    for rust_finding in rust_results:
+        # Extract line number from byte offset (approximate: count newlines)
+        start_byte = rust_finding.get("start", 0)
+        end_byte = rust_finding.get("end", start_byte)
+
+        # Get file content for line calculation
+        try:
+            file_content = Path(str(target_path)).read_text(encoding="utf-8")
+        except Exception:
+            file_content = ""
+
+        # Convert byte offset to line number (1-indexed)
+        start_line = file_content[:start_byte].count('\n') + 1 if start_byte > 0 else 1
+        end_line = file_content[:end_byte].count('\n') + 1 if end_byte > 0 else start_line
+
+        # Parse severity (Rust uses "critical", Python uses "critical")
+        sev_str = rust_finding.get("severity", "info")
+        if sev_str == "critical":
+            sev = SecuritySeverity.CRITICAL
+        elif sev_str == "high":
+            sev = SecuritySeverity.HIGH
+        elif sev_str == "medium":
+            sev = SecuritySeverity.MEDIUM
+        elif sev_str == "low":
+            sev = SecuritySeverity.LOW
+        else:
+            sev = SecuritySeverity.INFO
+
+        # Build CVSS vector from score
+        cvss_score = rust_finding.get("cvss_score")
+        cvss_vector = f"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H" if cvss_score else ""
+
+        rust_finding_obj = SecurityFinding(
+            rule_id=rust_finding.get("rule_id", "SEC-UNK"),
+            severity=sev,
+            confidence=0.95,  # Rust scanner has high confidence
+            cwe_id=rust_finding.get("cwe_id") or "",
+            owasp_id=rust_finding.get("owasp_id") or "",
+            cvss_score=float(cvss_score) if cvss_score else 0.0,
+            cvss_vector=cvss_vector,
+            file=str(target_path),
+            start_line=start_line,
+            end_line=end_line,
+            snippet=rust_finding.get("snippet", "")[:200],
+            problem=rust_finding.get("problem", "Security issue detected"),
+            fix_constraints=(rust_finding.get("fix_hint", "Fix this security issue"),),
+            do_not=("Do not ignore this finding.",),
+            verify=("Review and fix the code.",),
+            resources=(),
+            can_auto_fix=rust_finding.get("auto_fix_available", False),
+            auto_fix_available=rust_finding.get("auto_fix_available", False),
+        )
+        rust_findings.append(rust_finding_obj)
+
     # Aggregate by severity
     summary = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0, "dep": len(dep_findings)}
+
+    # Count Python findings
     for f in all_findings:
+        summary[f.severity] = summary.get(f.severity, 0) + 1
+
+    # Count Rust findings (merge into all_findings)
+    all_findings.extend(rust_findings)
+    for f in rust_findings:
         summary[f.severity] = summary.get(f.severity, 0) + 1
 
     if format == 'json':
@@ -962,6 +1033,9 @@ def check(target, severity, cvss, output, format, fail_on, skip_deps, verbose, u
             exit_code = 1
             click.echo("")
             click.secho(f"  [FAIL] Found {sev_label} issue(s) - exiting with code 1", fg="red", bold=True)
+
+    # Hiển thị menu gợi ý tính năng khác
+    show_feature_menu("check", f"{sum(summary.values()) - summary.get('dep', 0)} issues found")
 
     return exit_code
 
@@ -1360,6 +1434,139 @@ def security_db(update, status, force):
         click.echo("  Run 'pyneat security-db --status' to verify.")
 
     return 0
+
+
+# --------------------------------------------------------------------------
+# Interactive Feature Menu
+# --------------------------------------------------------------------------
+
+def show_feature_menu(last_command: str = "", context: str = "") -> None:
+    """Show interactive menu guiding users to other features.
+
+    Args:
+        last_command: The command that was just run (e.g., "check", "clean")
+        context: Optional context about what was scanned/analyzed
+    """
+    click.echo("")
+    click.echo("")
+    click.echo("  ┌─────────────────────────────────────────────────────────────┐")
+    click.echo("  │                  EXPLORE MORE FEATURES                     │")
+    click.echo("  └─────────────────────────────────────────────────────────────┘")
+    click.echo("")
+
+    # Gợi ý thông minh dựa trên command vừa chạy
+    suggestions = _get_menu_suggestions(last_command, context)
+    for key, (icon, title, desc, cmd) in suggestions.items():
+        click.echo(f"  {click.style(f'[{key}]', fg='cyan', bold=True)} {icon} {click.style(title, bold=True)}")
+        click.echo(f"      {desc}")
+        click.echo(f"      → {click.style(cmd, fg='green')}")
+        click.echo("")
+
+    click.echo(f"  {click.style('[q]', fg='yellow', bold=True)} Exit - return to terminal")
+    click.echo(f"  {click.style('[Enter]', fg='white', dim=True)} Skip this menu")
+    click.echo("")
+    click.echo("  ────────────────────────────────────────────────────────────")
+    click.echo("")
+
+    # Chờ input
+    try:
+        choice = input("  Select option (Enter to exit): ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        choice = 'q'
+
+    if choice in ('q', 'quit', 'exit', ''):
+        return
+
+    # Xử lý lựa chọn
+    _handle_menu_choice(choice, suggestions)
+
+
+def _get_menu_suggestions(last_command: str, context: str) -> Dict[str, tuple]:
+    """Get smart menu suggestions based on the last command.
+
+    Returns dict of {key: (icon, title, description, command_example)}
+    """
+    all_options = {
+        # Bảo mật & Quét lỗi
+        '1': ('🔒', 'Security Check',
+               'Quét lỗ hổng: SQL injection, path traversal, hardcoded secrets...',
+               'pyneat check file.py'),
+        '2': ('📖', 'Explain Rule',
+               'Nguyên nhân, cách fix, CWE/OWASP, verification steps...',
+               'pyneat explain SEC-001'),
+
+        # Làm sạch code
+        '3': ('🧹', 'Clean Code',
+               'Thêm type hints, xóa unused imports, số magic, debug prints...',
+               'pyneat clean file.py'),
+
+        # Báo cáo & CI/CD
+        '4': ('📊', 'Export Report (JSON/SARIF)',
+               'Tích hợp CI/CD: GitHub Code Scanning, GitLab SAST...',
+               'pyneat report . -f sarif -o security.sarif'),
+
+        # So sánh & Debug
+        '5': ('🔍', 'View Diff',
+               'So sánh code trước và sau khi làm sạch...',
+               'pyneat clean file.py --diff'),
+
+        # Cấu hình
+        '6': ('📋', 'View All Rules',
+               'Trạng thái bật/tắt, severity, mô tả ngắn của mỗi rule...',
+               'pyneat rules'),
+        '7': ('⚙️', 'Configure & Optimize',
+               'Bật/tắt rules, đặt ngưỡng, cấu hình package...',
+               'pyneat rules --verbose'),
+    }
+
+    # Smart suggestions dựa trên command vừa chạy
+    if last_command == 'check':
+        # Sau check bảo mật → clean + explain + report
+        ordered = ['3', '2', '4', '5']
+    elif last_command == 'clean':
+        # Sau clean → check bảo mật + diff + report
+        ordered = ['1', '5', '4', '7']
+    elif last_command == 'explain':
+        # Sau explain → check + clean + report
+        ordered = ['1', '3', '4', '5']
+    elif last_command == 'rules':
+        # Sau rules → check + clean
+        ordered = ['1', '3', '2', '4']
+    elif last_command == 'report':
+        # Sau report → check + clean
+        ordered = ['1', '3', '2', '7']
+    else:
+        ordered = ['1', '3', '2', '4']
+
+    return {k: all_options[k] for k in ordered if k in all_options}
+
+
+def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple]) -> None:
+    """Handle user's menu choice."""
+    choice_map = {
+        '1': ('check', 'pyneat check file.py --help'),
+        '2': ('explain', 'pyneat explain --help'),
+        '3': ('clean', 'pyneat clean file.py --help'),
+        '4': ('report', 'pyneat report --help'),
+        '5': ('diff', 'pyneat clean file.py --diff --help'),
+        '6': ('rules', 'pyneat rules --help'),
+        '7': ('config', 'pyneat rules --help'),
+    }
+
+    if choice in choice_map:
+        feature, help_cmd = choice_map[choice]
+        click.echo("")
+        click.echo(f"  📌 To use '{feature}':")
+        click.echo(f"     {click.style(help_cmd, fg='cyan')}")
+        click.echo("")
+        click.echo(f"  💡 View all options:")
+        click.echo(f"     {click.style(f'pyneat {feature} --help', fg='green')}")
+    else:
+        click.echo("")
+        click.echo(f"  {click.style('[!]', fg='yellow', bold=True)} Invalid option.")
+        click.echo(f"     Press 'q' or Enter to exit.")
+        click.echo("")
+        click.echo("  📚 Docs: https://pyneat.dev/docs")
 
 
 if __name__ == '__main__':

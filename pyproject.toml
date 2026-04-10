@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyneat-cli"
-version = "2.3.0"
+version = "2.4.0"
 description = "Neat Python AI Code Cleaner — removes AI-generated code artifacts, dead code, and security vulnerabilities"
 license = {text = "GNU AGPL-3.0-or-later"}
 readme = "README.md"
