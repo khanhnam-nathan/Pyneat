@@ -29,6 +29,18 @@ repos:
         files: \.py$
         stages: [pre-commit]
 
+      # Auto-generate PYNAGENT manifest (does not modify source code)
+      - id: pyneat-manifest
+        name: PyNEAT Manifest Generator
+        description: Generate .pyneat.manifest.json for AI editors (non-blocking)
+        entry: pyneat clean --export-manifest --dry-run
+        language: system
+        files: \.py$
+        stages: [pre-commit]
+        # Non-blocking: manifest generation failure does not abort commit
+        always_run: false
+        pass_filenames: true
+
       # Check for common issues
       - id: pyneat-check
         name: PyNEAT Check Mode

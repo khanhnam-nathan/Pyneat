@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyneat-cli"
-version = "2.2.1-beta"
+version = "2.2.1"
 description = "LibCST-powered Python cleaner: security scanning, structural refactors, auto-fix, and PYNAGENT markers for AI editors (not just a formatter)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -123,3 +123,7 @@ enable_quality = false
 enable_performance = false
 enable_unused_imports = true
 enable_redundant = true
+
+# --- Auto Manifest Export ---
+# Tự động tạo .pyneat.manifest.json sau mỗi lần clean
+export_manifest = true

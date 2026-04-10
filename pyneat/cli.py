@@ -299,7 +299,10 @@ def clean(input_file: str, output: str, in_place: bool, verbose: bool,
         return 1
 
     # Handle manifest export using agent_markers from engine
-    if export_manifest:
+    # Auto-export if export_manifest=True in pyproject.toml OR --export-manifest flag set
+    config = _load_config()
+    should_export = export_manifest or config.get("export_manifest", False)
+    if should_export:
         from pyneat.core.manifest import ManifestExporter
         all_markers = list(result.agent_markers)
         for i, finding in enumerate(result.security_findings):
@@ -451,6 +454,7 @@ def _process_single_file(
 @click.option('--parallel', '-P', is_flag=True, help='Enable parallel processing (auto-detect CPU cores)')
 @click.option('--workers', '-w', type=int, default=None, help='Number of parallel workers (default: auto)')
 @click.option('--clear-cache', is_flag=True, help='Clear the module-level AST cache before processing')
+@click.option('--export-manifest', is_flag=True, help='Export .pyneat.manifest.json sidecar file with markers for AI editors')
 @click.pass_context
 def clean_dir(ctx, dir_path: str, pattern: str, in_place: bool, backup: bool,
               backup_suffix: str, verbose: bool,
@@ -468,7 +472,7 @@ def clean_dir(ctx, dir_path: str, pattern: str, in_place: bool, backup: bool,
               enable_comment_clean: bool,
               debug_mode: str, dry_run: bool, diff: bool,
               parallel: bool, workers: Optional[int],
-              clear_cache: bool):
+              clear_cache: bool, export_manifest: bool):
     """Clean all Python files in a directory recursively."""
     if enable_all:
         enable_import_cleaning = True
@@ -666,6 +670,22 @@ def clean_dir(ctx, dir_path: str, pattern: str, in_place: bool, backup: bool,
     failed_count = sum(1 for r in results if not r['success'])
 
     click.echo(f"\nSummary: {success_count} ok, {failed_count} failed, {total_changes} total changes")
+
+    # Auto-export manifest if enabled in config or via flag
+    config = _load_config()
+    should_export = export_manifest or config.get("export_manifest", False)
+    if should_export:
+        from pyneat.core.manifest import ManifestExporter
+        for file_path in sorted(path.rglob(pattern)):
+            if file_path.exists() and file_path.suffix == '.py':
+                result = engine.process_file(file_path)
+                if result and result.agent_markers:
+                    exporter = ManifestExporter()
+                    for m in result.agent_markers:
+                        exporter.add_marker(m, file_path, result.original.content)
+                    manifest_path = exporter.write(file_path)
+                    if manifest_path:
+                        click.echo(f"[MANIFEST] {manifest_path}")
 
     if in_place:
         if backup and backup_dir:
