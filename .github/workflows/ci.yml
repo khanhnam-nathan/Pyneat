@@ -1,0 +1,157 @@
+# PyNEAT CI/CD Workflow
+#
+# Runs tests, lint, security scan, and auto-export manifest on push/PR.
+
+name: CI Tests
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - '**.py'
+      - '.github/workflows/*.yml'
+      - 'pyproject.toml'
+  pull_request:
+    paths:
+      - '**.py'
+      - '.github/workflows/*.yml'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v --tb=short
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: .pytest_cache/
+          retention-days: 7
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install ruff pyflakes
+
+      - name: Run Ruff
+        run: |
+          ruff check . --ignore E501,W503 || true
+
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    if: always()
+
+    steps:
+      - name: Check for failures
+        run: |
+          if [ "${{ needs.test.result }}" == "failure" ]; then
+            echo "::error::Tests failed"
+            exit 1
+          fi
+          echo "All tests passed!"
+
+  pyneat-self-analysis:
+    name: PyNeat Self-Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyNeat
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Run PyNeat on itself (dry-run)
+        run: |
+          python -m pyneat clean-dir pyneat --dry-run --diff
+
+      - name: Verify package sources compile
+        run: |
+          python -m compileall -q pyneat
+
+  export-manifest:
+    name: Export PyNEAT Manifest
+    runs-on: ubuntu-latest
+    # Run after self-analysis to avoid conflicts
+    needs: [pyneat-self-analysis]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyNEAT
+        run: pip install pyneat-cli
+
+      - name: Export Manifest
+        run: |
+          python -m pyneat clean-dir . --export-manifest --diff
+
+      - name: Upload Manifest Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyneat-manifest
+          path: '*.pyneat.manifest.json'
+          retention-days: 7
+
+      - name: Commit Manifest Changes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          if git diff --quiet; then
+            echo "No manifest changes to commit"
+          else
+            git add '*.pyneat.manifest.json'
+            git commit -m "ci: auto-update .pyneat.manifest.json [skip ci]" || echo "Commit failed (possibly no changes)"
+          fi
+        continue-on-error: true

@@ -75,7 +75,7 @@ from .rules.init_protection import InitFileProtectionRule
 # Security registry
 from .rules.security_registry import SECURITY_RULES_REGISTRY, get_security_rule, get_all_rule_ids
 
-__version__ = "2.0.0"
+__version__ = "2.2.1"
 
 __all__ = [
     # Core

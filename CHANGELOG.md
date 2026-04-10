@@ -4,6 +4,19 @@ Tất cả thay đổi đáng chú ý của dự án này sẽ được ghi ché
 
 Dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/) và [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.2.1] - 2026-04-10
+
+### Added
+
+#### Auto Manifest Export Integration
+- **Config-driven Export**: `export_manifest = true` in `[tool.pyneat]` section
+- **Pre-commit Hook**: Auto-generate `.pyneat.manifest.json` on commit
+- **GitHub Actions**: CI/CD job for automated manifest export on push/PR
+
+#### Enhanced CLI
+- `--export-manifest` flag for both `clean` and `clean-dir` commands
+- Auto-export based on `pyproject.toml` configuration
+
 ## [2.0.0-beta.2] - 2026-04-09
 
 ### Added

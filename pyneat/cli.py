@@ -238,6 +238,7 @@ def cli(color: str):
 @click.option('--diff', '-d', is_flag=True, help='Show unified diff of changes')
 @click.option('--check-conflicts', is_flag=True, help='Detect overlapping modifications between rules')
 @click.option('--clear-cache', is_flag=True, help='Clear the module-level AST cache before processing')
+@click.option('--export-manifest', is_flag=True, help='Export PYNAGENT manifest JSON file')
 def clean(input_file: str, output: str, in_place: bool, verbose: bool,
           package: str,
           enable_all: bool,
@@ -252,7 +253,7 @@ def clean(input_file: str, output: str, in_place: bool, verbose: bool,
           enable_refactoring: bool,
           enable_comment_clean: bool,
           debug_mode: str, dry_run: bool, diff: bool,
-          check_conflicts: bool, clear_cache: bool):
+          check_conflicts: bool, clear_cache: bool, export_manifest: bool):
     """Clean AI-generated code."""
     input_path = Path(input_file)
 
@@ -318,6 +319,23 @@ def clean(input_file: str, output: str, in_place: bool, verbose: bool,
                 str(input_path)
             ))
         return 0
+
+    # Export manifest if requested
+    if export_manifest:
+        manifest_path = input_path.with_suffix('.pyneat.manifest.json')
+        try:
+            manifest_data = {
+                'version': __version__,
+                'file': str(input_path),
+                'rules_enabled': [r['name'] for r in engine.get_rule_stats()['rules'] if r['enabled']],
+                'changes_count': len(result.changes_made) if result.changes_made else 0,
+            }
+            import json
+            with open(manifest_path, 'w', encoding='utf-8') as f:
+                json.dump(manifest_data, f, indent=2)
+            click.echo(f"[MANIFEST] Exported: {manifest_path}")
+        except Exception as e:
+            click.echo(f"[WARN] Manifest export failed: {e}", err=True)
 
     if diff:
         click.echo("=" * 60)
@@ -417,6 +435,7 @@ def _process_single_file(
 @click.option('--parallel', '-P', is_flag=True, help='Enable parallel processing (auto-detect CPU cores)')
 @click.option('--workers', '-w', type=int, default=None, help='Number of parallel workers (default: auto)')
 @click.option('--clear-cache', is_flag=True, help='Clear the module-level AST cache before processing')
+@click.option('--export-manifest', is_flag=True, help='Export PYNAGENT manifest JSON file')
 @click.pass_context
 def clean_dir(ctx, dir_path: str, pattern: str, in_place: bool, backup: bool,
               backup_suffix: str, verbose: bool,
@@ -434,7 +453,7 @@ def clean_dir(ctx, dir_path: str, pattern: str, in_place: bool, backup: bool,
               enable_comment_clean: bool,
               debug_mode: str, dry_run: bool, diff: bool,
               parallel: bool, workers: Optional[int],
-              clear_cache: bool):
+              clear_cache: bool, export_manifest: bool):
     """Clean all Python files in a directory recursively."""
     if enable_all:
         enable_import_cleaning = True
@@ -639,6 +658,25 @@ def clean_dir(ctx, dir_path: str, pattern: str, in_place: bool, backup: bool,
         else:
             click.echo(f"[OK] --in-place completed (no backup created)")
         click.echo(f"[OK] Files modified: {written_count}")
+
+    # Export manifest if requested
+    if export_manifest:
+        manifest_path = Path(dir_path) / '.pyneat.manifest.json'
+        try:
+            import json
+            manifest_data = {
+                'version': __version__,
+                'dir': str(dir_path),
+                'pattern': pattern,
+                'files_processed': success_count,
+                'files_failed': failed_count,
+                'total_changes': total_changes,
+            }
+            with open(manifest_path, 'w', encoding='utf-8') as f:
+                json.dump(manifest_data, f, indent=2)
+            click.echo(f"[MANIFEST] Exported: {manifest_path}")
+        except Exception as e:
+            click.echo(f"[WARN] Manifest export failed: {e}", err=True)
 
     return 0
 
