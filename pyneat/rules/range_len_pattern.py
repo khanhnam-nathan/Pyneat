@@ -1,6 +1,6 @@
 """Rule for fixing 'for i in range(len(items)): item = items[i]' anti-pattern.
 
-Copyright (c) 2024-2026 PyNEAT Authors
+Copyright (c) 2026 PyNEAT Authors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
