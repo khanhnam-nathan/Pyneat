@@ -375,7 +375,8 @@ def clean(input_file: str, output: str, in_place: bool, verbose: bool,
         return 1
 
     # Hiển thị menu gợi ý tính năng khác
-    show_feature_menu("clean", f"{len(result.changes_made)} changes made")
+    ctx = click.get_current_context()
+    show_feature_menu("clean", f"{len(result.changes_made)} changes made", ctx)
 
     return 0
 
@@ -1035,7 +1036,8 @@ def check(target, severity, cvss, output, format, fail_on, skip_deps, verbose, u
             click.secho(f"  [FAIL] Found {sev_label} issue(s) - exiting with code 1", fg="red", bold=True)
 
     # Hiển thị menu gợi ý tính năng khác
-    show_feature_menu("check", f"{sum(summary.values()) - summary.get('dep', 0)} issues found")
+    ctx = click.get_current_context()
+    show_feature_menu("check", f"{sum(summary.values()) - summary.get('dep', 0)} issues found", ctx)
 
     return exit_code
 
@@ -1440,7 +1442,7 @@ def security_db(update, status, force):
 # Interactive Feature Menu
 # --------------------------------------------------------------------------
 
-def show_feature_menu(last_command: str = "", context: str = "") -> None:
+def show_feature_menu(last_command: str = "", context: str = "", ctx: click.Context = None) -> None:
     """Show interactive menu guiding users to other features.
 
     Args:
@@ -1478,7 +1480,7 @@ def show_feature_menu(last_command: str = "", context: str = "") -> None:
         return
 
     # Xử lý lựa chọn
-    _handle_menu_choice(choice, suggestions)
+    _handle_menu_choice(choice, suggestions, ctx)
 
 
 def _get_menu_suggestions(last_command: str, context: str) -> Dict[str, tuple]:
@@ -1524,23 +1526,29 @@ def _get_menu_suggestions(last_command: str, context: str) -> Dict[str, tuple]:
     return {k: all_options[k] for k in ordered if k in all_options}
 
 
-def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple]) -> None:
-    """Handle user's menu choice."""
+def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple], ctx: click.Context) -> None:
+    """Handle user's menu choice - run the command directly."""
+    # Command map: key -> (feature_name, command_args)
     choice_map = {
-        'A': ('check', 'pyneat check file.py --help'),
-        'B': ('explain', 'pyneat explain --help'),
-        'C': ('clean', 'pyneat clean file.py --help'),
-        'D': ('report', 'pyneat report --help'),
+        'A': ('check', ['check', '--help']),
+        'B': ('explain', ['explain', '--help']),
+        'C': ('clean', ['clean', '--help']),
+        'D': ('report', ['report', '--help']),
     }
 
     if choice in choice_map:
-        feature, help_cmd = choice_map[choice]
+        feature, cmd_args = choice_map[choice]
         click.echo("")
-        click.echo(f"  📌 To use '{feature}':")
-        click.echo(f"     {click.style(help_cmd, fg='cyan')}")
+        click.echo(f"  Running: {click.style('pyneat ' + ' '.join(cmd_args), fg='cyan', bold=True)}")
         click.echo("")
-        click.echo(f"  💡 View all options:")
-        click.echo(f"     {click.style(f'pyneat {feature} --help', fg='green')}")
+        
+        # Chạy command trực tiếp bằng cách invoke lại CLI
+        try:
+            ctx.invoke(cli, args=cmd_args)
+        except SystemExit:
+            pass
+        except Exception as e:
+            click.echo(f"  {click.style('[!]', fg='red')} Error: {e}")
     else:
         click.echo("")
         click.echo(f"  {click.style('[!]', fg='yellow', bold=True)} Invalid option.")
