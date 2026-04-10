@@ -1528,23 +1528,27 @@ def _get_menu_suggestions(last_command: str, context: str) -> Dict[str, tuple]:
 
 def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple], ctx: click.Context) -> None:
     """Handle user's menu choice - run the command directly."""
-    # Command map: key -> (feature_name, command_args)
+    # Command map: key -> (feature_name, command_name)
     choice_map = {
-        'A': ('check', ['check', '--help']),
-        'B': ('explain', ['explain', '--help']),
-        'C': ('clean', ['clean', '--help']),
-        'D': ('report', ['report', '--help']),
+        'A': ('check', 'check'),
+        'B': ('explain', 'explain'),
+        'C': ('clean', 'clean'),
+        'D': ('report', 'report'),
     }
 
     if choice in choice_map:
-        feature, cmd_args = choice_map[choice]
+        feature, cmd_name = choice_map[choice]
         click.echo("")
-        click.echo(f"  Running: {click.style('pyneat ' + ' '.join(cmd_args), fg='cyan', bold=True)}")
+        click.echo(f"  Running: {click.style('pyneat ' + cmd_name + ' --help', fg='cyan', bold=True)}")
         click.echo("")
         
-        # Chạy command trực tiếp bằng cách invoke lại CLI
+        # Lấy subcommand từ CLI group và invoke nó
         try:
-            ctx.invoke(cli, args=cmd_args)
+            sub_cmd = ctx.command.commands.get(cmd_name)
+            if sub_cmd:
+                ctx.invoke(sub_cmd, ['--help'])
+            else:
+                click.echo(f"  {click.style('[!]', fg='red')} Command '{cmd_name}' not found")
         except SystemExit:
             pass
         except Exception as e:
