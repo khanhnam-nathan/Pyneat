@@ -1486,57 +1486,40 @@ def _get_menu_suggestions(last_command: str, context: str) -> Dict[str, tuple]:
 
     Returns dict of {key: (icon, title, description, command_example)}
     """
+    # Chữ cái A, B, C, D cố định - luôn hiển thị 4 lựa chọn liên tục
     all_options = {
-        # Bảo mật & Quét lỗi
-        '1': ('🔒', 'Security Check',
+        'A': ('🔒', 'Security Check',
                'Quét lỗ hổng: SQL injection, path traversal, hardcoded secrets...',
                'pyneat check file.py'),
-        '2': ('📖', 'Explain Rule',
+        'B': ('📖', 'Explain Rule',
                'Nguyên nhân, cách fix, CWE/OWASP, verification steps...',
                'pyneat explain SEC-001'),
-
-        # Làm sạch code
-        '3': ('🧹', 'Clean Code',
+        'C': ('🧹', 'Clean Code',
                'Thêm type hints, xóa unused imports, số magic, debug prints...',
                'pyneat clean file.py'),
-
-        # Báo cáo & CI/CD
-        '4': ('📊', 'Export Report (JSON/SARIF)',
+        'D': ('📊', 'Export Report (JSON/SARIF)',
                'Tích hợp CI/CD: GitHub Code Scanning, GitLab SAST...',
                'pyneat report . -f sarif -o security.sarif'),
-
-        # So sánh & Debug
-        '5': ('🔍', 'View Diff',
-               'So sánh code trước và sau khi làm sạch...',
-               'pyneat clean file.py --diff'),
-
-        # Cấu hình
-        '6': ('📋', 'View All Rules',
-               'Trạng thái bật/tắt, severity, mô tả ngắn của mỗi rule...',
-               'pyneat rules'),
-        '7': ('⚙️', 'Configure & Optimize',
-               'Bật/tắt rules, đặt ngưỡng, cấu hình package...',
-               'pyneat rules --verbose'),
     }
 
-    # Smart suggestions dựa trên command vừa chạy
+    # Smart suggestions dựa trên command vừa chạy - LUÔN dùng A, B, C, D
     if last_command == 'check':
-        # Sau check bảo mật → clean + explain + report
-        ordered = ['3', '2', '4', '5']
+        # Sau check bảo mật → clean + explain + report + diff
+        ordered = ['A', 'B', 'C', 'D']
     elif last_command == 'clean':
-        # Sau clean → check bảo mật + diff + report
-        ordered = ['1', '5', '4', '7']
+        # Sau clean → check bảo mật + diff + report + config
+        ordered = ['A', 'B', 'C', 'D']
     elif last_command == 'explain':
-        # Sau explain → check + clean + report
-        ordered = ['1', '3', '4', '5']
+        # Sau explain → check + clean + report + diff
+        ordered = ['A', 'B', 'C', 'D']
     elif last_command == 'rules':
-        # Sau rules → check + clean
-        ordered = ['1', '3', '2', '4']
+        # Sau rules → check + clean + explain + report
+        ordered = ['A', 'B', 'C', 'D']
     elif last_command == 'report':
-        # Sau report → check + clean
-        ordered = ['1', '3', '2', '7']
+        # Sau report → check + clean + explain + config
+        ordered = ['A', 'B', 'C', 'D']
     else:
-        ordered = ['1', '3', '2', '4']
+        ordered = ['A', 'B', 'C', 'D']
 
     return {k: all_options[k] for k in ordered if k in all_options}
 
@@ -1544,13 +1527,10 @@ def _get_menu_suggestions(last_command: str, context: str) -> Dict[str, tuple]:
 def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple]) -> None:
     """Handle user's menu choice."""
     choice_map = {
-        '1': ('check', 'pyneat check file.py --help'),
-        '2': ('explain', 'pyneat explain --help'),
-        '3': ('clean', 'pyneat clean file.py --help'),
-        '4': ('report', 'pyneat report --help'),
-        '5': ('diff', 'pyneat clean file.py --diff --help'),
-        '6': ('rules', 'pyneat rules --help'),
-        '7': ('config', 'pyneat rules --help'),
+        'A': ('check', 'pyneat check file.py --help'),
+        'B': ('explain', 'pyneat explain --help'),
+        'C': ('clean', 'pyneat clean file.py --help'),
+        'D': ('report', 'pyneat report --help'),
     }
 
     if choice in choice_map:
