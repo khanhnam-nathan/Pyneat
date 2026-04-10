@@ -45,6 +45,7 @@ from .core.types import (
     TransformationResult,
     RuleConflict,
     RuleRange,
+    AgentMarker,
     # Security types
     SecuritySeverity,
     SecurityFinding,
@@ -75,12 +76,21 @@ from .rules.init_protection import InitFileProtectionRule
 # Security registry
 from .rules.security_registry import SECURITY_RULES_REGISTRY, get_security_rule, get_all_rule_ids
 
+# Manifest export
+from .core.manifest import ManifestExporter, MarkerParser, export_to_sarif, export_to_codeclimate, export_to_markdown
+from .core.marker_cleanup import MarkerCleanup
+
+# AI bug rules
+from .rules.ai_bugs import AIBugRule
+from .rules.duplication import CodeDuplicationRule
+from .rules.naming import NamingInconsistencyRule
+
 __version__ = "2.2.2"
 
 __all__ = [
     # Core
     'RuleEngine', 'CodeFile', 'RuleConfig', 'TransformationResult',
-    'RuleConflict', 'RuleRange',
+    'RuleConflict', 'RuleRange', 'AgentMarker',
     # Security types
     'SecuritySeverity', 'SecurityFinding', 'DependencyFinding',
     'CWE_SEVERITY_MAP', 'OWASP_SEVERITY_MAP',
@@ -96,6 +106,11 @@ __all__ = [
     'DeadCodeRule', 'MatchCaseRule',
     # Security registry
     'SECURITY_RULES_REGISTRY', 'get_security_rule', 'get_all_rule_ids',
+    # Manifest export
+    'ManifestExporter', 'MarkerParser', 'export_to_sarif', 'export_to_codeclimate',
+    'export_to_markdown', 'MarkerCleanup',
+    # AI bug rules
+    'AIBugRule', 'CodeDuplicationRule', 'NamingInconsistencyRule',
     # Convenience functions
     'clean_code', 'clean_file', 'analyze_code',
     # Fuzz testing tool

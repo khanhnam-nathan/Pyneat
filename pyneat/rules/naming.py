@@ -25,9 +25,11 @@ Nếu muốn đổi tên đầy đủ (class + references), dùng AggressiveNami
 
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Set, Tuple
+from collections import defaultdict
 
 import libcst as cst
+import ast
 
 from pyneat.core.types import CodeFile, RuleConfig, TransformationResult
 from pyneat.rules.base import Rule
@@ -224,3 +226,107 @@ class NamingConventionRule(Rule):
         except Exception:
             pass
         return mapping
+
+
+# --------------------------------------------------------------------------
+# Naming Inconsistency Rule (AI Bug Pattern)
+# --------------------------------------------------------------------------
+
+class _NamingInconsistencyVisitor(ast.NodeVisitor):
+    """AST visitor to detect mixed naming conventions in the same file."""
+
+    def __init__(self):
+        self.names: Dict[str, str] = {}  # normalized -> original
+        self.changes: List[str] = []
+        self._seen_pairs: Set[Tuple[str, str]] = set()
+
+    def visit_FunctionDef(self, node):
+        self._check_name_style(node.name, f"function '{node.name}'")
+        for arg in node.args.args:
+            if arg.arg:
+                self._check_name_style(arg.arg, f"parameter '{arg.arg}'")
+        self.generic_visit(node)
+
+    def visit_Assign(self, node):
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                self._check_name_style(target.id, f"variable '{target.id}'")
+        self.generic_visit(node)
+
+    def visit_Name(self, node: ast.Name):
+        """Check all name references for consistency."""
+        self._check_name_style(node.id, f"name '{node.id}'")
+        self.generic_visit(node)
+
+    def _check_name_style(self, name: str, context: str):
+        """Check if name style is consistent with previously seen names."""
+        if not name or len(name) < 3:
+            return
+
+        # Normalize: remove underscores, lowercase
+        normalized = name.replace('_', '').lower()
+
+        if normalized in self.names:
+            original = self.names[normalized]
+            if original != name:
+                pair = tuple(sorted([original, name]))
+                if pair not in self._seen_pairs:
+                    self._seen_pairs.add(pair)
+                    orig_style = "camelCase" if '_' not in original and any(c.isupper() for c in original) else "snake_case"
+                    new_style = "camelCase" if '_' not in name and any(c.isupper() for c in name) else "snake_case"
+                    self.changes.append(
+                        f"NAMING-INCONSISTENCY: {context} uses {new_style} "
+                        f"while '{original}' uses {orig_style}"
+                    )
+        else:
+            self.names[normalized] = name
+
+    def _check_similar_names(self, name: str, context: str):
+        """Check if name is similar to an existing one with different style."""
+        if not name or len(name) < 3:
+            return
+
+        name_lower = name.lower().replace('_', '')
+        # Check all existing names for similarity
+        for existing, original in list(self.names.items()):
+            if existing == name_lower:
+                continue
+            # Check if one is a prefix of the other (after normalization)
+            if name_lower.startswith(existing) or existing.startswith(name_lower):
+                if ('_' in name) != ('_' in original):
+                    pair = tuple(sorted([original, name]))
+                    if pair not in self._seen_pairs:
+                        self._seen_pairs.add(pair)
+                        orig_style = "camelCase" if '_' not in original and any(c.isupper() for c in original) else "snake_case"
+                        new_style = "camelCase" if '_' not in name and any(c.isupper() for c in name) else "snake_case"
+                        self.changes.append(
+                            f"NAMING-INCONSISTENCY: {context} uses {new_style} "
+                            f"while '{original}' uses {orig_style}"
+                        )
+
+
+class NamingInconsistencyRule(Rule):
+    """Detect mixed naming conventions (camelCase vs snake_case) in the same file.
+
+    This rule identifies variables and functions that use inconsistent naming
+    styles, which is a common AI code generator mistake.
+    """
+
+    def __init__(self, config: RuleConfig = None):
+        super().__init__(config)
+
+    @property
+    def description(self) -> str:
+        return "Detect mixed naming conventions (camelCase vs snake_case)"
+
+    def apply(self, code_file: CodeFile) -> TransformationResult:
+        """Apply naming inconsistency detection."""
+        try:
+            tree = ast.parse(code_file.content)
+        except SyntaxError:
+            return self._create_error_result(code_file, f"Syntax error: {code_file.path}")
+
+        visitor = _NamingInconsistencyVisitor()
+        visitor.visit(tree)
+
+        return self._create_result(code_file, code_file.content, visitor.changes)

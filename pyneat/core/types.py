@@ -390,6 +390,100 @@ class CodeFile:
         return self.path.name
 
 @dataclass(frozen=True)
+class AgentMarker:
+    """A marker/issue detected by a rule for agent handoff.
+
+    Contains full context for tracking, fixing, and reporting issues.
+    Designed for agent-to-agent communication and manifest export.
+    """
+    marker_id: str                              # Unique identifier, e.g. "PYN-001"
+    issue_type: str                             # e.g. "sql_injection", "unused_import"
+    rule_id: str                                # e.g. "SecurityScannerRule", "DeadCodeRule"
+    severity: str = "medium"                    # "critical", "high", "medium", "low", "info"
+    line: int = 1                              # 1-indexed start line
+    end_line: Optional[int] = None             # 1-indexed end line (None = same as line)
+    column: int = 0                            # 0-indexed column
+    hint: Optional[str] = None                 # Suggested fix
+    why: Optional[str] = None                 # Why this is a problem
+    confidence: float = 1.0                    # 0.0 - 1.0 detection confidence
+    can_auto_fix: bool = False                 # Whether auto-fix is conceptually possible
+    fix_diff: Optional[str] = None             # Unified diff for the fix
+    snippet: Optional[str] = None              # Code snippet (max 200 chars)
+    cwe_id: Optional[str] = None               # CWE-89, CWE-79, ...
+    auto_fix_available: bool = False           # Whether auto-fix is implemented
+    auto_fix_before: Optional[str] = None      # Code before fix
+    auto_fix_after: Optional[str] = None       # Code after fix
+    requires_user_input: bool = False          # Whether fix needs user confirmation
+    related_markers: Tuple[str, ...] = field(default_factory=tuple)  # Related marker IDs
+
+    def __post_init__(self):
+        # Auto-set end_line to line if not provided
+        if self.end_line is None:
+            object.__setattr__(self, 'end_line', self.line)
+
+    @property
+    def location(self) -> str:
+        return f"line {self.line}" + (f"-{self.end_line}" if self.end_line != self.line else "")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize to dict for JSON output."""
+        return {
+            "marker_id": self.marker_id,
+            "issue_type": self.issue_type,
+            "rule_id": self.rule_id,
+            "severity": self.severity,
+            "line": self.line,
+            "end_line": self.end_line,
+            "column": self.column,
+            "hint": self.hint,
+            "why": self.why,
+            "confidence": self.confidence,
+            "can_auto_fix": self.can_auto_fix,
+            "fix_diff": self.fix_diff,
+            "snippet": self.snippet,
+            "cwe_id": self.cwe_id,
+            "auto_fix_available": self.auto_fix_available,
+            "auto_fix_before": self.auto_fix_before,
+            "auto_fix_after": self.auto_fix_after,
+            "requires_user_input": self.requires_user_input,
+            "related_markers": list(self.related_markers),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AgentMarker":
+        """Deserialize from dict."""
+        # Normalize related_markers to tuple
+        if "related_markers" in data and isinstance(data["related_markers"], list):
+            data = {**data, "related_markers": tuple(data["related_markers"])}
+        return cls(**data)
+
+    def to_json(self) -> str:
+        """Serialize to JSON string."""
+        import json
+        return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "AgentMarker":
+        """Deserialize from JSON string."""
+        import json
+        return cls.from_dict(json.loads(json_str))
+
+    def to_comment(self) -> str:
+        """Serialize to a PYNAGENT source code comment.
+
+        Format: # PYNAGENT: {"marker_id":"...", "issue_type":"...", ...}
+        """
+        import json
+        data = self.to_dict()
+        # Truncate long fields for comment readability
+        for key in ("snippet", "fix_diff", "auto_fix_before", "auto_fix_after"):
+            if data.get(key) and len(data[key]) > 80:
+                data[key] = data[key][:77] + "..."
+        json_str = json.dumps(data, ensure_ascii=False)
+        return f"# PYNAGENT: {json_str}"
+
+
+@dataclass(frozen=True)
 class TransformationResult:
     """Result of a code transformation operation."""
     original: CodeFile
@@ -402,6 +496,8 @@ class TransformationResult:
     security_findings: List[SecurityFinding] = field(default_factory=list)
     auto_fix_applied: List[str] = field(default_factory=list)
     dependency_findings: List[DependencyFinding] = field(default_factory=list)
+    # Agent marker field
+    agent_markers: List[AgentMarker] = field(default_factory=list)
 
     @property
     def has_changes(self) -> bool:

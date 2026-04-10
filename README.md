@@ -1,61 +1,103 @@
 # PyNeat: The Anti-Spaghetti Code Cleaner
 
-**PyNeat 2.0.0** is an aggressive, AST-based Python code refactoring tool designed to clean up messy, legacy, or AI-generated code. Unlike standard formatters that only fix whitespace, PyNeat performs deep structural surgery on your logic in a single optimized pass using LibCST.
+**PyNeat 2.3.0** is an aggressive, AST-based Python code refactoring tool designed to clean up messy, legacy, or AI-generated code. Unlike standard formatters that only fix whitespace, PyNeat performs deep structural surgery on your logic in a single optimized pass using LibCST.
 
 ## Features
 
-### Core Cleaning Rules (Always-on)
+### Package System
+
+PyNeat uses a **3-tier package system** to balance safety vs. aggressiveness:
+
+| Package | Description | Safety |
+|---------|-------------|--------|
+| `safe` (default) | Always-on rules that won't break code | **100% safe** |
+| `conservative` | Adds cleanup rules, may change style | Safe |
+| `destructive` | Aggressive refactoring, may break code | **Review changes** |
+
+### Safe Package (Default — Always On)
+
+These rules run automatically, no flags needed:
 
 | Rule | Description |
 |------|-------------|
-| `ImportCleaningRule` | Standardizes and deduplicates import statements |
-| `NamingConventionRule` | Enforces PEP8 naming conventions |
-| `RefactoringRule` | Refactors complex nested code structures (Arrow Anti-pattern) |
-| `DebugCleaner` | Removes print/log/pdb debug artifacts |
-| `CommentCleaner` | Removes empty TODO/AI boilerplate comments |
+| `IsNotNoneRule` | Fixes `x != None` → `x is not None` (PEP8) |
+| `RangeLenRule` | Fixes `range(len())` anti-pattern |
+| `TypingRule` | Suggests type annotations |
+| `CodeQualityRule` | Detects magic numbers, empty except blocks |
+| `PerformanceRule` | Detects inefficient loops |
+| `SecurityScannerRule` | Detects vulnerabilities (os.system, pickle, secrets) |
 
-### Optional Rules (Flags)
+### Conservative Package (`--package conservative`)
+
+Adds cleanup rules, safe to use:
 
 | Flag | Rule | Description |
 |------|------|-------------|
-| `--enable-security` | `SecurityScannerRule` | Detects SQL injection, hardcoded secrets, eval() |
-| `--enable-quality` | `CodeQualityRule` | Detects magic numbers, empty except blocks |
-| `--enable-performance` | `PerformanceRule` | Detects inefficient loops and patterns |
-| `--enable-unused` | `UnusedImportRule` | Removes genuinely unused imports via AST analysis |
-| `--enable-redundant` | `RedundantExpressionRule` | Simplifies `x == True`, `str(str(x))`, etc. |
-| `--enable-dead-code` | `DeadCodeRule` | Removes unused functions and classes via AST analysis |
-| `--enable-fstring` | `FStringRule` | Converts `.format()` and string concatenation to f-strings |
-| `--enable-range-len` | `RangeLenRule` | Fixes `range(len())` anti-pattern with direct iteration |
-| `--enable-typing` | `TypingRule` | Suggests type annotations for untyped functions |
-| `--enable-match-case` | `MatchCaseRule` | Suggests converting if-elif chains to match-case (Python 3.10+) |
-| `--enable-dataclass` | `DataclassSuggestionRule` | Suggests `@dataclass` for simple data classes |
+| `--enable-unused` | `UnusedImportRule` | Removes genuinely unused imports |
+| `--enable-fstring` | `FStringRule` | Converts `.format()` to f-strings |
+| `--enable-dataclass` | `DataclassSuggestionRule` | Suggests `@dataclass` decorator |
+| `--enable-magic-numbers` | `MagicNumberRule` | Flags magic numbers |
+| `--safe-debug-clean` | `DebugCleaner` (safe) | Removes debug-like prints |
 
-### What It Fixes
+### Destructive Package (`--package destructive`)
 
-## What's New in v2.0.0
+Aggressive rules that **may break code** — always review changes:
 
-| Category | Feature |
-|----------|---------|
-| **New Rule** | `IsNotNoneRule` - Converts `x is not None` patterns |
-| **New Rule** | `MagicNumberRule` - Detects and flags magic numbers |
-| **New Rule** | `RangeLenRule` - Fixes `range(len())` anti-pattern |
-| **New Rule** | `DeadCodeRule` - Removes unused functions and classes via AST analysis |
-| **New Rule** | `FStringRule` - Converts `.format()` to f-strings |
-| **New Rule** | `TypingRule` - Suggests type annotations for untyped functions |
-| **New Rule** | `MatchCaseRule` - Suggests match-case for if-elif chains (Python 3.10+) |
-| **New Rule** | `DataclassSuggestionRule` - Suggests `@dataclass` for simple classes |
-| **Improvement** | Refactored comprehensive rule system with priority ordering |
-| **Improvement** | Added comprehensive test samples for real-world scenarios |
-| **Improvement** | Cleaner CI/CD workflow with lint and stress tests |
-| **Improvement** | Enhanced isolated block processing for nested code |
-| **Improvement** | Fixed Unicode encoding issues in CLI output |
-| **Bug Fix** | Fixed CI configuration to use proper Linux Python paths |
-| **Bug Fix** | Fixed compileall verification for package integrity |
-| **Cleanup** | Removed redundant test files for leaner test suite |
-| **Cleanup** | Simplified CI pipeline (single pytest run instead of multiple jobs) |
+| Flag | Rule | Description |
+|------|------|-------------|
+| `--enable-all` | All rules | Enable everything (shortcut) |
+| `--enable-import-cleaning` | `ImportCleaningRule` | Rewrite/reorder all imports |
+| `--enable-naming` | `NamingConventionRule` | Rename classes to PascalCase |
+| `--enable-refactoring` | `RefactoringRule` | Flatten nested if (Arrow Anti-pattern) |
+| `--enable-comment-clean` | `CommentCleaner` | Remove TODO/FIXME comments |
+| `--enable-redundant` | `RedundantExpressionRule` | Simplify `x == True`, `str(str(x))` |
+| `--enable-dead-code` | `DeadCodeRule` | Remove unused functions/classes |
+| `--enable-match-case` | `MatchCaseRule` | Suggest match-case (Python 3.10+) |
+| `--aggressive-clean` | `DebugCleaner` (aggressive) | Remove ALL print calls |
+
+## What It Fixes
+
+### AgentMarker — Issue Tracking Metadata
+- `AgentMarker` dataclass tracks each issue with full metadata (rule_id, severity, line, CWE, confidence, auto-fix diff)
+- Auto-exports as `# PYNAGENT: {...}` comments in source code
+- `to_dict()`, `to_json()`, `to_comment()` methods for integration
+
+### Manifest Export — CI/CD Integration
+- `ManifestExporter` writes `.pyneat.manifest.json` with all markers
+- `export_to_sarif()` — SARIF 2.1.0 format (GitHub Security, Azure DevOps)
+- `export_to_codeclimate()` — Code Climate format
+- `export_to_markdown()` — Human-readable report
+
+### MarkerCleanup — Stale Marker Removal
+- `MarkerCleanup` class removes markers after issues are fixed
+- `remove_stale_markers()` — only removes markers not in remaining_issues
+- `remove_all_markers()` — strips all PYNAGENT comments
+
+### AI Bug Detection (`AIBugRule`)
+- **Resource Leaks**: `open()` without `with`, `requests` without timeout
+- **Boundary Errors**: `list[0]` without empty check, `.split()[0]`
+- **Phantom Packages**: generic import names (utils, helpers, ai)
+- **Fake Parameters**: `param1=x`, `fake=True`, `dummy_arg`
+- **Redundant I/O**: Same API call 3+ times with identical args
+- **Naming Inconsistency**: Mixed camelCase/snake_case in same file
+
+### CLI Enhancements
+- `--package` system: `safe` (default) → `conservative` → `destructive`
+- `--enable-all` — enable all destructive rules at once
+- `--dry-run` + `--diff` — preview changes before writing
+- `--backup` + `--in-place` — safe file modification
+- `--export-manifest` — auto-export PYNAGENT manifest
+
+### Pre-commit + GitHub Actions
+- Auto-generate `.pyneat.manifest.json` on commit
+- CI/CD job for automated manifest export on push/PR
+
+---
+
+## What It Fixes
 
 1. Flattens deeply nested `if/else` (Arrow Anti-pattern)
-2. Converts `x == None` to `x is None`
+2. Converts `x != None` to `x is not None` (PEP8)
 3. Fixes literal identity comparisons (`is 200` to `== 200`)
 4. Upgrades `type(x) == list` to `isinstance()`
 5. Removes debug artifacts: `print()`, `pdb`, `console.log`
@@ -66,10 +108,11 @@
 10. Simplifies redundant expressions (`x == True` -> `x`)
 11. Auto-fixes `yaml.load()` to use `SafeLoader`
 12. Warns about command injection, pickle RCE, weak crypto
+13. Detects AI-generated code bugs (resource leaks, phantom packages, fake params)
 
-### Security Scanning (`--enable-security`)
+### Security Scanning
 
-When enabled, detects and auto-fixes security vulnerabilities in AI-generated code:
+`SecurityScannerRule` runs automatically in all packages. Detects and auto-fixes vulnerabilities:
 
 | Vulnerability | Detection | Auto-fix |
 |-------------|-----------|----------|
@@ -80,12 +123,13 @@ When enabled, detects and auto-fixes security vulnerabilities in AI-generated co
 | Weak Crypto | `random` for tokens, `hashlib.md5/sha1` | Warning only |
 | Pickle Deserialize | `pickle.loads()` | Warning only (RCE risk) |
 | Debug Mode | `DEBUG=True` in production | Warning only |
-| Weak SECRET_KEY | Short/common keys | Warning + suggestion |
 | Hardcoded Secrets | `api_key`, `password`, `token` in code | Warning + env vars suggestion |
 | Template Injection | `render_template_string()` | Warning only (SSTI risk) |
 | Empty except blocks | `except: pass` | **Auto-fixed to `raise`** |
 | Path Traversal | `open()` with user input | Warning only |
 | XXE | XML parsing without safe settings | Warning only |
+
+Use `pyneat check` for detailed scan with severity levels and CVSS scores.
 
 ### Rust Acceleration (`--rust`)
 
@@ -118,40 +162,92 @@ pip install -e .
 
 ## Usage
 
-### Clean a single file
+### CLI — Clean a single file
 
 ```bash
+# Default (safe package) — runs automatically, no flags needed
 pyneat clean your_messy_file.py
+
+# Preview changes without writing
+pyneat clean your_messy_file.py --dry-run --diff
+
+# In-place modification (with backup first)
+pyneat clean your_messy_file.py --in-place --backup
+
+# Conservative package — adds cleanup rules
+pyneat clean your_messy_file.py --package conservative
+
+# Destructive package — aggressive refactoring (may break code!)
+pyneat clean your_messy_file.py --package destructive
+
+# Enable ALL rules at once
+pyneat clean your_messy_file.py --package destructive --enable-all
 ```
 
-With in-place modification:
+### CLI — Clean entire directory
 
 ```bash
-pyneat clean your_messy_file.py --in-place
+# Preview all changes first
+pyneat clean-dir ./src --dry-run --diff
+
+# In-place with parallel processing
+pyneat clean-dir ./src --pattern "*.py" --in-place --backup --parallel
 ```
 
-### Clean entire directory
+### CLI — Security scan (no auto-fix)
 
 ```bash
-pyneat clean-dir ./src
+# Scan for vulnerabilities
+pyneat check your_file.py --severity --cvss
+
+# Fail CI if CRITICAL issues found
+pyneat check ./src --fail-on critical --format sarif --output report.sarif
 ```
 
-### Verbose output
+### CLI — Other commands
 
 ```bash
-pyneat clean your_file.py --verbose
-```
-
-### Enable optional rules
-
-```bash
-pyneat clean your_file.py --enable-security --enable-unused --enable-redundant
-```
-
-### List all rules
-
-```bash
+# List all rules by package
 pyneat rules
+
+# Explain a security rule
+pyneat explain SEC-001
+
+# Ignore a rule (per-instance or global)
+pyneat ignore SEC-003 --file app.py --line 42 --reason "already sanitized"
+```
+
+### Python API
+
+```python
+from pyneat import clean_code, clean_file, analyze_code
+
+# Simplest — pass code as a string
+result = clean_code("x == None")                          # "x is not None"
+result = clean_code("print('debug')", remove_debug=True)  # ""
+
+# Clean a file
+from pathlib import Path
+result = clean_file(Path("app.py"), in_place=True)
+print(f"Made {len(result.changes_made)} changes")
+
+# Analyze only — no auto-fix
+report = analyze_code("x == None; print('debug')")
+for issue in report['issues']:
+    print(f"  - {issue}")
+```
+
+### Python API — Custom engine
+
+```python
+from pyneat import RuleEngine, CodeFile, RuleConfig
+from pyneat.rules import IsNotNoneRule, DebugCleaner
+
+engine = RuleEngine([
+    IsNotNoneRule(),
+    DebugCleaner(mode="safe"),
+])
+result = engine.process_code_file(CodeFile(path=Path("demo.py"), content=source))
 ```
 
 ## Configuration
@@ -160,11 +256,27 @@ PyNeat respects `pyproject.toml` settings under `[tool.pyneat]`:
 
 ```toml
 [tool.pyneat]
-enable_security = false
-enable_quality = false
-enable_performance = false
+# Default package: safe, conservative, or destructive
+package = "safe"
+
+# Conservative rules
 enable_unused_imports = true
-enable_redundant = true
+enable_fstring = false
+enable_dataclass = false
+enable_magic_numbers = false
+debug_clean_mode = "off"   # off, safe, or aggressive
+
+# Destructive rules (use with caution!)
+enable_import_cleaning = false
+enable_naming = false
+enable_refactoring = false
+enable_comment_clean = false
+enable_redundant = false
+enable_dead_code = false
+enable_match_case = false
+
+# Auto-export manifest on commit
+export_manifest = false
 ```
 
 ## Pre-commit Integration
@@ -177,11 +289,11 @@ repos:
     hooks:
       - id: pyneat-clean
         name: PyNeat AI Code Cleaner
-        entry: pyneat clean --in-place --verbose
+        entry: pyneat clean --package conservative --in-place
         language: system
         types: [python]
         pass_filenames: true
-        args: ['--enable-unused', '--enable-redundant']
+        args: ['--enable-unused', '--dry-run']
 ```
 
 Install:
