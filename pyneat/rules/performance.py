@@ -99,7 +99,7 @@ class PerformanceRule(Rule):
             repeated = self._find_repeated_method_calls(tree)
             for item in repeated:
                 changes.append(
-                    f"PERFORMANCE: Repeated {item}() call in loop — call once and reuse"
+                    f"PERFORMANCE: Repeated {item}() call in loop - call once and reuse"
                 )
 
             return self._create_result(code_file, content, changes)
