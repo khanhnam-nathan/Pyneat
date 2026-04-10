@@ -40,6 +40,9 @@ from pyneat.rules.match_case import MatchCaseRule
 from pyneat.rules.dataclass import DataclassSuggestionRule, DataclassAdderRule
 from pyneat.rules.init_protection import InitFileProtectionRule
 from pyneat.rules.fstring import FStringRule, StringConcatRule
+from pyneat.rules.ai_bugs import AIBugRule
+from pyneat.rules.duplication import CodeDuplicationRule
+from pyneat.rules.naming import NamingInconsistencyRule
 
 # Rule groupings for easier discovery
 from pyneat.rules import safe

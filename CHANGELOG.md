@@ -4,6 +4,43 @@ Tất cả thay đổi đáng chú ý của dự án này sẽ được ghi ché
 
 Dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/) và [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.3.0] - 2026-04-10
+
+### Added
+
+#### AgentMarker (Issue Tracking Metadata)
+- `AgentMarker` dataclass in `pyneat.core.types` - metadata cho từng issue
+- Fields: `marker_id`, `issue_type`, `rule_id`, `severity`, `line`, `end_line`, `hint`, `why`, `confidence`, `cwe_id`, `can_auto_fix`, `fix_diff`, `auto_fix_before/after`, `requires_user_input`, `related_markers`
+- Methods: `to_dict()`, `from_dict()`, `to_json()`, `from_json()`, `to_comment()`
+- Auto-export as `# PYNAGENT: {...}` comments in source code
+
+#### ManifestExporter & Export Formats
+- `ManifestExporter` class - ghi markers ra `.pyneat.manifest.json`
+- `export_to_sarif()` - SARIF 2.1.0 format (GitHub Security tab, Azure DevOps)
+- `export_to_codeclimate()` - Code Climate format cho CI integration
+- `export_to_markdown()` - Markdown report đọc bằng người
+- `MarkerParser` class - parse markers từ source và manifest file
+
+#### MarkerCleanup (Stale Marker Removal)
+- `MarkerCleanup` class - xóa markers sau khi issues đã fix
+- `remove_stale_markers()` - chỉ xóa markers không còn trong remaining_issues
+- `remove_all_markers()` - xóa tất cả markers
+- Hỗ trợ malformed markers
+
+#### AI Bug Pattern Detection (`AIBugRule`)
+- `AIBugRule` - phát hiện lỗi đặc trưng của AI-generated code
+- **Resource Leaks**: `open()` không `with`, `requests.*` không timeout
+- **Boundary Errors**: `list[0]` không check empty, `.split()[0]`
+- **Phantom Packages**: import tên ngắn, tên generic (utils, helpers, ai)
+- **Fake Parameters**: `param1=x`, `fake=True`, `dummy_arg`
+- **Redundant I/O**: Gọi API lặp 3+ lần với cùng args
+- **Naming Inconsistency**: `userId` vs `user_id` trong cùng file
+
+#### Additional Rules
+- `NamingInconsistencyRule` - phát hiện mixed camelCase/snake_case
+- `CodeDuplicationRule` - phát hiện duplicate function bodies
+- `TransformationResult.agent_markers` field - lưu markers từ rule execution
+
 ## [2.2.1] - 2026-04-10
 
 ### Added

@@ -176,7 +176,7 @@ class PerformanceRule(Rule):
         for node in ast.walk(tree):
             if isinstance(node, (ast.For, ast.While)):
                 loop_methods: set[str] = set()
-                for child in ast.walk(node):
+                for child in self._walk_no_nested(node, set()):
                     if isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute):
                         name = child.func.attr
                         if name not in self.KNOWN_SAFE_METHODS:
@@ -190,3 +190,21 @@ class PerformanceRule(Rule):
         if len(seen_in_loop) <= 5:
             results.extend(sorted(seen_in_loop))
         return results
+
+    def _walk_no_nested(self, node: ast.AST, visited: set) -> list:
+        """Walk AST but stop descent into nested functions/lambdas.
+
+        Uses visited set to prevent infinite recursion. Returns flat list of nodes.
+        """
+        result = []
+        for child in ast.iter_child_nodes(node):
+            node_id = id(child)
+            if node_id in visited:
+                continue
+            visited.add(node_id)
+
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                continue
+            result.append(child)
+            result.extend(self._walk_no_nested(child, visited))
+        return result

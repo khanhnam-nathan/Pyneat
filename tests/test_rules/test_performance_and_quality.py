@@ -57,6 +57,85 @@ class TestPerformanceRule:
         result = rule.apply(CodeFile(path=Path("test.py"), content=""))
         assert result.success
 
+    def test_no_false_positive_lambda_callback(self):
+        """Method calls inside lambda in re.sub/map/filter should NOT trigger warnings.
+
+        Lambda callbacks are NOT executed in the calling loop - they're passed as
+        functions and only called when the pattern matches.
+        """
+        rule = PerformanceRule()
+        # re.sub with lambda callback - not a loop, should NOT warn
+        source = """import re
+result = re.sub(r'\\d+', lambda m: m.group().zfill(5), text)
+items = list(map(lambda x: x.strip().upper(), items))
+active = list(filter(lambda u: u.is_active(), users))
+"""
+        _, changes = apply_rule(rule, source)
+        # Should NOT have "repeated group() call in loop" or similar
+        assert not any("group()" in c and "loop" in c.lower() for c in changes)
+        assert not any("strip()" in c and "loop" in c.lower() for c in changes)
+
+    def test_no_false_positive_nested_function(self):
+        """Method calls inside nested functions defined within loops should NOT trigger warnings.
+
+        Nested functions are defined once but their body executes separately,
+        not within the enclosing loop.
+        """
+        rule = PerformanceRule()
+        source = """def process_data(items):
+    results = []
+    for item in items:
+        def extractor(x):
+            return x.strip().lower()
+        results.append(extractor(item))
+    return results
+"""
+        _, changes = apply_rule(rule, source)
+        # strip() and lower() are inside nested function, should NOT warn
+        assert not any("strip()" in c and "loop" in c.lower() for c in changes)
+        assert not any("lower()" in c and "loop" in c.lower() for c in changes)
+
+    def test_no_false_positive_class_methods_in_loop(self):
+        """Safe method calls inside class methods in loops should NOT trigger warnings.
+
+        Safe methods like append(), strip(), lower() are in KNOWN_SAFE_METHODS
+        and should not trigger warnings.
+        """
+        rule = PerformanceRule()
+        source = """class Parser:
+    def parse(self, lines):
+        results = []
+        for line in lines:
+            normalized = line.strip().lower()
+            results.append(normalized)
+        return results
+"""
+        _, changes = apply_rule(rule, source)
+        # append(), strip(), lower() are in KNOWN_SAFE_METHODS, should NOT warn
+        assert not any("append()" in c and "call in loop" in c.lower() for c in changes)
+        assert not any("strip()" in c and "call in loop" in c.lower() for c in changes)
+
+    def test_detects_true_positive_repeated_call_in_loop(self):
+        """Real repeated method calls in loops SHOULD still be detected.
+
+        This tests that the fix doesn't over-correct - actual repeated calls
+        for methods NOT in KNOWN_SAFE_METHODS should still trigger warnings.
+        """
+        rule = PerformanceRule()
+        # Custom method called twice in loop - SHOULD warn
+        source = """def parse_tokens(tokens):
+    results = []
+    for token in tokens:
+        if token.validate().is_valid():
+            results.append(token)
+        if token.validate().has_error():
+            results.append(None)
+    return results
+"""
+        _, changes = apply_rule(rule, source)
+        # validate() is called twice in loop - should warn since it's not in safe list
+        assert any("validate()" in c and "call in loop" in c.lower() for c in changes)
+
 
 class TestTypingRule:
     """Tests for TypingRule - suggests type annotations."""

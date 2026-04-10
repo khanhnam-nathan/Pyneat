@@ -208,11 +208,6 @@ class TypingRule(Rule):
         """Check if an AST node is a None literal."""
         if isinstance(node, ast.Constant) and node.value is None:
             return True
-        # ast.NameConstant was removed in Python 3.8 (merged into ast.Constant)
-        # Use getattr to avoid AttributeError when running on Python 3.8+
-        _nc = getattr(ast, 'NameConstant', None)
-        if _nc is not None and isinstance(node, _nc) and node.value is None:
-            return True
         return False
 
     def _add_return_type_annotations(self, content: str, fixable: List[tuple], cst_tree=None) -> str:
