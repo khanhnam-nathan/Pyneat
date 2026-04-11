@@ -4,7 +4,7 @@ version = "2.4.5"
 edition = "2021"
 description = "High-performance security scanner for PyNeat written in Rust"
 authors = ["Khanh Nam <khanhnam.copywriting@gmail.com>"]
-license = {identifier = "AGPL-3.0-or-later"}
+license = "AGPL-3.0-or-later"
 repository = "https://github.com/pyneat/pyneat"
 readme = "README.md"
 keywords = ["security", "scanner", "python", "static-analysis"]
