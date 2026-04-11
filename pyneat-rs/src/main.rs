@@ -59,6 +59,10 @@ enum Commands {
         /// Code to check
         #[arg(required = true)]
         code: String,
+
+        /// Output format (overrides global --format)
+        #[arg(short, long)]
+        format: Option<String>,
     },
 }
 
@@ -81,8 +85,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::ListRules => {
             list_rules();
         }
-        Commands::Check { code } => {
-            check_code(&code)?;
+        Commands::Check { code, format } => {
+            // Prefer local --format if provided, otherwise use global --format
+            let fmt = format.as_deref().or(
+                if args.format != "text" { Some(args.format.as_str()) } else { None }
+            );
+            check_code(&code, fmt)?;
         }
     }
 
@@ -169,7 +177,7 @@ fn list_rules() {
     println!("\nTotal: {} rules", rules.len());
 }
 
-fn check_code(code: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn check_code(code: &str, override_format: Option<&str>) -> Result<(), Box<dyn std::error::Error>> {
     let rules = all_security_rules();
     let tree = parse(code)?;
     let mut findings: Vec<_> = Vec::new();
@@ -180,8 +188,34 @@ fn check_code(code: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     findings.sort_by_key(|f| f.start);
 
-    let report = format_findings_report(&findings);
-    println!("{}", report);
+    // Use override format if provided, otherwise default to text
+    let fmt = override_format.unwrap_or("text");
+
+    if fmt == "json" {
+        // Output as JSON for Python integration
+        let json_findings: Vec<serde_json::Value> = findings
+            .iter()
+            .map(|f| {
+                serde_json::json!({
+                    "rule_id": f.rule_id,
+                    "severity": f.severity.as_str(),
+                    "cwe_id": f.cwe_id,
+                    "cvss_score": f.cvss_score,
+                    "owasp_id": f.owasp_id,
+                    "start": f.start,
+                    "end": f.end,
+                    "snippet": f.snippet,
+                    "problem": f.problem,
+                    "fix_hint": f.fix_hint,
+                    "auto_fix_available": f.auto_fix_available,
+                })
+            })
+            .collect();
+        println!("{}", serde_json::to_string(&json_findings).unwrap_or_else(|_| "[]".to_string()));
+    } else {
+        let report = format_findings_report(&findings);
+        println!("{}", report);
+    }
 
     Ok(())
 }

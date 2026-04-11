@@ -1,14 +1,18 @@
 [package]
 name = "pyneat-rs"
-version = "0.3.0"
+version = "2.4.5"
 edition = "2021"
 description = "High-performance security scanner for PyNeat written in Rust"
-authors = ["Khanh Nam"]
-license = "AGPL-3.0-or-later"
+authors = ["Khanh Nam <khanhnam.copywriting@gmail.com>"]
+license = {identifier = "AGPL-3.0-or-later"}
+repository = "https://github.com/pyneat/pyneat"
+readme = "README.md"
+keywords = ["security", "scanner", "python", "static-analysis"]
+categories = ["security", "development-tools"]
 
 [lib]
 name = "pyneat_rs"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 regex = "1.10"
@@ -23,9 +27,6 @@ pyo3 = { version = "0.28", features = ["extension-module"] }
 tree-sitter = "0.23"
 tree-sitter-python = "0.23"
 
-# For code editing/AST manipulation
-# tree-sitter-edit = "0.2"
-
 # CLI argument parsing
 clap = { version = "4.4", features = ["derive"] }
 
@@ -34,6 +35,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [build-dependencies]
+maturin = "1.5"
 cc = "1.0"
 
 [profile.release]

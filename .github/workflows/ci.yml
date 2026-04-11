@@ -6,17 +6,22 @@ name: CI Tests
 
 on:
   push:
-    # Default development branch is main (do not use master for new work).
     branches: [main, develop]
     paths:
       - '**.py'
+      - '**.rs'
       - '.github/workflows/*.yml'
       - 'pyproject.toml'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
   pull_request:
     paths:
       - '**.py'
+      - '**.rs'
       - '.github/workflows/*.yml'
       - 'pyproject.toml'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
   workflow_dispatch:
 
 jobs:

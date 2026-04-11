@@ -10,6 +10,16 @@ __pycache__/
 dist/
 build/
 
+# Python wheels (both local builds and downloaded)
+*.whl
+*.whl.*
+
+# Rust wheels (maturin output)
+pyneat-rs/target/wheels/
+
+# Rust target (local build artifacts)
+pyneat-rs/target/
+
 # Logs
 *.log
 pyneat_errors.log
