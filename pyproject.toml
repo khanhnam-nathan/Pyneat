@@ -1,18 +1,18 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
 
 [project]
 name = "pyneat-cli"
-version = "2.4.0"
+version = "2.4.5"
 description = "Neat Python AI Code Cleaner — removes AI-generated code artifacts, dead code, and security vulnerabilities"
-license = {text = "GNU AGPL-3.0-or-later"}
 readme = "README.md"
+license = {text = "GNU AGPL-3.0-or-later"}
 requires-python = ">=3.10"
-dependencies = [
-    "click>=8.0.0",
-    "libcst>=0.4.0",
+authors = [
+    {name = "Khanh Nam", email = "khanhnam.copywriting@gmail.com"},
 ]
+keywords = ["ai", "code-cleaner", "python", "linter", "formatter", "security", "dead-code", "refactoring", "ast", "auto-fix"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -26,13 +26,14 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Rust",
     "Topic :: Software Development :: Code Generators",
     "Topic :: Software Development :: Quality Assurance",
 ]
-keywords = ["ai", "code-cleaner", "python", "linter", "formatter", "security", "dead-code", "refactoring", "ast", "auto-fix"]
-
-[project.scripts]
-pyneat = "pyneat.cli:cli"
+dependencies = [
+    "click>=8.0.0",
+    "libcst>=0.4.0",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -42,6 +43,27 @@ dev = [
 pre-commit = [
     "pre-commit>=3.0.0",
 ]
+rust = [
+    "maturin>=1.5,<2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/pyneat/pyneat"
+Documentation = "https://github.com/pyneat/pyneat#readme"
+Repository = "https://github.com/pyneat/pyneat"
+Changelog = "https://github.com/pyneat/pyneat/blob/main/CHANGELOG.md"
+Issues = "https://github.com/pyneat/pyneat/issues"
+
+
+[project.scripts]
+pyneat = "pyneat.cli:cli"
+
+# Maturin configuration for Rust extension
+[tool.maturin]
+features = ["pyo3/extension-module"]
+manifest-path = "pyneat-rs/Cargo.toml"
+module-name = "pyneat_rs"
+args = ["--release"]
 
 [tool.pyneat]
 # Default rule settings for pyneat clean / pyneat clean-dir

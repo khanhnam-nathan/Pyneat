@@ -329,16 +329,77 @@ impl Rule for HardcodedSecretsRule {
 
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
         let mut findings = Vec::new();
-        let patterns = [
-            (r#"api[_-]?key\s*=\s*['"][a-zA-Z0-9]{20,}['"]"#, "API key assignment"),
-            (r#"password\s*=\s*['"][^'"]+['"]"#, "Password assignment"),
-            (r#"secret\s*=\s*['"][^'"]+['"]"#, "Secret assignment"),
-            (r#"token\s*=\s*['"][a-zA-Z0-9_-]{20,}['"]"#, "Token assignment"),
-            (r#"private[_-]?key\s*=\s*['"]"#, "Private key assignment"),
-            (r#"aws[_-]?access[_-]?key\s*=\s*['"]"#, "AWS access key"),
+        let patterns: Vec<(&str, &str)> = vec![
+            // ===== API Keys & Tokens =====
+            (r#"api[_-]?key\s*[=:]\s*['"][a-zA-Z0-9]{20,}['"]"#, "API key assignment"),
+            (r#"api[_-]?secret\s*[=:]\s*['"][^'"]+['"]"#, "API secret assignment"),
+            (r#"access[_-]?key[_-]?id\s*[=:]\s*['"][^'"]+['"]"#, "Access key ID assignment"),
+            (r#"secret[_-]?key\s*[=:]\s*['"][^'"]+['"]"#, "Secret key assignment"),
+            (r#"(password|passwd|pwd)\s*[=:]\s*['"][^'"]+['"]"#, "Password assignment"),
+            (r#"(token|auth[_-]?token|access[_-]?token)\s*[=:]\s*['"][a-zA-Z0-9_\-]{20,}['"]"#, "Token assignment"),
+
+            // ===== Cloud Provider Keys =====
             (r#"sk-[a-zA-Z0-9]{20,}"#, "Stripe API key"),
+            (r#"rk_[a-zA-Z0-9]{20,}"#, "Stripe Restricted API key"),
             (r#"ghp_[a-zA-Z0-9]{36,}"#, "GitHub Personal Access Token"),
+            (r#"gho_[a-zA-Z0-9]{36,}"#, "GitHub OAuth Token"),
+            (r#"ghu_[a-zA-Z0-9]{36,}"#, "GitHub User Access Token"),
             (r#"xox[baprs]-[a-zA-Z0-9]{10,}"#, "Slack Token"),
+            (r#"xox[baprs]-[a-zA-Z0-9_-]{10,}"#, "Slack Token (extended)"),
+            (r#"AIza[0-9A-Za-z_-]{35}"#, "Google API Key"),
+            (r#"ya29\.[0-9A-Za-z_-]+"#, "Google OAuth Access Token"),
+            (r#"[0-9]+-[0-9A-Za-z_]{32}\.apps\.googleusercontent\.com"#, "Google OAuth Client ID"),
+            (r#"amzn\.mws\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"#, "Amazon MWS Auth Token"),
+            (r#"AKIA[0-9A-Z]{16}"#, "AWS Access Key ID"),
+            (r#"['"][0-9a-f]{40}['"]"#, "AWS Secret Access Key (hex)"),
+
+            // ===== Azure Keys =====
+            (r#"DefaultEndpointsProtocol=https;AccountName=[^;]+;AccountKey=[^;]+"#, "Azure Storage Connection String"),
+            (r#"[a-zA-Z0-9+/]{86}==['"]"#, "Azure Shared Key"),
+
+            // ===== Database Connection Strings =====
+            (r#"mongodb\+srv://[^:'"]+:[^:'"]+@"#, "MongoDB Connection String with credentials"),
+            (r#"mysql://[^:'"]+:[^:'"]+@[^/'"]+"#, "MySQL Connection String"),
+            (r#"postgresql://[^:'"]+:[^:'"]+@[^/'"]+"#, "PostgreSQL Connection String"),
+            (r#"redis://[^:'"]+:[^:'"]+@"#, "Redis Connection String with credentials"),
+            (r#"sqlserver://[^:'"]+:[^:'"]+@"#, "SQL Server Connection String"),
+            (r#"mongodb://[^:'"]+:[^:'"]+@"#, "MongoDB Connection String"),
+
+            // ===== JWT & OAuth =====
+            (r#"eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*"#, "JWT Token"),
+            (r#"Bearer\s+[a-zA-Z0-9_\-\.]+"#, "Bearer Token"),
+
+            // ===== SSH & Private Keys =====
+            (r#"-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----"#, "Private Key (PEM)"),
+            (r#"-----BEGIN\s+OPENSSH\s+PRIVATE\s+KEY-----"#, "OpenSSH Private Key"),
+            (r#"-----BEGIN\s+EC\s+PRIVATE\s+KEY-----"#, "EC Private Key"),
+            (r#"-----BEGIN\s+DSA\s+PRIVATE\s+KEY-----"#, "DSA Private Key"),
+            (r#"-----BEGIN\s+PGP\s+PRIVATE\s+KEY\s+BLOCK-----"#, "PGP Private Key"),
+
+            // ===== Encryption Keys =====
+            (r#"encryption[_-]?key\s*[=:]\s*['"][^'"]+['"]"#, "Encryption key assignment"),
+            (r#"crypt[_-]?key\s*[=:]\s*['"][^'"]+['"]"#, "Crypt key assignment"),
+            (r#"secret[_-]?key\s*[=:]\s*['"][^'"]+['"]"#, "Secret key assignment"),
+
+            // ===== Payment & Finance =====
+            (r#"sq0csp-[a-zA-Z0-9_-]{43}"#, "Square OAuth Secret"),
+            (r#"sq0atp-[a-zA-Z0-9_-]{22}"#, "Square Access Token"),
+            (r#"(paypal|braintree)[_-]?(api[_-]?key|secret|token)\s*[=:]\s*['"][^'"]+['"]"#, "Payment API key"),
+
+            // ===== Social Media & Third-party =====
+            (r#"twilio[_-]?(account[_-]?sid|auth[_-]?token)\s*[=:]\s*['"][^'"]+['"]"#, "Twilio credentials"),
+            (r#"sendgrid[_-]?api[_-]?key\s*[=:]\s*['"][^'"]+['"]"#, "SendGrid API Key"),
+            (r#"mailgun[_-]?api[_-]?key\s*[=:]\s*['"][^'"]+['"]"#, "Mailgun API Key"),
+            (r#"[0-9a-f]{32}-[0-9a-f]{16}"#, "Generic Secret Pattern (32 hex + 16 hex)"),
+
+            // ===== Environment-like secrets =====
+            (r#"SECRET[_-]?(KEY|TOKEN|PASSWORD)\s*[=:]\s*['"][^'")\s]{8,}['"]"#, "Environment secret variable"),
+            (r#"PRIVATE[_-]?TOKEN\s*[=:]\s*['"][^'"]+['"]"#, "Private token"),
+            (r#"HEROKU_API_KEY\s*[=:]\s*['"][a-zA-Z0-9_-]{20,}['"]"#, "Heroku API Key"),
+            (r#"STRIPE[_-]?(LIVE|TEST)[_-]?(SECRET|KEY)\s*[=:]\s*['"][^'"]+['"]"#, "Stripe secret key"),
+
+            // ===== Docker & Container =====
+            (r#"(docker[_-]?hub)?[_-]?registry[_-]?password\s*[=:]\s*['"][^'"]+['"]"#, "Container registry password"),
         ];
 
         for (pattern, desc) in &patterns {
@@ -2214,6 +2275,20 @@ impl Rule for BusinessLogicRule {
 // RULE REGISTRY
 // ============================================================================
 
+use crate::rules::sec060::AutocompleteEnabledRule;
+use crate::rules::sec061::MissingSriRule;
+use crate::rules::sec062::MissingContentTypeValidationRule;
+use crate::rules::sec063::MissingRateLimitingRule;
+use crate::rules::sec064::WeakJwtSecretRule;
+use crate::rules::sec065::InsecureLogoutRule;
+use crate::rules::sec066::TimingAttackRule;
+use crate::rules::sec067::WeakServerValidationRule;
+use crate::rules::sec068::FrontendPriceManipulationRule;
+use crate::rules::sec069::DangerousDependenciesRule;
+use crate::rules::sec070::DockerVulnerabilityRule;
+use crate::rules::sec071::WeakJwtPayloadRule;
+use crate::rules::sec072::MissingCspNonceRule;
+
 /// Get all security rules.
 #[allow(clippy::redundant_allocation)]
 pub fn all_security_rules() -> Vec<Box<dyn Rule>> {
@@ -2251,6 +2326,20 @@ pub fn all_security_rules() -> Vec<Box<dyn Rule>> {
         Box::new(XContentTypeOptionsRule),
         Box::new(XFrameOptionsRule),
         Box::new(CspMissingRule),
+        // SEC-060 to SEC-072 (New rules)
+        Box::new(AutocompleteEnabledRule),
+        Box::new(MissingSriRule),
+        Box::new(MissingContentTypeValidationRule),
+        Box::new(MissingRateLimitingRule),
+        Box::new(WeakJwtSecretRule),
+        Box::new(InsecureLogoutRule),
+        Box::new(TimingAttackRule),
+        Box::new(WeakServerValidationRule),
+        Box::new(FrontendPriceManipulationRule),
+        Box::new(DangerousDependenciesRule),
+        Box::new(DockerVulnerabilityRule),
+        Box::new(WeakJwtPayloadRule),
+        Box::new(MissingCspNonceRule),
         // Low
         Box::new(SensitiveCommentRule),
         Box::new(InfoDisclosureRule),
