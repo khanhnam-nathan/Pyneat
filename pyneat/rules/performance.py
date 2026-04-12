@@ -50,7 +50,7 @@ class PerformanceRule(Rule):
         'read', 'readline', 'readlines', 'write', 'flush', 'seek',
         'tell', 'truncate', 'fileno', 'isatty',
         # Collection methods
-        'copy', 'deepcopy', 'count', 'index', 'append', 'extend',
+        'copy', 'deepcopy', 'count', 'index',
         'difference', 'intersection', 'union', 'issubset', 'issuperset',
         'symmetric_difference',
         # Safe type conversion
@@ -59,7 +59,29 @@ class PerformanceRule(Rule):
         'sum', 'all', 'any', 'sorted', 'reversed', 'enumerate', 'filter', 'map',
         # Other safe
         'isalpha', 'isdigit', 'isalnum', 'isspace', 'isupper', 'islower',
-        'lstrip', 'rstrip', 'encode', 'decode',
+        # Path methods that are cheap (property-like, no I/O)
+        'name', 'stem', 'suffix', 'parent', 'parts', 'anchor',
+        'drive', 'root', 'parents',
+    })
+
+    # Methods that may involve I/O or computation but are commonly used
+    # on loop variables and are not performance issues when each item
+    # is processed independently. These are excluded to avoid false
+    # positives.
+    KNOWN_CONTEXT_SAFE_METHODS: frozenset = frozenset({
+        # Path methods (I/O bound per-item; each call processes one item)
+        'relative_to', 'resolve', 'absolute', 'realpath', 'normpath',
+        'exists', 'is_file', 'is_dir', 'is_symlink', 'is_absolute',
+        'stat', 'lstat',
+        'open', 'read_bytes', 'read_text', 'write_bytes', 'write_text',
+        'mkdir', 'makedirs', 'touch', 'unlink', 'remove', 'rmdir',
+        'rename', 'replace', 'copy2', 'copy', 'link',
+        'samefile', 'sameopenfile',
+        # Path utilities — cheap string manipulation, not I/O
+        'join', 'basename', 'dirname', 'split', 'splitext',
+        'abspath', 'exists',
+        # glob returns a new iterator each call — per-item processing
+        'glob', 'rglob', 'iglob', 'iterdir',
     })
 
     def __init__(self, config: RuleConfig = None):
@@ -86,6 +108,11 @@ class PerformanceRule(Rule):
             except SyntaxError:
                 return self._create_result(code_file, content, changes)
 
+            # Set parent pointers so _get_loop_invariant_names can walk the tree
+            for node in ast.walk(tree):
+                for child in ast.iter_child_nodes(node):
+                    child.parent = node  # type: ignore[attr-defined]
+
             if self._has_list_concat_in_loop(tree):
                 changes.append("INEFFICIENT LOOP: Use list comprehension or extend()")
 
@@ -98,6 +125,8 @@ class PerformanceRule(Rule):
 
             repeated = self._find_repeated_method_calls(tree)
             for item in repeated:
+                # item is already "base.method" like "x.relative_to"
+                method_part = item.split(".", 1)[-1]
                 changes.append(
                     f"PERFORMANCE: Repeated {item}() call in loop - call once and reuse"
                 )
@@ -169,27 +198,134 @@ class PerformanceRule(Rule):
         return False
 
     def _find_repeated_method_calls(self, tree: ast.AST) -> List[str]:
-        """Find methods called repeatedly inside loops that are NOT in safe list."""
+        """Find methods called repeatedly inside loops that are NOT in safe list.
+
+        Key fix: tracks (base_object, method_name) pairs instead of just method names.
+        Also skips:
+        - Methods on loop iteration variables (expected per-item access)
+        - Methods on objects assigned once before the loop (loop-invariant)
+        - Methods in the KNOWN_SAFE_METHODS and KNOWN_CONTEXT_SAFE_METHODS lists
+        """
         results: List[str] = []
         seen_in_loop: set[str] = set()
 
         for node in ast.walk(tree):
             if isinstance(node, (ast.For, ast.While)):
                 loop_methods: set[str] = set()
+                # Identify the loop variable(s) so we can skip calls on them
+                loop_vars = self._get_loop_variables(node)
+                # Identify loop-invariant assignments: Name nodes assigned before
+                # the loop body that are still in scope
+                loop_invariants = self._get_loop_invariant_names(node)
+
                 for child in self._walk_no_nested(node, set()):
                     if isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute):
                         name = child.func.attr
-                        if name not in self.KNOWN_SAFE_METHODS:
-                            loop_methods.add(name)
+                        if name in self.KNOWN_SAFE_METHODS:
+                            continue
+                        if name in self.KNOWN_CONTEXT_SAFE_METHODS:
+                            continue
 
-                if len(loop_methods) > 0:
-                    for name in loop_methods:
-                        if name not in seen_in_loop:
-                            seen_in_loop.add(name)
+                        base = child.func.value
+                        base_desc = self._describe_base(base)
+                        pair_key = f"{base_desc}.{name}"
+
+                        # Skip if base is a loop iteration variable
+                        if isinstance(base, ast.Name) and base.id in loop_vars:
+                            continue
+                        # Skip if base is a loop-invariant name (assigned before loop)
+                        if isinstance(base, ast.Name) and base.id in loop_invariants:
+                            continue
+
+                        loop_methods.add(pair_key)
+
+                if loop_methods:
+                    for pair in sorted(loop_methods):
+                        if pair not in seen_in_loop:
+                            seen_in_loop.add(pair)
 
         if len(seen_in_loop) <= 5:
             results.extend(sorted(seen_in_loop))
         return results
+
+    def _get_loop_variables(self, loop_node: ast.AST) -> set:
+        """Extract variable names from a for-loop target."""
+        vars = set()
+        if isinstance(loop_node, ast.For):
+            target = loop_node.target
+            if isinstance(target, ast.Name):
+                vars.add(target.id)
+            elif isinstance(target, ast.Tuple):
+                for elt in target.elts:
+                    if isinstance(elt, ast.Name):
+                        vars.add(elt.id)
+        return vars
+
+    def _get_loop_invariant_names(self, loop_node: ast.AST) -> set:
+        """Get names assigned once *before* the loop body starts.
+
+        An assignment is loop-invariant if it appears as a direct child
+        statement of the loop node's parent, *before* the loop itself,
+        and the name is a simple `Name` node (not attribute/index access).
+        """
+        parent = getattr(loop_node, 'parent', None)
+        if parent is None:
+            return set()
+
+        invariants: set = set()
+        if isinstance(parent, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef)):
+            body = parent.body
+        elif isinstance(parent, (ast.For, ast.While)):
+            # Check the else-branch of the loop — assignments there are also
+            # before the loop body runs
+            body = parent.body
+        else:
+            return set()
+
+        # Linear scan through parent body until we hit the loop itself
+        for stmt in body:
+            if stmt is loop_node:
+                break
+            # Simple name assignments: `x = ...`
+            if isinstance(stmt, ast.Assign):
+                for target in stmt.targets:
+                    if isinstance(target, ast.Name):
+                        invariants.add(target.id)
+            # Named expression (walrus): `x := ...`
+            elif isinstance(stmt, ast.NamedExpr):
+                if isinstance(stmt.target, ast.Name):
+                    invariants.add(stmt.target.id)
+            # Augmented assignment: `x += ...`
+            elif isinstance(stmt, ast.AugAssign):
+                if isinstance(stmt.target, ast.Name):
+                    invariants.add(stmt.target.id)
+            # AnnAssign: `x: T = ...`
+            elif isinstance(stmt, ast.AnnAssign):
+                if isinstance(stmt.target, ast.Name):
+                    invariants.add(stmt.target.id)
+
+        return invariants
+
+    def _describe_base(self, node: ast.AST) -> str:
+        """Return a human-readable string describing the base of a method call.
+
+        Examples:
+            ast.Name(id='x')          -> "x"
+            ast.Attribute(value=..., attr='data') -> "xxx.data"
+            ast.Subscript(...)        -> "[...]"
+            ast.Call(...)             -> "(...)"
+            _                         -> "?"
+        """
+        if isinstance(node, ast.Name):
+            return node.id
+        elif isinstance(node, ast.Attribute):
+            return f"{self._describe_base(node.value)}.{node.attr}"
+        elif isinstance(node, ast.Subscript):
+            return "[...]"
+        elif isinstance(node, ast.Call):
+            return "(call)"
+        else:
+            return "?"
 
     def _walk_no_nested(self, node: ast.AST, visited: set) -> list:
         """Walk AST but stop descent into nested functions/lambdas.
@@ -204,6 +340,14 @@ class PerformanceRule(Rule):
             visited.add(node_id)
 
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                continue
+            # Skip loop-control parts that are not the body:
+            # - target: the loop variable (`f` in `for f in ...`)
+            # - iter:   the iterable expression (`base.rglob("*")` in `for f in base.rglob("*")`)
+            # Only walk the body, else clause, and type comment.
+            if isinstance(node, ast.For) and child is node.target:
+                continue
+            if isinstance(node, (ast.For, ast.AsyncFor)) and child is node.iter:
                 continue
             result.append(child)
             result.extend(self._walk_no_nested(child, visited))
