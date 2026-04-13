@@ -11,6 +11,13 @@ pub use rules::base::{Finding, Fix, Rule, Severity};
 pub use rules::security::all_security_rules;
 pub use rules::quality::all_quality_rules;
 pub use scanner::tree_sitter::parse;
+pub use scanner::multilang::detect_language_from_extension;
+pub use scanner::{
+    RustScanner, JavaScriptScanner, TypeScriptScanner,
+    GoScanner, JavaScanner, CSharpScanner,
+    PhpScanner, RubyScanner,
+    LanguageScanner, LanguageRegistry, LangRule, LangFinding, Language,
+};
 
 #[cfg(test)]
 mod lib_tests;
@@ -104,6 +111,32 @@ fn get_rules() -> PyResult<String> {
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
 }
 
+/// Parse source code into Language-Neutral AST (LN-AST) JSON.
+/// Used for multi-language support in the Python engine.
+#[pyfunction]
+fn parse_ln_ast(code: &str, language: &str) -> PyResult<String> {
+    match crate::scanner::multilang::parse_ln_ast(code, language) {
+        Ok(ast) => Ok(ast.to_json()),
+        Err(e) => Err(pyo3::exceptions::PyValueError::new_err(e.to_string())),
+    }
+}
+
+/// Detect language from file extension.
+/// Returns language string like "python", "javascript", etc.
+#[pyfunction]
+fn detect_language(ext: &str) -> PyResult<Option<String>> {
+    Ok(crate::scanner::multilang::detect_language_from_extension(ext))
+}
+
+/// Get list of supported languages.
+#[pyfunction]
+fn supported_languages() -> Vec<&'static str> {
+    vec![
+        "python", "javascript", "typescript",
+        "go", "java", "rust", "csharp", "php", "ruby",
+    ]
+}
+
 /// Python module definition
 #[pymodule]
 fn pyneat_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -111,6 +144,9 @@ fn pyneat_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(apply_auto_fix, m)?)?;
     m.add_function(wrap_pyfunction!(version, m)?)?;
     m.add_function(wrap_pyfunction!(get_rules, m)?)?;
+    m.add_function(wrap_pyfunction!(parse_ln_ast, m)?)?;
+    m.add_function(wrap_pyfunction!(detect_language, m)?)?;
+    m.add_function(wrap_pyfunction!(supported_languages, m)?)?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     Ok(())
 }

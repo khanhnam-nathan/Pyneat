@@ -5,7 +5,18 @@
 
 pub mod base;
 pub mod quality;
+pub use base::Rule;
+
+// Security rules organized into submodules:
+// - security/ (security.rs) - core Python security rules (SEC-001 to SEC-059)
+// - sec024.rs to sec044.rs - extended security rules
+// - sec060.rs to sec072.rs - more extended rules
+// - security/php.rs - PHP-specific rules (SEC-073 to SEC-090)
 pub mod security;
+
+// PHP-specific security rules (SEC-073 to SEC-090) in php_rules/ directory
+pub mod php_rules;
+
 pub mod sec024;
 pub mod sec025;
 pub mod sec026;
@@ -26,7 +37,4 @@ pub mod sec069;
 pub mod sec070;
 pub mod sec071;
 pub mod sec072;
-
-pub use base::*;
-pub use security::*;
-pub use quality::*;
+// SEC-073 to SEC-090 are now in security/php.rs (via security module)

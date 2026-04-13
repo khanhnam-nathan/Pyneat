@@ -2288,6 +2288,8 @@ use crate::rules::sec069::DangerousDependenciesRule;
 use crate::rules::sec070::DockerVulnerabilityRule;
 use crate::rules::sec071::WeakJwtPayloadRule;
 use crate::rules::sec072::MissingCspNonceRule;
+// SEC-073 to SEC-090 (PHP Security Rules) are now in php_rules/php.rs
+use crate::rules::php_rules;
 
 /// Get all security rules.
 #[allow(clippy::redundant_allocation)]
@@ -2340,6 +2342,25 @@ pub fn all_security_rules() -> Vec<Box<dyn Rule>> {
         Box::new(DockerVulnerabilityRule),
         Box::new(WeakJwtPayloadRule),
         Box::new(MissingCspNonceRule),
+        // SEC-073 to SEC-090 (PHP Security Rules)
+        Box::new(php_rules::php::PhpSqlInjectionRule),
+        Box::new(php_rules::php::PhpXssRule),
+        Box::new(php_rules::php::PhpInsecureFileUploadRule),
+        Box::new(php_rules::php::PhpLooseComparisonRule),
+        Box::new(php_rules::php::PhpEvalAssertRule),
+        Box::new(php_rules::php::PhpUnserializeRule),
+        Box::new(php_rules::php::PhpIncludeTraversalRule),
+        Box::new(php_rules::php::PhpHardcodedSecretsRule),
+        Box::new(php_rules::php::PhpCommandInjectionRule),
+        Box::new(php_rules::php::PhpSsrfRule),
+        Box::new(php_rules::php::PhpDebugModeRule),
+        Box::new(php_rules::php::PhpSessionRule),
+        Box::new(php_rules::php::PhpCsrfRule),
+        Box::new(php_rules::php::PhpXxeRule),
+        Box::new(php_rules::php::PhpOpenRedirectRule),
+        Box::new(php_rules::php::PhpLdapInjectionRule),
+        Box::new(php_rules::php::PhpMassAssignmentRule),
+        Box::new(php_rules::php::PhpInfoDisclosureRule),
         // Low
         Box::new(SensitiveCommentRule),
         Box::new(InfoDisclosureRule),

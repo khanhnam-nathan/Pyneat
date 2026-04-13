@@ -22,7 +22,7 @@ impl Rule for UnusedImportRule {
     }
 
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
-        let mut findings = Vec::new();
+        let findings = Vec::new();
 
         // Simple heuristic: find imports and check if they appear later in code
         let import_re = regex::Regex::new(r#"^import\s+(\w+)"#).unwrap();
