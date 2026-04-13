@@ -2,6 +2,10 @@
 //!
 //! Command-line interface for the PyNeat security scanner.
 
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(unused_assignments)]
+
 use clap::{Parser, Subcommand};
 use std::path::Path;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};

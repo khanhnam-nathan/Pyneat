@@ -1,5 +1,7 @@
 //! Multi-language AST parsing via tree-sitter.
 
+#![allow(dead_code)]
+
 use std::collections::HashMap;
 
 use tree_sitter::{Parser, Tree, Node};

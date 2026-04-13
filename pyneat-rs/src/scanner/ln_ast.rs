@@ -5,6 +5,8 @@
 //!
 //! Supported languages: Python, JavaScript, TypeScript, Go, Java, Rust, C#, PHP, Ruby
 
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 
 /// A language-neutral function/method definition.

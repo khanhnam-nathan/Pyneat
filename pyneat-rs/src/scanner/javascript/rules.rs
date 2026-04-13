@@ -3,6 +3,8 @@
 //! Rules for detecting common JS/TS issues like console.log, debug code, etc.
 //! Also includes security rules for JS/TS-specific vulnerabilities (SEC-JS-xxx).
 
+#![allow(unused_variables)]
+
 use std::collections::HashSet;
 
 use crate::scanner::ln_ast::{LnAst, LnCall};
@@ -525,6 +527,7 @@ impl LangRule for JSSXSSRule {
 // ---------------------------------------------------------------------------
 pub struct JSSQLInjectionRule;
 
+#[allow(dead_code)]
 impl JSSQLInjectionRule {
     fn get_line_offsets(&self, code: &str, line: usize) -> (usize, usize) {
         let mut current_line = 1;

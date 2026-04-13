@@ -3,6 +3,10 @@
 //! High-performance security scanner for Python code written in Rust.
 //! Uses tree-sitter for AST parsing and regex for pattern matching.
 
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(unused_assignments)]
+
 pub mod fixer;
 pub mod rules;
 pub mod scanner;

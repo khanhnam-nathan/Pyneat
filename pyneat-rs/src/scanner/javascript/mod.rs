@@ -2,6 +2,8 @@
 //!
 //! Provides JavaScriptScanner and TypeScriptScanner that implement LanguageScanner trait.
 
+#![allow(unused_variables)]
+
 pub mod parser;
 pub mod rules;
 pub mod quality_rules;

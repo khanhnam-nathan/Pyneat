@@ -2,6 +2,8 @@
 //!
 //! Provides functions to parse Python code into an AST using tree-sitter.
 
+#![allow(dead_code)]
+
 use tree_sitter::{Parser, Tree};
 
 /// Get the tree-sitter-python language reference.

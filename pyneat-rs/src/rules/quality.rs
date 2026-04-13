@@ -2,6 +2,8 @@
 //!
 //! Implements code quality rules like unused imports, naming conventions, etc.
 
+#![allow(dead_code)]
+
 use crate::rules::base::{Fix, Finding, Rule, Severity};
 use tree_sitter::Tree;
 

@@ -3,6 +3,8 @@
 //! This module provides functions to generate unified diffs
 //! similar to the standard diff format.
 
+#![allow(dead_code)]
+
 /// Generate a unified diff string.
 ///
 /// # Arguments

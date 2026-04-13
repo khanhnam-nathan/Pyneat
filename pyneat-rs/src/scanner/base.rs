@@ -3,6 +3,9 @@
 //! Provides a common interface for language-specific scanners,
 //! each with their own parser and rules.
 
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use std::collections::HashMap;
 use std::path::Path;
 

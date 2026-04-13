@@ -2,6 +2,8 @@
 //!
 //! Defines the core `Rule` trait that all rules must implement.
 
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 use tree_sitter::Tree;
 

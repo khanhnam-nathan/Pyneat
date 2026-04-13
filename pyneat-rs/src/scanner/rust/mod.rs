@@ -3,6 +3,8 @@
 //! Provides RustScanner that implements LanguageScanner trait
 //! for parsing and analyzing Rust source code.
 
+#![allow(unused_variables)]
+
 pub mod parser;
 pub mod rules;
 pub mod quality_rules;

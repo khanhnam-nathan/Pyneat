@@ -2,6 +2,8 @@
 //!
 //! This module provides functions to apply auto-fixes to Python code.
 
+#![allow(dead_code)]
+
 use tree_sitter::Parser;
 
 /// Apply a single fix to the code.

@@ -2,6 +2,8 @@
 //!
 //! Provides GoScanner that implements LanguageScanner trait.
 
+#![allow(unused_variables)]
+
 pub mod parser;
 pub mod rules;
 

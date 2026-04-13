@@ -1,5 +1,7 @@
 //! PHP language scanner.
 
+#![allow(unused_variables)]
+
 pub mod parser;
 pub mod rules;
 pub mod security_rules;
