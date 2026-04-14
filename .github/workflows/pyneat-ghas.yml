@@ -59,8 +59,6 @@ jobs:
         with:
           sarif_file: pyneat-results.sarif
           category: "pyneat-sast"
-          # Optional: Set severity threshold
-          # checkout_uri: .
 
       - name: Summary
         run: |
@@ -75,17 +73,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build PyNEAT-RS
+      - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           profile: minimal
 
-      - name: Build
+      - name: Build PyNEAT-RS
         run: |
           cd pyneat-rs
           cargo build --release
+        env:
+          CARGO_INCREMENTAL: 0
 
-      - name: Run Scan
+      - name: Run PyNEAT-RS Scan
         run: |
           ./pyneat-rs/target/release/pyneat scan \
             --format sarif \
