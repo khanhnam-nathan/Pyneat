@@ -5,6 +5,9 @@ __pycache__/
 *.pyc
 *.pyo
 
+# VSCode test binaries (very large)
+.vscode-test/
+
 # Distribution / packaging
 *.egg-info/
 dist/
@@ -17,7 +20,7 @@ build/
 # Rust wheels (maturin output)
 pyneat-rs/target/wheels/
 
-# Rust target (local build artifacts)
+# Rust target (local build artifacts) - includes .pdb files which can be 80MB+
 pyneat-rs/target/
 
 # Logs
