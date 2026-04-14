@@ -1,6 +1,19 @@
-//! Base rule trait and types.
+//! PyNeat Rust Security Scanner
 //!
-//! Defines the core `Rule` trait that all rules must implement.
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #![allow(dead_code)]
 
@@ -110,4 +123,30 @@ pub trait Rule: Send + Sync {
 pub trait RuleRegistry {
     fn get_rule(&self, id: &str) -> Option<&dyn Rule>;
     fn all_rules(&self) -> Vec<&dyn Rule>;
+}
+
+/// Extract a code snippet bounded by byte offsets, returning up to 3 lines of context.
+///
+/// Finds the line containing `start`, the line containing `end`, and up to
+/// one line of context before for better readability in security reports.
+#[inline]
+pub fn extract_snippet(source: &str, start: usize, end: usize) -> String {
+    let line_start = source[..start]
+        .rfind('\n')
+        .map(|i| i + 1)
+        .unwrap_or(0);
+    let line_end = source[end..]
+        .find('\n')
+        .map(|i| end + i)
+        .unwrap_or(source.len());
+    let context_before = if line_start > 0 {
+        source[..line_start - 1]
+            .rfind('\n')
+            .map(|i| i + 1)
+            .unwrap_or(0)
+    } else {
+        line_start
+    };
+    let snippet = &source[context_before..line_end];
+    snippet.lines().take(3).collect::<Vec<_>>().join("\n")
 }

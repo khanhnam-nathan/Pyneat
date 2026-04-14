@@ -28,14 +28,25 @@ from .types import (
     SecuritySeverity,
     SecurityFinding,
     DependencyFinding,
+    security_finding_to_marker,
+    MarkerIdGenerator,
 )
 from .engine import RuleEngine
 from .manifest import (
     ManifestExporter,
     MarkerParser,
+    MarkerAggregator,
     export_to_sarif,
+    export_to_sarif_batch,
+    export_to_sarif_legacy,
     export_to_codeclimate,
     export_to_markdown,
+    export_to_junit_xml,
+    export_to_gitlab_sast,
+    export_to_sonarqube,
+    export_to_html_report,
+    get_cwe_info,
+    get_owasp_mapping,
 )
 from .marker_cleanup import MarkerCleanup
 
@@ -49,11 +60,22 @@ __all__ = [
     'SecuritySeverity',
     'SecurityFinding',
     'DependencyFinding',
+    'security_finding_to_marker',
+    'MarkerIdGenerator',
     'RuleEngine',
     'ManifestExporter',
     'MarkerParser',
+    'MarkerAggregator',
     'export_to_sarif',
+    'export_to_sarif_batch',
+    'export_to_sarif_legacy',
     'export_to_codeclimate',
     'export_to_markdown',
+    'export_to_junit_xml',
+    'export_to_gitlab_sast',
+    'export_to_sonarqube',
+    'export_to_html_report',
+    'get_cwe_info',
+    'get_owasp_mapping',
     'MarkerCleanup',
 ]

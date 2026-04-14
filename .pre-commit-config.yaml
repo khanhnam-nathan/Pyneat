@@ -8,7 +8,7 @@
 #   pre-commit autoupdate
 
 repos:
-  # PyNEAT - AI Code Cleaner
+  # PyNEAT - AI-Generated Code Scanner
   - repo: local
     hooks:
       # Security scan - fast, runs on all files
@@ -22,7 +22,7 @@ repos:
 
       # Code quality check - dry-run mode
       - id: pyneat-clean
-        name: PyNEAT Code Cleaner
+        name: PyNEAT AI Code Scanner
         description: Clean AI-generated code patterns, remove debug prints, fix security issues
         entry: pyneat clean --dry-run --diff
         language: system

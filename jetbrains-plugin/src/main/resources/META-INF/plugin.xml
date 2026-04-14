@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin>
+    <id>dev.pyneat.pyneat-jetbrains</id>
+    <name>PyNEAT Security Scanner</name>
+    <vendor email="khanhnam.copywriting@gmail.com" url="https://github.com/pyneat/pyneat">PyNEAT Authors</vendor>
+    <description>
+        <![CDATA[
+        <p>PyNEAT is an AI-generated code security scanner that detects:</p>
+        <ul>
+            <li>SQL/NoSQL/Command/Expression Injection</li>
+            <li>Hardcoded secrets and credentials</li>
+            <li>Weak cryptography and authentication issues</li>
+            <li>Path traversal and SSRF vulnerabilities</li>
+            <li>Deserialization flaws</li>
+            <li>AI-specific security issues (prompt injection, hallucination)</li>
+        </ul>
+        <p>Supports: Python, JavaScript, TypeScript, Go, Java, Rust, C#, PHP, Ruby</p>
+        <p>Integrates with GitHub, GitLab, and SonarQube via SARIF output.</p>
+        ]]>
+    </description>
+    <version>2.4.0</version>
+    <category>Security</category>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <actions>
+        <group id="PyNEAT.Actions" text="PyNEAT" description="PyNEAT Security Scanner actions">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="PyNEAT.ScanFile" class="dev.pyneat.ScanAction" text="PyNEAT: Scan File" description="Run PyNEAT security scan on current file"/>
+            <action id="PyNEAT.ScanWorkspace" class="dev.pyneat.ScanWorkspaceAction" text="PyNEAT: Scan Workspace" description="Run PyNEAT security scan on entire workspace"/>
+            <action id="PyNEAT.OpenToolWindow" class="dev.pyneat.PyNEATPlugin" text="PyNEAT Security" description="Open PyNEAT Security tool window"/>
+        </group>
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Tool Window -->
+        <toolWindow id="PyNEAT Security" anchor="bottom" factoryClass="dev.pyneat.PyNEATToolWindowFactory"/>
+
+        <!-- Annotator -->
+        <annotator language="Python" implementationClass="dev.pyneat.PyNEATAnnotator"/>
+
+        <!-- Inspection -->
+        <inspectionTools>
+            <inspectionTool class="dev.pyneat.PyNEATInspection" displayName="PyNEAT Security Scan"/>
+        </inspectionTools>
+    </extensions>
+</idea-plugin>

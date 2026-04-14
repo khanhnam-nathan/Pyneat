@@ -1,27 +1,47 @@
 //! PyNeat Rust Security Scanner
 //!
-//! High-performance security scanner for Python code written in Rust.
-//! Uses tree-sitter for AST parsing and regex for pattern matching.
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 #![allow(unused_assignments)]
+#![allow(dead_code)]
 
 pub mod fixer;
 pub mod rules;
 pub mod scanner;
+pub mod sarif;
+pub mod integrations;
+pub mod ai_security;
+pub mod lsp;
 
+pub use lsp::{run_server, LspConfig};
 pub use rules::base::{Finding, Fix, Rule, Severity};
 pub use rules::security::all_security_rules;
 pub use rules::quality::all_quality_rules;
 pub use scanner::tree_sitter::parse;
 pub use scanner::multilang::detect_language_from_extension;
+pub use scanner::ln_ast_converter::LnAstConverter;
 pub use scanner::{
     RustScanner, JavaScriptScanner, TypeScriptScanner,
     GoScanner, JavaScanner, CSharpScanner,
     PhpScanner, RubyScanner,
     LanguageScanner, LanguageRegistry, LangRule, LangFinding, Language,
 };
+pub use sarif::writer::SarifBuilder;
 
 #[cfg(test)]
 mod lib_tests;
@@ -32,11 +52,9 @@ use serde_json::{json, Value};
 /// Scan Python code for security vulnerabilities using tree-sitter AST + regex.
 #[pyfunction]
 fn scan_security(code: &str) -> PyResult<String> {
-    // Parse the code into AST
     let tree = match parse(code) {
         Ok(t) => t,
         Err(_) => {
-            // Fallback: return empty findings if parse fails
             return Ok("[]".to_string());
         }
     };
@@ -62,7 +80,6 @@ fn scan_security(code: &str) -> PyResult<String> {
         }
     }
 
-    // Sort by position
     findings.sort_by_key(|f| f["start"].as_u64().unwrap_or(0));
 
     serde_json::to_string(&findings)
@@ -72,7 +89,6 @@ fn scan_security(code: &str) -> PyResult<String> {
 /// Apply auto-fixes to code.
 #[pyfunction]
 fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
-    // Parse the finding from JSON
     let finding: serde_json::Value = serde_json::from_str(finding_json)
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
 

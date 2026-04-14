@@ -122,19 +122,21 @@ active = list(filter(lambda u: u.is_active(), users))
         for methods NOT in KNOWN_SAFE_METHODS should still trigger warnings.
         """
         rule = PerformanceRule()
-        # Custom method called twice in loop - SHOULD warn
+        # validator is a loop-invariant (assigned before loop), validate() called twice per iteration
         source = """def parse_tokens(tokens):
+    validator = TokenValidator()
     results = []
     for token in tokens:
-        if token.validate().is_valid():
+        if validator.validate(token).is_valid():
             results.append(token)
-        if token.validate().has_error():
+        if validator.validate(token).has_error():
             results.append(None)
     return results
 """
         _, changes = apply_rule(rule, source)
-        # validate() is called twice in loop - should warn since it's not in safe list
-        assert any("validate()" in c and "call in loop" in c.lower() for c in changes)
+        # validate() is called twice in loop on validator (loop-invariant) - should warn
+        # The warning includes "(call).is_valid()" and "(call).has_error()"
+        assert any("call in loop" in c.lower() for c in changes)
 
 
 class TestTypingRule:

@@ -1,8 +1,21 @@
-//! Security rules for pyneat-rs.
+//! PyNeat Rust Security Scanner
 //!
-//! Implements SEC-001 through SEC-059 security rules.
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::rules::base::{Fix, Finding, Rule, Severity};
+use crate::rules::base::{extract_snippet, Fix, Finding, Rule, Severity};
 use tree_sitter::Tree;
 
 /// SEC-001: Command Injection Detection
@@ -2294,7 +2307,7 @@ use crate::rules::php_rules;
 /// Get all security rules.
 #[allow(clippy::redundant_allocation)]
 pub fn all_security_rules() -> Vec<Box<dyn Rule>> {
-    let rules: Vec<Box<dyn Rule>> = vec![
+    let mut rules: Vec<Box<dyn Rule>> = vec![
         // Critical
         Box::new(CommandInjectionRule),
         Box::new(SqlInjectionRule),
@@ -2384,35 +2397,9 @@ pub fn all_security_rules() -> Vec<Box<dyn Rule>> {
         Box::new(SsrfCloudRule),
         Box::new(BusinessLogicRule),
     ];
+    // Add extended security rules (SEC-073 to SEC-105+)
+    rules.extend(crate::rules::extended_security::all_extended_security_rules());
     rules
-}
-
-/// Extract a code snippet around the match (1-3 lines).
-fn extract_snippet(source: &str, start: usize, end: usize) -> String {
-    // Find the start of the line containing the match
-    let line_start = source[..start]
-        .rfind('\n')
-        .map(|i| i + 1)
-        .unwrap_or(0);
-
-    // Find the end of the line containing the match
-    let line_end = source[end..]
-        .find('\n')
-        .map(|i| end + i)
-        .unwrap_or(source.len());
-
-    // Also include one line before if available
-    let context_before = if line_start > 0 {
-        source[..line_start - 1]
-            .rfind('\n')
-            .map(|i| i + 1)
-            .unwrap_or(0)
-    } else {
-        line_start
-    };
-
-    let snippet = &source[context_before..line_end];
-    snippet.lines().take(3).collect::<Vec<_>>().join("\n")
 }
 
 #[cfg(test)]

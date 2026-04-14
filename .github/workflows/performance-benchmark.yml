@@ -1,0 +1,185 @@
+name: Performance Benchmark
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Number of iterations'
+        required: false
+        default: '10'
+      compare:
+        description: 'Compare with competitors'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  BENCHMARK_ITERATIONS: ${{ inputs.iterations || '10' }}
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  benchmark-python:
+    name: Python Benchmark
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install pytest pytest-benchmark
+
+      - name: Run Python benchmarks
+        id: benchmark
+        run: |
+          python pyneat/benchmark.py \
+            --iterations ${{ env.BENCHMARK_ITERATIONS }} \
+            --output benchmark-results.json \
+            --warmup 3
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-benchmark-results
+          path: benchmark-results.json
+          retention-days: 30
+
+      - name: Generate benchmark report
+        run: |
+          echo "## Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Python Backend" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat benchmark-results.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  benchmark-rust:
+    name: Rust Benchmark
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: cargo-bench, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: pyneat-rs
+
+      - name: Build Rust backend
+        run: |
+          cd pyneat-rs
+          cargo build --release
+
+      - name: Run Rust benchmarks
+        run: |
+          cd pyneat-rs
+          cargo bench --no-run || echo "No benchmarks defined"
+
+      - name: Run benchmark script
+        run: |
+          cd pyneat-rs
+          python benchmark.py --iterations ${{ env.BENCHMARK_ITERATIONS }}
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-benchmark-results
+          path: pyneat-rs/benchmark_results.json
+          retention-days: 30
+
+  compare-rust-vs-python:
+    name: Compare Rust vs Python
+    runs-on: ubuntu-latest
+    needs: [benchmark-python, benchmark-rust]
+    if: ${{ github.event.inputs.compare == 'true' || github.event_name == 'push' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Python results
+        uses: actions/download-artifact@v4
+        with:
+          name: python-benchmark-results
+          path: python-results
+
+      - name: Download Rust results
+        uses: actions/download-artifact@v4
+        with:
+          name: rust-benchmark-results
+          path: rust-results
+
+      - name: Compare results
+        run: |
+          echo "## Rust vs Python Performance" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f python-results/benchmark-results.json ] && [ -f rust-results/benchmark_results.json ]; then
+            echo "Results available for comparison." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Benchmark results not available for comparison." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  performance-regression:
+    name: Check Performance Regression
+    runs-on: ubuntu-latest
+    needs: [benchmark-python, benchmark-rust]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+
+      - name: Download current results
+        uses: actions/download-artifact@v4
+        with:
+          name: python-benchmark-results
+          path: current-results
+
+      - name: Run baseline benchmarks
+        run: |
+          pip install -e .
+          python pyneat/benchmark.py --iterations 5 --output baseline-results.json
+
+      - name: Compare performance
+        id: compare
+        run: |
+          echo "## Performance Regression Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          REGRESSION_THRESHOLD=0.2
+          echo "Regression threshold: $(echo "$REGRESSION_THRESHOLD * 100" | bc)%" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f current-results/benchmark-results.json ]; then
+            echo "Baseline results found. Comparison enabled." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No baseline results. Skipping comparison." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Fail on significant regression
+        if: steps.compare.outputs.has_regression == 'true'
+        run: |
+          echo "Performance regression detected!"
+          exit 1

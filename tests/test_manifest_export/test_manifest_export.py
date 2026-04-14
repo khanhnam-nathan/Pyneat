@@ -1,12 +1,14 @@
-"""Tests for manifest exporters (JSON, SARIF, Markdown, CodeClimate)."""
+"""Tests for manifest exporters (JSON, SARIF, Markdown, CodeClimate, JUnit, GitLab SAST, SonarQube, HTML)."""
 
 import json
 import pytest
 from pathlib import Path
 from pyneat.core.types import AgentMarker
 from pyneat.core.manifest import (
-    Manifest, ManifestExporter, MarkerParser,
+    Manifest, ManifestExporter, MarkerParser, MarkerAggregator,
     export_to_sarif, export_to_codeclimate, export_to_markdown,
+    export_to_junit_xml, export_to_gitlab_sast, export_to_sonarqube,
+    export_to_html_report,
 )
 
 
@@ -210,7 +212,7 @@ class TestMarkerParser:
     def test_from_source_basic(self):
         """Test parsing PYNAGENT markers from source."""
         source = '''import os
-# PYNAGENT: {"marker_id":"PYN-001","issue_type":"unused_import","rule_id":"UnusedImportRule","severity":"medium","line":1,"hint":"Remove unused import"}
+# PYNAGENT: {"marker_id":"PYN-001","issue_type":"unused_import","rule_id":"UnusedImportRule","severity":"medium","line":2,"hint":"Remove unused import"}
 def main():
     pass
 '''
@@ -289,3 +291,299 @@ def main():
 
         found = MarkerParser.find_manifest(source_file)
         assert found is None
+
+
+class TestMarkerAggregator:
+    """Test MarkerAggregator helper class."""
+
+    def test_by_severity(self):
+        markers = [
+            AgentMarker(marker_id="PYN-001", issue_type="a", rule_id="R", severity="critical", line=5),
+            AgentMarker(marker_id="PYN-002", issue_type="b", rule_id="R", severity="high", line=10),
+            AgentMarker(marker_id="PYN-003", issue_type="c", rule_id="R", severity="critical", line=20),
+        ]
+        agg = MarkerAggregator(markers)
+        grouped = agg.by_severity()
+        assert len(grouped["critical"]) == 2
+        assert len(grouped["high"]) == 1
+        assert "medium" not in grouped
+
+    def test_by_rule(self):
+        markers = [
+            AgentMarker(marker_id="PYN-001", issue_type="a", rule_id="RuleA", severity="low", line=1),
+            AgentMarker(marker_id="PYN-002", issue_type="b", rule_id="RuleB", severity="low", line=1),
+            AgentMarker(marker_id="PYN-003", issue_type="c", rule_id="RuleA", severity="low", line=1),
+        ]
+        agg = MarkerAggregator(markers)
+        grouped = agg.by_rule()
+        assert len(grouped["RuleA"]) == 2
+        assert len(grouped["RuleB"]) == 1
+
+    def test_by_file(self):
+        markers = [
+            AgentMarker(marker_id="PYN-001", issue_type="a", rule_id="R", line=1, file_path="/src/a.py"),
+            AgentMarker(marker_id="PYN-002", issue_type="b", rule_id="R", line=1, file_path="/src/b.py"),
+            AgentMarker(marker_id="PYN-003", issue_type="c", rule_id="R", line=1, file_path="/src/a.py"),
+        ]
+        agg = MarkerAggregator(markers)
+        grouped = agg.by_file()
+        assert len(grouped["/src/a.py"]) == 2
+        assert len(grouped["/src/b.py"]) == 1
+
+    def test_by_file_unknown_path(self):
+        markers = [
+            AgentMarker(marker_id="PYN-001", issue_type="a", rule_id="R", line=1),
+            AgentMarker(marker_id="PYN-002", issue_type="b", rule_id="R", line=1),
+        ]
+        agg = MarkerAggregator(markers)
+        grouped = agg.by_file()
+        assert len(grouped["unknown"]) == 2
+
+    def test_prioritized(self):
+        markers = [
+            AgentMarker(marker_id="PYN-001", issue_type="a", rule_id="R", severity="low", line=5),
+            AgentMarker(marker_id="PYN-002", issue_type="b", rule_id="R", severity="critical", line=10),
+            AgentMarker(marker_id="PYN-003", issue_type="c", rule_id="R", severity="high", line=1),
+        ]
+        agg = MarkerAggregator(markers)
+        prioritized = agg.prioritized()
+        assert prioritized[0].marker_id == "PYN-002"
+        assert prioritized[1].marker_id == "PYN-003"
+        assert prioritized[2].marker_id == "PYN-001"
+
+    def test_auto_fixable(self):
+        markers = [
+            AgentMarker(marker_id="PYN-001", issue_type="a", rule_id="R", line=1, auto_fix_available=True),
+            AgentMarker(marker_id="PYN-002", issue_type="b", rule_id="R", line=1, auto_fix_available=False),
+        ]
+        agg = MarkerAggregator(markers)
+        fixable = agg.auto_fixable()
+        assert len(fixable) == 1
+        assert fixable[0].marker_id == "PYN-001"
+
+    def test_unremediated(self):
+        markers = [
+            AgentMarker(marker_id="PYN-001", issue_type="a", rule_id="R", line=1, remediated=False),
+            AgentMarker(marker_id="PYN-002", issue_type="b", rule_id="R", line=1, remediated=True),
+        ]
+        agg = MarkerAggregator(markers)
+        unremed = agg.unremediated()
+        assert len(unremed) == 1
+        assert unremed[0].marker_id == "PYN-001"
+
+    def test_summary(self):
+        markers = [
+            AgentMarker(marker_id="PYN-001", issue_type="a", rule_id="R", severity="critical", line=1),
+            AgentMarker(marker_id="PYN-002", issue_type="b", rule_id="R", severity="high", line=1, auto_fix_available=True),
+            AgentMarker(marker_id="PYN-003", issue_type="c", rule_id="R", severity="medium", line=1),
+        ]
+        agg = MarkerAggregator(markers)
+        summary = agg.summary()
+        assert summary["total"] == 3
+        assert summary["critical"] == 1
+        assert summary["high"] == 1
+        assert summary["medium"] == 1
+        assert summary["auto_fixable"] == 1
+
+
+class TestExportToJUnitXml:
+    """Test JUnit XML export."""
+
+    def test_junit_xml_structure(self, tmp_path):
+        markers = [
+            AgentMarker(
+                marker_id="PYN-001",
+                issue_type="sql_injection",
+                rule_id="SecurityRule",
+                severity="critical",
+                line=10,
+                hint="Use parameterized queries",
+                why="SQL injection risk",
+                cwe_id="CWE-89",
+            )
+        ]
+        source_file = tmp_path / "app.py"
+        xml_str = export_to_junit_xml(markers, source_file, test_name="PyNEAT")
+        assert '<?xml version="1.0" encoding="UTF-8"?>' in xml_str
+        assert "<testsuite" in xml_str
+        assert 'name="PyNEAT"' in xml_str
+        assert "<testcase" in xml_str
+        assert "<error" in xml_str or "<failure" in xml_str
+
+    def test_junit_xml_empty_markers(self, tmp_path):
+        source_file = tmp_path / "empty.py"
+        xml_str = export_to_junit_xml([], source_file)
+        assert "<testsuite" in xml_str
+        assert 'tests="0"' in xml_str
+
+
+class TestExportToGitLabSAST:
+    """Test GitLab SAST export."""
+
+    def test_gitlab_sast_structure(self, tmp_path):
+        markers = [
+            AgentMarker(
+                marker_id="PYN-SEC-001",
+                issue_type="sql_injection",
+                rule_id="SecurityRule",
+                severity="critical",
+                line=10,
+                hint="Use parameterized queries",
+                cwe_id="CWE-89",
+                file_path="/src/app.py",
+            )
+        ]
+        source_file = tmp_path / "app.py"
+        result = export_to_gitlab_sast(markers, project="my-project")
+        assert "vulnerabilities" in result
+        assert result["project"] == "my-project"
+        assert len(result["vulnerabilities"]) == 1
+        vuln = result["vulnerabilities"][0]
+        assert vuln["id"] == "PYN-SEC-001"
+        assert vuln["cve"] == "CWE-89"
+        assert vuln["severity"] == "critical"
+        assert vuln["line"] == 10
+
+    def test_gitlab_sast_empty(self, tmp_path):
+        source_file = tmp_path / "empty.py"
+        result = export_to_gitlab_sast([])
+        assert result["vulnerabilities"] == []
+
+
+class TestExportToSonarQube:
+    """Test SonarQube Generic Issue Export."""
+
+    def test_sonarqube_structure(self, tmp_path):
+        markers = [
+            AgentMarker(
+                marker_id="PYN-001",
+                issue_type="sql_injection",
+                rule_id="SecurityRule",
+                severity="critical",
+                line=10,
+                hint="Use parameterized queries",
+            )
+        ]
+        source_file = tmp_path / "app.py"
+        issues = export_to_sonarqube(markers, source_file)
+        assert len(issues) == 1
+        issue = issues[0]
+        assert issue["engineId"] == "PyNEAT"
+        assert issue["ruleId"] == "SecurityRule"
+        assert issue["severity"] == "BLOCKER"
+        assert issue["type"] == "VULNERABILITY"
+        assert issue["line"] == 10
+
+    def test_sonarqube_low_becomes_code_smell(self, tmp_path):
+        markers = [
+            AgentMarker(
+                marker_id="PYN-001",
+                issue_type="unused_import",
+                rule_id="ImportRule",
+                severity="low",
+                line=5,
+            )
+        ]
+        source_file = tmp_path / "app.py"
+        issues = export_to_sonarqube(markers, source_file)
+        assert issues[0]["type"] == "CODE_SMELL"
+
+    def test_sonarqube_empty(self, tmp_path):
+        source_file = tmp_path / "empty.py"
+        issues = export_to_sonarqube([], source_file)
+        assert issues == []
+
+
+class TestExportToHtmlReport:
+    """Test HTML report export."""
+
+    def test_html_report_structure(self, tmp_path):
+        markers = [
+            AgentMarker(
+                marker_id="PYN-001",
+                issue_type="sql_injection",
+                rule_id="SecurityRule",
+                severity="critical",
+                line=10,
+                hint="Use parameterized queries",
+            ),
+            AgentMarker(
+                marker_id="PYN-002",
+                issue_type="unused_import",
+                rule_id="ImportRule",
+                severity="medium",
+                line=5,
+                hint="Remove import",
+            ),
+        ]
+        source_file = tmp_path / "app.py"
+        html = export_to_html_report(markers, title="Test Report")
+        assert "<!DOCTYPE html>" in html
+        assert "Test Report" in html
+        assert "PYN-001" in html
+        assert "PYN-002" in html
+        assert "critical" in html.lower()
+        assert "sql_injection" in html
+
+    def test_html_report_empty(self, tmp_path):
+        source_file = tmp_path / "empty.py"
+        html = export_to_html_report([])
+        assert "<!DOCTYPE html>" in html
+        assert "No issues found" in html
+
+    def test_html_report_with_summary(self, tmp_path):
+        markers = [
+            AgentMarker(marker_id="PYN-001", issue_type="a", rule_id="R", severity="critical", line=1),
+            AgentMarker(marker_id="PYN-002", issue_type="b", rule_id="R", severity="high", line=1),
+            AgentMarker(marker_id="PYN-003", issue_type="c", rule_id="R", severity="low", line=1),
+        ]
+        html = export_to_html_report(markers)
+        assert "3" in html  # total count
+
+
+class TestMarkerParserMultiLanguage:
+    """Test MarkerParser multi-language comment support."""
+
+    def test_parse_js_single_line(self):
+        source = """function test() {
+// PYNAGENT: {"marker_id":"PYN-JS-001","issue_type":"unused_var","rule_id":"JSRule","line":2}
+}"""
+        markers = MarkerParser.from_source(source)
+        assert len(markers) == 1
+        assert markers[0].marker_id == "PYN-JS-001"
+
+    def test_parse_c_block_comment(self):
+        source = """int main() {
+/* PYNAGENT: {"marker_id":"PYN-C-001","issue_type":"buffer_risk","rule_id":"CRule","line":2} */
+return 0;
+}"""
+        markers = MarkerParser.from_source(source)
+        assert len(markers) == 1
+        assert markers[0].marker_id == "PYN-C-001"
+
+    def test_parse_sql_single_line(self):
+        source = """SELECT *
+-- PYNAGENT: {"marker_id":"PYN-SQL-001","issue_type":"sql_risk","rule_id":"SQLRule","line":2}
+FROM users"""
+        markers = MarkerParser.from_source(source)
+        assert len(markers) == 1
+        assert markers[0].marker_id == "PYN-SQL-001"
+
+    def test_parse_html_comment(self):
+        source = """<div>
+<!-- PYNAGENT: {"marker_id":"PYN-HTML-001","issue_type":"html_risk","rule_id":"HTMLRule","line":2} -->
+</div>"""
+        markers = MarkerParser.from_source(source)
+        assert len(markers) == 1
+        assert markers[0].marker_id == "PYN-HTML-001"
+
+    def test_parse_python_and_js_mixed(self):
+        source = """# PYNAGENT: {"marker_id":"PYN-PY-001","issue_type":"py_risk","rule_id":"PyRule","line":1}
+def test():
+// PYNAGENT: {"marker_id":"PYN-JS-001","issue_type":"js_risk","rule_id":"JSRule","line":3}
+"""
+        markers = MarkerParser.from_source(source)
+        assert len(markers) == 2
+        ids = {m.marker_id for m in markers}
+        assert "PYN-PY-001" in ids
+        assert "PYN-JS-001" in ids

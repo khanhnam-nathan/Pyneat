@@ -1,7 +1,19 @@
-//! LanguageScanner trait and LanguageRegistry.
+//! PyNeat Rust Security Scanner
 //!
-//! Provides a common interface for language-specific scanners,
-//! each with their own parser and rules.
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #![allow(dead_code)]
 #![allow(unused_variables)]
@@ -9,7 +21,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use super::ln_ast::LnAst;
+use super::ln_ast::{LnAst, LnCall};
 use super::multilang::detect_language_from_extension;
 pub use super::multilang::Language;
 use super::ParseError;
@@ -190,4 +202,18 @@ impl Default for LanguageRegistry {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Find all function/method calls whose callee starts with any of the given prefixes.
+#[inline]
+pub fn find_calls<'a>(tree: &'a LnAst, prefixes: &[&str]) -> Vec<&'a LnCall> {
+    tree.calls.iter()
+        .filter(|c| prefixes.iter().any(|p| c.callee.starts_with(p)))
+        .collect()
+}
+
+/// Check if the AST has any import whose module starts with any of the given prefixes.
+#[inline]
+pub fn has_import(tree: &LnAst, prefixes: &[&str]) -> bool {
+    tree.imports.iter().any(|i| prefixes.iter().any(|p| i.module.starts_with(p)))
 }

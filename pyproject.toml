@@ -4,8 +4,8 @@ build-backend = "maturin"
 
 [project]
 name = "pyneat-cli"
-version = "2.4.5"
-description = "Neat Python AI Code Cleaner — removes AI-generated code artifacts, dead code, and security vulnerabilities"
+version = "3.0.0"
+description = "AI-Generated Code Scanner — detects bugs, security vulnerabilities, and quality issues that AI coding assistants introduce"
 readme = "README.md"
 license = {text = "GNU AGPL-3.0-or-later"}
 requires-python = ">=3.10"

@@ -1,0 +1,80 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as follows."
+
+type: software
+title: "PyNeat"
+version: "2.4.5"
+date-released: 2026-04-13
+url: "https://github.com/khanhnam-nathan/Pyneat"
+repository-code: "https://github.com/khanhnam-nathan/Pyneat"
+license: AGPL-3.0-or-later
+
+abstract: >
+  PyNeat is an aggressive, AST-based code scanning tool designed to
+  detect bugs, security vulnerabilities, and quality issues in
+  AI-generated code. It performs deep structural analysis to catch
+  patterns that AI coding assistants systematically introduce — phantom
+  packages, fake parameters, resource leaks, and OWASP Top 10
+  vulnerabilities — across Python, JavaScript, TypeScript, Go, Java,
+  Rust, C#, PHP, and Ruby. The Rust backend (pyneat-rs) provides
+  tree-sitter AST parsing with rayon parallel processing for maximum
+  performance.
+
+keywords:
+  - security
+  - scanner
+  - static-analysis
+  - python
+  - ai-generated-code
+  - code-quality
+  - vulnerability-detection
+  - ast
+  - tree-sitter
+
+authors:
+  - family-names: "Nam"
+    given-names: "Khanh"
+    email: "khanhnam.copywriting@gmail.com"
+    affiliation: "PyNeat Project"
+
+preferred-citation:
+  type: software
+  title: "PyNeat: AI-Generated Code Scanner"
+  authors:
+    - family-names: "Nam"
+      given-names: "Khanh"
+      email: "khanhnam.copywriting@gmail.com"
+  year: 2026
+  url: "https://github.com/khanhnam-nathan/Pyneat"
+
+contact:
+  - family-names: "Nam"
+    given-names: "Khanh"
+    email: "khanhnam.copywriting@gmail.com"
+
+references:
+  - type: book
+    title: "The AST Guard: Validating Code Structure Before Processing"
+    authors:
+      - family-names: "Nam"
+        given-names: "Khanh"
+    year: 2026
+    notes: "Architecture documentation of PyNeat's 7-layer protection system"
+
+  - type: conference-paper
+    title: "Detecting AI-Generated Code Bugs: Resource Leaks, Phantom Packages, and Fake Parameters"
+    conference: "Automated Software Engineering"
+    authors:
+      - family-names: "Nam"
+        given-names: "Khanh"
+    year: 2026
+    notes: "Research on systematic bug patterns introduced by AI coding assistants"
+
+  - type: report
+    title: "OWASP Top 10 for AI-Generated Code: A Security Analysis"
+    institution: "PyNeat Project"
+    authors:
+      - family-names: "Nam"
+        given-names: "Khanh"
+    year: 2026
+    notes: "Security vulnerability patterns specific to AI-generated code"

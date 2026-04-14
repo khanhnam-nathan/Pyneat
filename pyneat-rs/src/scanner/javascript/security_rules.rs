@@ -1,7 +1,19 @@
-//! JavaScript/TypeScript-specific security rules for pyneat-rs.
+//! PyNeat Rust Security Scanner
 //!
-//! Implements JS-SEC-001 through JS-SEC-015 for security vulnerabilities
-//! in AI-generated JavaScript/TypeScript code.
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use std::collections::HashSet;
 
@@ -1313,6 +1325,336 @@ impl LangRule for JsInsecureCors {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Extended JS Security Rules (JS-SEC-016 to JS-SEC-030)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// JS-SEC-016: Code Injection via eval-like functions
+pub struct JsCodeInjection;
+
+impl LangRule for JsCodeInjection {
+    fn id(&self) -> &str { "JS-SEC-016" }
+    fn name(&self) -> &str { "Code Injection via eval-like functions" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let dangerous = ["eval", "Function", "setTimeout", "setInterval"];
+        for call in &tree.calls {
+            if dangerous.iter().any(|d| call.callee.contains(d)) {
+                let user_sources = ["req", "body", "params", "query", "input", "data", "payload"];
+                if user_sources.iter().any(|s| code.contains(s)) {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+                    findings.push(LangFinding::new(
+                        "JS-SEC-016",
+                        "critical",
+                        call.start_line,
+                        &line_text,
+                        &format!("{}() with potentially user-controlled input", call.callee),
+                        "Avoid using eval with user input. Use JSON.parse() for JSON data.",
+                    ));
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+/// JS-SEC-017: SQL Injection via string concatenation
+pub struct JsSqlConcatInjection;
+
+impl LangRule for JsSqlConcatInjection {
+    fn id(&self) -> &str { "JS-SEC-017" }
+    fn name(&self) -> &'static str { "SQL Injection via String Concatenation" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let sql_keywords = ["SELECT", "INSERT", "UPDATE", "DELETE", "DROP", "ALTER"];
+        for call in &tree.calls {
+            let user_vars = ["req", "body", "params", "query", "input", "id", "user"];
+            let has_user_input = user_vars.iter().any(|v| call.callee.contains(v));
+            let has_sql = sql_keywords.iter().any(|s| code.to_uppercase().contains(s));
+            let has_concat = call.arguments.iter().any(|a| a.contains("+") || a.contains("`"));
+            if has_user_input && has_sql && has_concat {
+                let (start, end) = get_line_offsets(code, call.start_line);
+                let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+                findings.push(LangFinding::new(
+                    "JS-SEC-017",
+                    "critical",
+                    call.start_line,
+                    &line_text,
+                    "SQL query built with string concatenation and user input",
+                    "Use parameterized queries or an ORM instead of string concatenation.",
+                ));
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+/// JS-SEC-018: Insecure WebSocket Connection
+pub struct JsInsecureWebSocket;
+
+impl LangRule for JsInsecureWebSocket {
+    fn id(&self) -> &str { "JS-SEC-018" }
+    fn name(&self) -> &str { "Insecure WebSocket Connection (ws://)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        for call in &tree.calls {
+            if call.callee.contains("WebSocket") && call.arguments.iter().any(|a| a.contains("ws://") || a.contains("http://")) {
+                let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+                findings.push(LangFinding::new(
+                    "JS-SEC-018", "high", call.start_line,
+                    &line_text,
+                    "WebSocket connection uses insecure protocol (ws://)",
+                    "Use wss:// instead of ws:// for secure WebSocket connections.",
+                ));
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+/// JS-SEC-019: Misconfigured CORS (allow-credentials with any origin)
+pub struct JsCorsMisconfigCredentials;
+
+impl LangRule for JsCorsMisconfigCredentials {
+    fn id(&self) -> &str { "JS-SEC-019" }
+    fn name(&self) -> &str { "CORS Misconfiguration: credentials with wildcard origin" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        for call in &tree.calls {
+            if call.callee.contains("setHeader") || call.callee.contains("cors") {
+                let has_wildcard = call.arguments.iter().any(|a| a.contains("*") || a.contains("null"));
+                let has_credentials = call.arguments.iter().any(|a| a.to_lowercase().contains("credentials") || a.to_lowercase().contains("true"));
+                if has_wildcard && has_credentials {
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+                    findings.push(LangFinding::new(
+                        "JS-SEC-019", "high", call.start_line,
+                        &line_text,
+                        "CORS allows wildcard origin with credentials - attackers can steal user data",
+                        "Do not use Access-Control-Allow-Origin: * with Access-Control-Allow-Credentials: true.",
+                    ));
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+/// JS-SEC-020: JSONP Callback (CORS bypass risk)
+pub struct JsJsonpCallback;
+
+impl LangRule for JsJsonpCallback {
+    fn id(&self) -> &str { "JS-SEC-020" }
+    fn name(&self) -> &str { "JSONP Callback Pattern (CORS bypass)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let jsonp_patterns = ["callback=", "jsonp=", "jsonpcallback="];
+        for call in &tree.calls {
+            if call.callee.contains("script") || call.callee.contains("fetch") || call.callee.contains("getJSON") {
+                if jsonp_patterns.iter().any(|p| call.callee.to_lowercase().contains(p)) {
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+                    findings.push(LangFinding::new(
+                        "JS-SEC-020", "high", call.start_line,
+                        &line_text,
+                        "JSONP callback detected - allows data theft via cross-site requests",
+                        "Replace JSONP with CORS or use a server-side proxy for cross-origin requests.",
+                    ));
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+/// JS-SEC-021: Hardcoded IP Address
+pub struct JsHardcodedIp;
+
+impl LangRule for JsHardcodedIp {
+    fn id(&self) -> &str { "JS-SEC-021" }
+    fn name(&self) -> &str { "Hardcoded IP Address" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let re = regex::Regex::new(r#"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"#).unwrap();
+        for (i, line_text) in code.lines().enumerate() {
+            let stripped = line_text.trim();
+            if !stripped.is_empty() && !stripped.starts_with("//") && !stripped.starts_with("*") {
+                for m in re.find_iter(line_text) {
+                    let ip = m.as_str();
+                    if ip != "0.0.0.0" && ip != "127.0.0.1" && ip != "255.255.255.255" {
+                        findings.push(LangFinding::new(
+                            "JS-SEC-021", "medium", i + 1,
+                            line_text,
+                            &format!("Hardcoded IP address: {}", ip),
+                            "Use environment variables or configuration files for IP addresses.",
+                        ));
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+/// JS-SEC-022: PostMessage without origin validation
+pub struct JsPostMessageNoOrigin;
+
+impl LangRule for JsPostMessageNoOrigin {
+    fn id(&self) -> &str { "JS-SEC-022" }
+    fn name(&self) -> &str { "postMessage without origin validation" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let has_postmessage = code.contains("addEventListener(\"message\"") || code.contains("onmessage");
+        let has_wildcard_check = code.contains("event.origin === \"*\"") || code.contains("event.origin === null");
+        let has_any_check = code.contains("if (event.origin)") && !code.contains("event.origin !==");
+        if has_postmessage && (has_wildcard_check || has_any_check) {
+            for call in &tree.calls {
+                if call.callee.contains("message") || code.contains("onmessage") {
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+                    findings.push(LangFinding::new(
+                        "JS-SEC-022", "high", call.start_line,
+                        &line_text,
+                        "postMessage listener without strict origin validation - accepts messages from any site",
+                        "Validate event.origin against a whitelist of allowed origins.",
+                    ));
+                    break;
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+/// JS-SEC-023: Insecure use of localStorage/sessionStorage
+pub struct JsInsecureStorage;
+
+impl LangRule for JsInsecureStorage {
+    fn id(&self) -> &str { "JS-SEC-023" }
+    fn name(&self) -> &str { "Sensitive Data Stored in localStorage/sessionStorage" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let sensitive_keys = ["token", "auth", "password", "credential", "secret", "key", "session", "bearer", "jwt", "api_key"];
+        for call in &tree.calls {
+            let is_set = call.callee.contains("setItem") || call.callee.ends_with("=");
+            let storage = call.callee.contains("localStorage") || call.callee.contains("sessionStorage");
+            if is_set && storage {
+                if sensitive_keys.iter().any(|k| call.arguments.iter().any(|a| a.to_lowercase().contains(k))) {
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+                    findings.push(LangFinding::new(
+                        "JS-SEC-023", "medium", call.start_line,
+                        &line_text,
+                        "Sensitive data stored in browser storage - vulnerable to XSS attacks",
+                        "Use httpOnly cookies instead, or encrypt data before storing in web storage.",
+                    ));
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+/// JS-SEC-024: Missing Content-Security-Policy Header
+pub struct JsMissingCSP;
+
+impl LangRule for JsMissingCSP {
+    fn id(&self) -> &str { "JS-SEC-024" }
+    fn name(&self) -> &str { "Missing Content-Security-Policy Header" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let has_csp = code.to_lowercase().contains("content-security-policy") || code.to_lowercase().contains("csp");
+        let is_server = code.contains("setHeader") || code.contains("res.setHeader") || code.contains("app.use");
+        if is_server && !has_csp {
+            let line_text = get_line_text(code, 1).unwrap_or_default();
+            findings.push(LangFinding::new(
+                "JS-SEC-024", "medium", 1,
+                &line_text,
+                "No Content-Security-Policy header found - application is vulnerable to XSS",
+                "Add Content-Security-Policy header with appropriate directives.",
+            ));
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+/// JS-SEC-025: Prototype Pollution via __proto__
+pub struct JsProtoPollution;
+
+impl LangRule for JsProtoPollution {
+    fn id(&self) -> &str { "JS-SEC-025" }
+    fn name(&self) -> &str { "Prototype Pollution via __proto__" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let dangerous_props = ["__proto__", "constructor", "prototype"];
+        for call in &tree.calls {
+            if call.arguments.iter().any(|a| dangerous_props.iter().any(|p| a.contains(p))) {
+                let has_user_input = call.arguments.iter().any(|a| {
+                    let user_srcs = ["req", "body", "params", "query", "input", "data"];
+                    user_srcs.iter().any(|s| a.to_lowercase().contains(s))
+                });
+                if has_user_input {
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+                    findings.push(LangFinding::new(
+                        "JS-SEC-025", "high", call.start_line,
+                        &line_text,
+                        "Object property assignment with user input and __proto__/constructor - prototype pollution risk",
+                        "Sanitize and validate input. Use Object.freeze() on critical prototypes. Consider deep cloning instead of shallow merge.",
+                    ));
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Registry function
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1334,5 +1676,16 @@ pub fn js_security_rules() -> Vec<Box<dyn LangRule>> {
         Box::new(JsInsecureCookie),
         Box::new(JsRegexDos),
         Box::new(JsInsecureCors),
+        // Extended rules JS-SEC-016 to JS-SEC-025
+        Box::new(JsCodeInjection),
+        Box::new(JsSqlConcatInjection),
+        Box::new(JsInsecureWebSocket),
+        Box::new(JsCorsMisconfigCredentials),
+        Box::new(JsJsonpCallback),
+        Box::new(JsHardcodedIp),
+        Box::new(JsPostMessageNoOrigin),
+        Box::new(JsInsecureStorage),
+        Box::new(JsMissingCSP),
+        Box::new(JsProtoPollution),
     ]
 }

@@ -1,8 +1,21 @@
-//! SEC-071: Sensitive Data in JWT
+//! PyNeat Rust Security Scanner
 //!
-//! Detects sensitive data stored in JWT payload
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::rules::base::{Fix, Finding, Rule, Severity};
+use crate::rules::base::{extract_snippet, Fix, Finding, Rule, Severity};
 use tree_sitter::Tree;
 
 /// SEC-071: Weak JWT Payload Rule
@@ -48,16 +61,4 @@ impl Rule for WeakJwtPayloadRule {
     }
 
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
-}
-
-fn extract_snippet(source: &str, start: usize, end: usize) -> String {
-    let line_start = source[..start].rfind('\n').map(|i| i + 1).unwrap_or(0);
-    let line_end = source[end..].find('\n').map(|i| end + i).unwrap_or(source.len());
-    let context_before = if line_start > 0 {
-        source[..line_start - 1].rfind('\n').map(|i| i + 1).unwrap_or(0)
-    } else {
-        line_start
-    };
-    let snippet = &source[context_before..line_end];
-    snippet.lines().take(3).collect::<Vec<_>>().join("\n")
 }

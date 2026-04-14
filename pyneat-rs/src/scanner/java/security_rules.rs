@@ -1,11 +1,24 @@
-//! Java-specific security rules for pyneat-rs.
+//! PyNeat Rust Security Scanner
 //!
-//! Implements JAVA-SEC-001 through JAVA-SEC-020 for AI-generated Java code vulnerabilities.
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use std::collections::HashSet;
 
 use crate::scanner::ln_ast::{LnAst, LnCall};
-use crate::scanner::base::{LangRule, LangFinding};
+use crate::scanner::base::{find_calls, has_import, LangRule, LangFinding};
 
 /// Helper: get line byte offsets (0-indexed lines, 0-indexed bytes).
 fn get_line_offsets(code: &str, line: usize) -> (usize, usize) {
@@ -31,20 +44,6 @@ fn get_line_offsets(code: &str, line: usize) -> (usize, usize) {
         line_end = code.len();
     }
     (line_start, line_end)
-}
-
-/// Helper: find calls by callee prefix.
-#[allow(dead_code)]
-fn find_calls<'a>(tree: &'a LnAst, prefixes: &[&str]) -> Vec<&'a LnCall> {
-    tree.calls.iter()
-        .filter(|c| prefixes.iter().any(|p| c.callee.starts_with(p)))
-        .collect()
-}
-
-/// Helper: find imports by module prefix.
-#[allow(dead_code)]
-fn has_import(tree: &LnAst, prefixes: &[&str]) -> bool {
-    tree.imports.iter().any(|i| prefixes.iter().any(|p| i.module.starts_with(p)))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,99 @@
+name: PyNEAT SAST (GitHub Advanced Security)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.ts'
+      - '**.go'
+      - '**.java'
+      - '**.rs'
+      - '**.cs'
+      - '**.php'
+      - '**.rb'
+  pull_request:
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.ts'
+      - '**.go'
+      - '**.java'
+      - '**.rs'
+      - '**.cs'
+      - '**.php'
+      - '**.rb'
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  pyneat-scan:
+    name: PyNEAT Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyNEAT
+        run: pip install pyneat-cli
+
+      - name: Run PyNEAT Scan
+        run: |
+          pyneat check \
+            --format sarif \
+            --output pyneat-results.sarif \
+            --severity info \
+            .
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: pyneat-results.sarif
+          category: "pyneat-sast"
+          # Optional: Set severity threshold
+          # checkout_uri: .
+
+      - name: Summary
+        run: |
+          TOTAL=$(cat pyneat-results.sarif | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d.get('runs',[{}])[0].get('results',[])))" 2>/dev/null || echo "0")
+          echo "## PyNEAT Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Total findings: $TOTAL" >> $GITHUB_STEP_SUMMARY
+
+  pyneat-rs-scan:
+    name: PyNEAT-RS Native Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build PyNEAT-RS
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          profile: minimal
+
+      - name: Build
+        run: |
+          cd pyneat-rs
+          cargo build --release
+
+      - name: Run Scan
+        run: |
+          ./pyneat-rs/target/release/pyneat scan \
+            --format sarif \
+            --output pyneat-rs-results.sarif \
+            .
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: pyneat-rs-results.sarif
+          category: "pyneat-rs-sast"

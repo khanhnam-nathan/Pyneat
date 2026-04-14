@@ -19,8 +19,8 @@ For commercial licensing, contact: license@pyneat.dev
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Tuple, Set
-
+from typing import Dict, Any, List, Optional, Tuple, Set, ClassVar
+from collections import defaultdict
 from pathlib import Path
 
 # --------------------------------------------------------------------------
@@ -384,6 +384,7 @@ class CodeFile:
     language: str = "python"
     ast_tree: Optional[Any] = None
     cst_tree: Optional[Any] = None
+    ln_ast: Optional[Any] = None  # Language-Neutral AST from Rust parser
 
     @property
     def filename(self) -> str:
@@ -405,6 +406,8 @@ class AgentMarker:
     column: int = 0                            # 0-indexed column
     hint: Optional[str] = None                 # Suggested fix
     why: Optional[str] = None                 # Why this is a problem
+    impact: Optional[str] = None             # Consequences if exploited
+    confidence_note: Optional[str] = None     # Why confidence = X (e.g. "regex-only match")
     confidence: float = 1.0                    # 0.0 - 1.0 detection confidence
     can_auto_fix: bool = False                 # Whether auto-fix is conceptually possible
     fix_diff: Optional[str] = None             # Unified diff for the fix
@@ -415,11 +418,68 @@ class AgentMarker:
     auto_fix_after: Optional[str] = None       # Code after fix
     requires_user_input: bool = False          # Whether fix needs user confirmation
     related_markers: Tuple[str, ...] = field(default_factory=tuple)  # Related marker IDs
+    # New fields
+    owasp_id: Optional[str] = None             # OWASP-A03
+    cvss_score: Optional[float] = None        # 9.8
+    cvss_vector: Optional[str] = None         # CVSS:3.1/AV:N/AC:L/...
+    file_path: Optional[str] = None            # Full path đầy đủ
+    detected_at: Optional[str] = None          # ISO timestamp
+    remediated: bool = False                   # Đã fix chưa
+    remediated_at: Optional[str] = None         # Khi nào fix
+    fix_constraints: Tuple[str, ...] = field(default_factory=tuple)  # Ràng buộc khi fix
+    do_not: Tuple[str, ...] = field(default_factory=tuple)          # Sai lầm thường gặp
+    verify: Tuple[str, ...] = field(default_factory=tuple)          # Cách verify fix
+    resources: Tuple[str, ...] = field(default_factory=tuple)         # Link tài liệu
+    language: Optional[str] = None           # python, javascript, java, go, rust, csharp, php, ruby
+
+    # Supported languages (used for validation)
+    SUPPORTED_LANGUAGES: ClassVar[Tuple[str, ...]] = (
+        "python", "javascript", "typescript", "java", "go", "rust", "csharp", "php", "ruby"
+    )
 
     def __post_init__(self):
         # Auto-set end_line to line if not provided
         if self.end_line is None:
             object.__setattr__(self, 'end_line', self.line)
+        # Validation
+        if not (0.0 <= self.confidence <= 1.0):
+            raise ValueError(f"confidence must be in [0.0, 1.0], got {self.confidence}")
+        valid_severities = SecuritySeverity.all_levels()
+        if self.severity not in valid_severities:
+            raise ValueError(f"invalid severity: {self.severity}, must be one of {valid_severities}")
+        if self.line < 1:
+            raise ValueError(f"line must be >= 1, got {self.line}")
+        if self.language is not None and self.language not in self.SUPPORTED_LANGUAGES:
+            raise ValueError(
+                f"invalid language: {self.language}, must be one of {self.SUPPORTED_LANGUAGES}"
+            )
+        # Auto-normalize tuple fields
+        for fname in ("related_markers", "fix_constraints", "do_not", "verify", "resources"):
+            val = getattr(self, fname)
+            if val is None:
+                object.__setattr__(self, fname, ())
+            elif not isinstance(val, tuple):
+                object.__setattr__(self, fname, tuple(val) if val else ())
+
+    def __lt__(self, other: "AgentMarker") -> bool:
+        """So sánh theo severity (critical > high > medium > low > info), rồi theo line."""
+        order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+        self_order = order.get(self.severity, 5)
+        other_order = order.get(other.severity, 5)
+        if self_order != other_order:
+            return self_order < other_order
+        return self.line < other.line
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, AgentMarker):
+            return False
+        return self.marker_id == other.marker_id
+
+    def __hash__(self) -> int:
+        return hash(self.marker_id)
+
+    def __repr__(self) -> str:
+        return f"AgentMarker({self.marker_id}, {self.issue_type}, line={self.line}, severity={self.severity})"
 
     @property
     def location(self) -> str:
@@ -437,6 +497,8 @@ class AgentMarker:
             "column": self.column,
             "hint": self.hint,
             "why": self.why,
+            "impact": self.impact,
+            "confidence_note": self.confidence_note,
             "confidence": self.confidence,
             "can_auto_fix": self.can_auto_fix,
             "fix_diff": self.fix_diff,
@@ -447,14 +509,28 @@ class AgentMarker:
             "auto_fix_after": self.auto_fix_after,
             "requires_user_input": self.requires_user_input,
             "related_markers": list(self.related_markers),
+            "owasp_id": self.owasp_id,
+            "cvss_score": self.cvss_score,
+            "cvss_vector": self.cvss_vector,
+            "file_path": self.file_path,
+            "detected_at": self.detected_at,
+            "remediated": self.remediated,
+            "remediated_at": self.remediated_at,
+            "fix_constraints": list(self.fix_constraints),
+            "do_not": list(self.do_not),
+            "verify": list(self.verify),
+            "resources": list(self.resources),
+            "language": self.language,
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AgentMarker":
         """Deserialize from dict."""
-        # Normalize related_markers to tuple
-        if "related_markers" in data and isinstance(data["related_markers"], list):
-            data = {**data, "related_markers": tuple(data["related_markers"])}
+        # Normalize tuple fields
+        tuple_fields = ("related_markers", "fix_constraints", "do_not", "verify", "resources")
+        for fname in tuple_fields:
+            if fname in data and isinstance(data[fname], list):
+                data = {**data, fname: tuple(data[fname])}
         return cls(**data)
 
     def to_json(self) -> str:
@@ -481,6 +557,136 @@ class AgentMarker:
                 data[key] = data[key][:77] + "..."
         json_str = json.dumps(data, ensure_ascii=False)
         return f"# PYNAGENT: {json_str}"
+
+
+# --------------------------------------------------------------------------
+# MarkerIdGenerator - centralized singleton marker ID generation
+# --------------------------------------------------------------------------
+
+
+class MarkerIdGenerator:
+    """Centralized marker ID generation ensuring uniqueness and consistency.
+
+    Singleton pattern so counters persist across all rules within a scan session.
+    """
+
+    PREFIXES: Dict[str, str] = {
+        "security": "PYN-SEC",
+        "quality": "PYN-QAL",
+        "ai": "PYN-AI",
+        "deadcode": "PYN-DC",
+        "import": "PYN-IMP",
+        "naming": "PYN-NAM",
+        "refactor": "PYN-REF",
+        "default": "PYN",
+    }
+
+    _instance: Optional["MarkerIdGenerator"] = None
+
+    def __new__(cls) -> "MarkerIdGenerator":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._counters: Dict[str, int] = defaultdict(int)
+        return cls._instance
+
+    def __init__(self):
+        pass
+
+    def generate(self, rule_id: str, category: Optional[str] = None) -> str:
+        """Generate a unique marker ID.
+
+        Args:
+            rule_id: The rule identifier (e.g. "SEC-001").
+            category: Optional category override (security, quality, ai, etc.).
+
+        Returns:
+            Unique marker ID string (e.g. "PYN-SEC-0001").
+        """
+        if category is None:
+            category = self._infer_category(rule_id)
+        prefix = self.PREFIXES.get(category, "PYN")
+        self._counters[category] += 1
+        return f"{prefix}-{self._counters[category]:04d}"
+
+    def _infer_category(self, rule_id: str) -> str:
+        rule_lower = rule_id.lower()
+        if "security" in rule_lower or rule_lower.startswith("sec"):
+            return "security"
+        if "ai" in rule_lower:
+            return "ai"
+        if "dead" in rule_lower or "unused" in rule_lower:
+            return "deadcode"
+        if "import" in rule_lower:
+            return "import"
+        if "naming" in rule_lower:
+            return "naming"
+        if "quality" in rule_lower or "refactor" in rule_lower:
+            return "refactor"
+        return "default"
+
+    def reset(self) -> None:
+        """Reset counters (for testing or new scan session)."""
+        self._counters.clear()
+
+    def get_counts(self) -> Dict[str, int]:
+        return dict(self._counters)
+
+
+# --------------------------------------------------------------------------
+# SecurityFinding -> AgentMarker conversion
+# --------------------------------------------------------------------------
+
+
+def security_finding_to_marker(
+    finding: SecurityFinding,
+    marker_id: Optional[str] = None,
+    language: Optional[str] = None,
+    file_path: Optional[str] = None,
+) -> AgentMarker:
+    """Convert a SecurityFinding to an AgentMarker.
+
+    Args:
+        finding: The SecurityFinding to convert.
+        marker_id: Optional pre-assigned marker ID; if None, a new one is generated.
+        language: Language of the source file (e.g. "python", "javascript").
+        file_path: Optional override for file path; defaults to finding.file.
+
+    Returns:
+        A fully-populated AgentMarker with all available fields mapped.
+    """
+    from datetime import datetime as _dt
+
+    if marker_id is None:
+        generator = MarkerIdGenerator()
+        marker_id = generator.generate(finding.rule_id, "security")
+
+    return AgentMarker(
+        marker_id=marker_id,
+        issue_type=finding.rule_id.lower().replace("sec-", "security_"),
+        rule_id=finding.rule_id,
+        severity=finding.severity,
+        line=finding.start_line,
+        end_line=finding.end_line,
+        hint=finding.fix_constraints[0] if finding.fix_constraints else None,
+        why=finding.problem,
+        confidence=finding.confidence,
+        can_auto_fix=finding.can_auto_fix,
+        auto_fix_available=finding.auto_fix_available,
+        auto_fix_before=finding.auto_fix_before,
+        auto_fix_after=finding.auto_fix_after,
+        snippet=finding.snippet,
+        cwe_id=finding.cwe_id,
+        owasp_id=finding.owasp_id,
+        cvss_score=finding.cvss_score,
+        cvss_vector=finding.cvss_vector,
+        file_path=file_path if file_path is not None else finding.file,
+        language=language,
+        detected_at=_dt.now().isoformat() + "Z",
+        fix_constraints=finding.fix_constraints,
+        do_not=finding.do_not,
+        verify=finding.verify,
+        resources=finding.resources,
+    )
 
 
 @dataclass(frozen=True)

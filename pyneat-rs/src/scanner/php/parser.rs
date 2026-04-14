@@ -1,9 +1,25 @@
-//! PHP parser using tree-sitter.
+//! PyNeat Rust Security Scanner
+//!
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use tree_sitter::{Node, Parser};
 
 use crate::scanner::ln_ast::{
     LnAst, LnClass, LnComment, LnDeepNesting, LnFunction, LnTodo,
+    TODO_MARKERS,
 };
 use crate::scanner::ParseError;
 
@@ -122,7 +138,7 @@ fn extract_nesting_recursive(node: &Node, depth: usize, threshold: usize, kinds:
 }
 
 fn extract_todo_marker(text: &str) -> Option<(String, String)> {
-    let markers = ["TODO", "FIXME", "HACK", "XXX", "NOTE", "BUG"];
+    let markers = TODO_MARKERS;
     for marker in markers {
         if let Some(pos) = text.to_uppercase().find(marker) {
             let after_start = pos + marker.len();

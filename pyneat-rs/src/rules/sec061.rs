@@ -2,7 +2,7 @@
 //!
 //! Detects when external scripts/stylesheets are loaded without integrity check
 
-use crate::rules::base::{Fix, Finding, Rule, Severity};
+use crate::rules::base::{extract_snippet, Fix, Finding, Rule, Severity};
 use tree_sitter::Tree;
 
 /// SEC-061: Missing SRI Rule
@@ -48,16 +48,4 @@ impl Rule for MissingSriRule {
     }
 
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
-}
-
-fn extract_snippet(source: &str, start: usize, end: usize) -> String {
-    let line_start = source[..start].rfind('\n').map(|i| i + 1).unwrap_or(0);
-    let line_end = source[end..].find('\n').map(|i| end + i).unwrap_or(source.len());
-    let context_before = if line_start > 0 {
-        source[..line_start - 1].rfind('\n').map(|i| i + 1).unwrap_or(0)
-    } else {
-        line_start
-    };
-    let snippet = &source[context_before..line_end];
-    snippet.lines().take(3).collect::<Vec<_>>().join("\n")
 }

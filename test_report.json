@@ -1,0 +1,15 @@
+{
+  "report_version": "1.0",
+  "generated_at": "2026-04-12T23:13:45.221964",
+  "target": "test_samples\\javascript\\dirty_function.js",
+  "total_files": 1,
+  "scan_duration_seconds": 0.0,
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "findings": []
+}

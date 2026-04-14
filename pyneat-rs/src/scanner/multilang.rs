@@ -1,4 +1,19 @@
-//! Multi-language AST parsing via tree-sitter.
+//! PyNeat Rust Security Scanner
+//!
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #![allow(dead_code)]
 
@@ -9,6 +24,7 @@ use tree_sitter::{Parser, Tree, Node};
 use super::ln_ast::{
     LnAst, LnFunction, LnClass, LnImport, LnAssignment,
     LnCall, LnString, LnComment, LnCatchBlock, LnTodo, LnDeepNesting,
+    TODO_MARKERS,
 };
 use super::ParseError;
 
@@ -699,7 +715,7 @@ fn extract_nesting_recursive(node: &Node, lang: &Language, depth: usize, thresho
 // ---------------------------------------------------------------------------
 
 fn extract_todo_marker(text: &str) -> Option<(String, String)> {
-    let markers = ["TODO", "FIXME", "HACK", "XXX", "NOTE", "BUG"];
+    let markers = TODO_MARKERS;
     for marker in markers {
         if let Some(pos) = text.to_uppercase().find(marker) {
             let after = text[text[text.len()..].find(marker).unwrap_or(pos) + marker.len()..].trim_start_matches(':').trim();

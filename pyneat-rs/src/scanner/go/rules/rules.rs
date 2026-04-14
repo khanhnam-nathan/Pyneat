@@ -1,8 +1,19 @@
-//! Go language security rules.
+//! PyNeat Rust Security Scanner
 //!
-//! Implements security rules for Go code (GO-SEC-xxx).
-//! Covers command injection, SQL injection, path traversal, hardcoded secrets,
-//! YAML unsafe load, insecure TLS, eval patterns, SSRF, XSS, unsafe reflection,
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 //! weak crypto, insecure random, unsafe XML, Cgo security, and AI-generated code issues.
 
 use std::collections::HashSet;

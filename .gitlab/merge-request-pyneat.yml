@@ -1,0 +1,48 @@
+# GitLab SAST Integration for PyNEAT
+# Include this template in your .gitlab-ci.yml
+
+variables:
+  PYNEAT_VERSION: "latest"
+
+pyneat_sast:
+  stage: test
+  image: python:3.12-slim
+  allow_failure: true  # Set to false to block pipeline on findings
+  script:
+    - pip install pyneat-cli==$PYNEAT_VERSION
+    - pyneat check --format sarif --output pyneat-results.sarif .
+    - python3 -c "
+        import json, sys
+        with open('pyneat-results.sarif') as f:
+            data = json.load(f)
+            results = data.get('runs', [{}])[0].get('results', [])
+            critical = len([r for r in results if r.get('level') == 'error'])
+            warnings = len([r for r in results if r.get('level') == 'warning'])
+            notes = len([r for r in results if r.get('level') == 'note'])
+            print(f'Total findings: {len(results)} (Critical: {critical}, Warnings: {warnings}, Notes: {notes})')
+        "
+  artifacts:
+    reports:
+      sast: pyneat-results.sarif
+    when: always
+    expire_in: 1 week
+  dependencies: []
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH =~ /^security-/
+
+pyneat_sast_native:
+  stage: test
+  image: ghcr.io/pyneat/pyneat-rs:latest
+  allow_failure: true
+  script:
+    - pyneat scan --format sarif --output pyneat-rs-results.sarif .
+  artifacts:
+    reports:
+      sast: pyneat-rs-results.sarif
+    when: always
+    expire_in: 1 week
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

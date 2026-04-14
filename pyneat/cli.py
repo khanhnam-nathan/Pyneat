@@ -193,6 +193,11 @@ def _build_engine(config: dict,
               help='Control colored output: auto (default), always, or never')
 def cli(color: str):
     """PyNeat - Neat Python AI Code Cleaner."""
+    import sys
+    if sys.platform == 'win32':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
     ctx = click.get_current_context()
     ctx.color = color == 'always'
 
@@ -201,6 +206,8 @@ def cli(color: str):
 @cli.command()
 @click.argument('input_file', type=click.Path(exists=True))
 @click.option('--output', '-o', type=click.Path(), help='Output file path')
+@click.option('--lang', '-l', 'lang_opt', type=str, default=None,
+              help='Language: javascript, typescript, go, java, rust, csharp, php, ruby, python')
 @click.option('--in-place', '-i', is_flag=True, help='Modify file in place')
 @click.option('--verbose', '-v', is_flag=True, help='Verbose output')
 @click.option('--package', '-p', type=click.Choice(['safe', 'conservative', 'destructive']), default='safe',
@@ -239,7 +246,7 @@ def cli(color: str):
 @click.option('--check-conflicts', is_flag=True, help='Detect overlapping modifications between rules')
 @click.option('--clear-cache', is_flag=True, help='Clear the module-level AST cache before processing')
 @click.option('--export-manifest', is_flag=True, help='Export PYNAGENT manifest JSON file')
-def clean(input_file: str, output: str, in_place: bool, verbose: bool,
+def clean(input_file: str, output: str, lang_opt: str, in_place: bool, verbose: bool,
           package: str,
           enable_all: bool,
           enable_security: bool, enable_quality: bool, enable_performance: bool,
@@ -254,7 +261,10 @@ def clean(input_file: str, output: str, in_place: bool, verbose: bool,
           enable_comment_clean: bool,
           debug_mode: str, dry_run: bool, diff: bool,
           check_conflicts: bool, clear_cache: bool, export_manifest: bool):
-    """Clean AI-generated code."""
+    """Clean AI-generated code.
+
+    Supports multi-language cleaning via --lang flag (JS, TS, Go, Java, Rust, C#, PHP, Ruby).
+    """
     input_path = Path(input_file)
 
     if enable_all:
@@ -281,14 +291,62 @@ def clean(input_file: str, output: str, in_place: bool, verbose: bool,
         debug_clean_mode=debug_mode,
     )
 
-    if verbose:
-        stats = engine.get_rule_stats()
-        cache_stats = engine.get_cache_stats()
-        click.echo(f"[TARGET] Loaded {stats['enabled_rules']}/{stats['total_rules']} rules")
-        click.echo(f"[CACHE] Entries: {cache_stats['cache_entries']}, Hits: {cache_stats['cache_hits']}, Misses: {cache_stats['cache_misses']}, Hit Rate: {cache_stats['hit_rate_pct']}%")
-        for rule in stats['rules']:
-            status = "[OK]" if rule['enabled'] else "[X]"
-            click.echo(f"  {status} {rule['name']} [p={rule['priority']}]: {rule['description']}")
+    # Multi-language: add universal rules
+    use_universal = bool(lang_opt)
+    if use_universal:
+        try:
+            from pyneat.rules.universal import (
+                HardcodedSecretsRule, DebugArtifactsRule, TodoCommentRule,
+            )
+            engine.add_rule(HardcodedSecretsRule())
+            engine.add_rule(DebugArtifactsRule())
+            engine.add_rule(TodoCommentRule())
+        except ImportError:
+            pass
+
+    # Multi-language: collect files if directory + --lang
+    if lang_opt and input_path.is_dir():
+        LANG_EXT_GLOBS = {
+            "javascript": ["*.js", "*.jsx"],
+            "typescript": ["*.ts", "*.tsx"],
+            "go": ["*.go"],
+            "java": ["*.java"],
+            "rust": ["*.rs"],
+            "csharp": ["*.cs"],
+            "php": ["*.php"],
+            "ruby": ["*.rb"],
+            "python": ["*.py"],
+        }
+        lang_key = lang_opt.lower()
+        if lang_key not in LANG_EXT_GLOBS:
+            click.echo(f"  {click.style('[!]', fg='yellow')} Unknown language: {lang_opt}")
+            return 1
+        files_to_clean = []
+        for glob_pat in LANG_EXT_GLOBS[lang_key]:
+            files_to_clean.extend(input_path.rglob(glob_pat))
+        files_to_clean = sorted([f for f in files_to_clean if not any(
+            skip in f.parts for skip in ["__pycache__", ".venv", "venv", ".git"]
+        )])
+        if not files_to_clean:
+            click.echo(f"  {click.style('[!]', fg='yellow')} No .{lang_key} files found")
+            return 1
+
+        # Process each file
+        total_changes = 0
+        for f in files_to_clean:
+            lang = lang_opt.lower()
+            r = engine.process_file(f, language=lang)
+            if r.changes_made:
+                if verbose:
+                    for ch in r.changes_made:
+                        click.echo(f"  [+] {f.name}: {ch}")
+                total_changes += len(r.changes_made)
+
+        if total_changes > 0:
+            click.echo(f"  Found {total_changes} issue(s) across {len(files_to_clean)} file(s)")
+        else:
+            click.echo(f"  All clean across {len(files_to_clean)} file(s)")
+        return 0
 
     result = engine.process_file(input_path, check_conflicts=check_conflicts)
 
@@ -755,6 +813,8 @@ def rules():
 
 @cli.command()
 @click.argument('target', type=click.Path(exists=True))
+@click.option('--lang', '-l', 'lang_opt', type=str, default=None,
+              help='Language: javascript, typescript, go, java, rust, csharp, php, ruby, python')
 @click.option('--severity', is_flag=True, help='Show severity levels (CRITICAL/HIGH/MEDIUM/LOW/INFO)')
 @click.option('--cvss', is_flag=True, help='Show CVSS scores and vectors')
 @click.option('--output', '-o', type=click.Path(), help='Output file path')
@@ -766,15 +826,16 @@ def rules():
 @click.option('--verbose', '-v', is_flag=True, help='Verbose output')
 @click.option('--rust/--no-rust', 'use_rust', default=None,
               help='Force enable/disable Rust scanner (default: auto-detect)')
-def check(target, severity, cvss, output, format, fail_on, skip_deps, verbose, use_rust):
+def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, verbose, use_rust):
     """Security scan - detect vulnerabilities without auto-fix.
 
     Runs the full security pack (50+ rules) against the target file or directory.
-    Shows findings sorted by severity with CWE/OWASP mapping and fix guidance.
+    Supports multi-language scanning via --lang flag (JS, TS, Go, Java, Rust, C#, PHP, Ruby).
 
     Examples:
         pyneat check app.py
         pyneat check src/ --severity --cvss
+        pyneat check . --lang javascript
         pyneat check . --fail-on critical --output report.json
         pyneat check . --format sarif --output results.sarif
     """
@@ -803,24 +864,63 @@ def check(target, severity, cvss, output, format, fail_on, skip_deps, verbose, u
 
     # Build security engine for Python fallback
     engine = RuleEngine([SecurityScannerRule()])
+    # For multi-language mode, also add universal rules (cross-language)
+    use_universal = bool(lang_opt)
+    if use_universal:
+        try:
+            from pyneat.rules.universal import (
+                HardcodedSecretsRule, DebugArtifactsRule, TodoCommentRule,
+            )
+            engine.add_rule(HardcodedSecretsRule())
+            engine.add_rule(DebugArtifactsRule())
+            engine.add_rule(TodoCommentRule())
+        except ImportError:
+            click.echo("Warning: Universal rules not installed, running Python-only scan")
 
     start_time = time.time()
     all_findings: List[SecurityFinding] = []
+    all_changes: List[str] = []  # For universal rule findings
     rust_findings: List[SecurityFinding] = []  # Rust scanner results
     total_files = 0
+
+    # Multi-language glob patterns
+    LANG_EXT_GLOBS = {
+        "javascript": ["*.js", "*.jsx"],
+        "typescript": ["*.ts", "*.tsx"],
+        "go": ["*.go"],
+        "java": ["*.java"],
+        "rust": ["*.rs"],
+        "csharp": ["*.cs"],
+        "php": ["*.php"],
+        "ruby": ["*.rb"],
+        "python": ["*.py"],
+    }
 
     # Scan code files
     if target_path.is_file():
         files_to_scan = [target_path]
     else:
-        files_to_scan = list(target_path.rglob("*.py"))
+        if lang_opt:
+            lang_key = lang_opt.lower()
+            if lang_key not in LANG_EXT_GLOBS:
+                click.echo(f"  {click.style('[!]', fg='yellow')} Unknown language: {lang_opt}")
+                click.echo(f"  Supported: {', '.join(LANG_EXT_GLOBS.keys())}")
+                return 1
+            globs = LANG_EXT_GLOBS[lang_key]
+            files_to_scan = []
+            for glob_pat in globs:
+                files_to_scan.extend(target_path.rglob(glob_pat))
+        else:
+            files_to_scan = list(target_path.rglob("*.py"))
+
         files_to_scan = [f for f in files_to_scan if not any(
             skip in f.parts for skip in ["__pycache__", ".venv", "venv", ".git"]
         )]
 
     for file_path in sorted(files_to_scan):
         total_files += 1
-        result = engine.process_file(file_path)
+        lang = lang_opt.lower() if lang_opt else "auto"
+        result = engine.process_file(file_path, language=lang)
 
         for finding in result.security_findings:
             # Update finding with file info
@@ -852,6 +952,10 @@ def check(target, severity, cvss, output, format, fail_on, skip_deps, verbose, u
                 updated_finding.rule_id, file_path, updated_finding.start_line
             ):
                 all_findings.append(updated_finding)
+
+        # Collect universal rule findings (changes_made contains findings)
+        if use_universal and result.changes_made:
+            all_changes.extend(result.changes_made)
 
     # Scan dependencies if not skipped
     dep_findings = []
@@ -1008,9 +1112,22 @@ def check(target, severity, cvss, output, format, fail_on, skip_deps, verbose, u
             if dep.fixed_version:
                 click.echo(f"      Fix: Upgrade to >={dep.fixed_version}")
 
+    # Print universal rule findings (multi-language mode)
+    if use_universal and all_changes:
+        click.echo("")
+        click.secho("  UNIVERSAL RULE FINDINGS", fg="cyan", bold=True)
+        seen = set()
+        for change in all_changes:
+            if change not in seen:
+                seen.add(change)
+                if "[UNI-" in change:
+                    click.echo(f"    {change}")
+
     # Summary line
     click.echo("")
     total_issues = sum(summary.values()) - summary.get("dep", 0)
+    if use_universal:
+        total_issues += len(all_changes)
     total_deps = summary.get("dep", 0)
     click.echo(f"  Total: {total_issues} code issues, {total_deps} dependency issues")
 
@@ -1439,6 +1556,23 @@ def security_db(update, status, force):
 
 
 # --------------------------------------------------------------------------
+# Multi-Language Demo
+# --------------------------------------------------------------------------
+
+LANG_MAP = {
+    "javascript": ("js", "JavaScript"),
+    "typescript": ("ts", "TypeScript"),
+    "go": ("go", "Go"),
+    "java": ("java", "Java"),
+    "rust": ("rs", "Rust"),
+    "csharp": ("cs", "C#"),
+    "php": ("php", "PHP"),
+    "ruby": ("rb", "Ruby"),
+    "python": ("py", "Python"),
+}
+
+
+# --------------------------------------------------------------------------
 # Interactive Feature Menu
 # --------------------------------------------------------------------------
 
@@ -1488,37 +1622,32 @@ def _get_menu_suggestions(last_command: str, context: str) -> Dict[str, tuple]:
 
     Returns dict of {key: (icon, title, description, command_example)}
     """
-    # Chữ cái A, B, C, D cố định - luôn hiển thị 4 lựa chọn liên tục
+    # Chữ cái A, B, C, D cố định — luôn hiển thị 4 lựa chọn
     all_options = {
         'A': ('🔒', 'Security Check',
                'Quét lỗ hổng: SQL injection, path traversal, hardcoded secrets...',
                'pyneat check file.py'),
-        'B': ('📖', 'Explain Rule',
-               'Nguyên nhân, cách fix, CWE/OWASP, verification steps...',
-               'pyneat explain SEC-001'),
-        'C': ('🧹', 'Clean Code',
+        'B': ('🧹', 'Clean Code',
                'Thêm type hints, xóa unused imports, số magic, debug prints...',
                'pyneat clean file.py'),
+        'C': ('📖', 'Explain Rule',
+               'Nguyên nhân, cách fix, CWE/OWASP, verification steps...',
+               'pyneat explain SEC-001'),
         'D': ('📊', 'Export Report (JSON/SARIF)',
                'Tích hợp CI/CD: GitHub Code Scanning, GitLab SAST...',
                'pyneat report . -f sarif -o security.sarif'),
     }
 
-    # Smart suggestions dựa trên command vừa chạy - LUÔN dùng A, B, C, D
+    # Smart suggestions dựa trên command vừa chạy - LUÔN dùng A, B, C, D, E
     if last_command == 'check':
-        # Sau check bảo mật → clean + explain + report + diff
         ordered = ['A', 'B', 'C', 'D']
     elif last_command == 'clean':
-        # Sau clean → check bảo mật + diff + report + config
         ordered = ['A', 'B', 'C', 'D']
     elif last_command == 'explain':
-        # Sau explain → check + clean + report + diff
         ordered = ['A', 'B', 'C', 'D']
     elif last_command == 'rules':
-        # Sau rules → check + clean + explain + report
         ordered = ['A', 'B', 'C', 'D']
     elif last_command == 'report':
-        # Sau report → check + clean + explain + config
         ordered = ['A', 'B', 'C', 'D']
     else:
         ordered = ['A', 'B', 'C', 'D']

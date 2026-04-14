@@ -38,6 +38,7 @@ import io
 import pstats
 import sys
 import time
+import tracemalloc
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -281,6 +282,19 @@ def main() -> int:
         '--output', '-o', type=str, default=None,
         help='Write results to a JSON file',
     )
+    parser.add_argument(
+        '--lang', '-l', type=str, default='python',
+        choices=['python', 'javascript', 'typescript', 'go', 'java', 'rust', 'csharp', 'php', 'ruby'],
+        help='Language for multi-language benchmarks (default: python)',
+    )
+    parser.add_argument(
+        '--compare', '-c', action='store_true',
+        help='Compare with competitor tools (ruff, bandit)',
+    )
+    parser.add_argument(
+        '--memory', '-m', action='store_true',
+        help='Enable memory profiling using tracemalloc',
+    )
 
     args = parser.parse_args()
 
@@ -341,7 +355,187 @@ def main() -> int:
             json.dump(results, f, indent=2)
         print(f"\nResults written to: {args.output}")
 
+    # Memory profiling
+    if args.memory:
+        print("\n" + "=" * 60)
+        print("MEMORY PROFILING")
+        print("=" * 60)
+        memory_results = profile_memory(args.files or ['pyneat/rules'])
+        print_memory_stats(memory_results)
+
+    # Competitor comparison
+    if args.compare:
+        print("\n" + "=" * 60)
+        print("COMPETITOR COMPARISON")
+        print("=" * 60)
+        comparison_results = compare_with_competitors(files)
+        print_comparison_table(comparison_results)
+
     return 0
+
+
+def profile_memory(paths: List[str]) -> Dict[str, Any]:
+    """Profile memory usage of PyNeat scanning."""
+    import tracemalloc
+    from pyneat.core.engine import RuleEngine, clear_module_cache
+
+    tracemalloc.start()
+
+    files = find_python_files(paths)
+    snapshot_before = tracemalloc.take_snapshot()
+
+    clear_module_cache()
+    _FALSE17 = (False,) * 17
+    engine = _build_engine({}, None, *_FALSE17, debug_clean_mode='off')
+
+    for file_path in files[:10]:  # Limit to first 10 files
+        if file_path.exists():
+            engine.process_file(file_path)
+
+    snapshot_after = tracemalloc.take_snapshot()
+    tracemalloc.stop()
+
+    top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
+    total_diff = sum(stat.size_diff for stat in top_stats)
+
+    return {
+        'total_memory_mb': total_diff / 1024 / 1024,
+        'top_allocations': [
+            {'file': str(stat.traceback), 'size_kb': stat.size_diff / 1024}
+            for stat in top_stats[:10]
+        ]
+    }
+
+
+def print_memory_stats(memory_results: Dict[str, Any]) -> None:
+    """Print memory profiling results."""
+    print(f"  Total memory used: {memory_results['total_memory_mb']:.2f} MB")
+    print()
+    print("  Top memory allocations:")
+    for alloc in memory_results['top_allocations'][:5]:
+        print(f"    {alloc['size_kb']:.2f} KB: {alloc['file']}")
+
+
+def compare_with_competitors(files: List[Path]) -> List[Dict[str, Any]]:
+    """Compare PyNeat with competitor tools."""
+    import subprocess
+    import shutil
+    results = []
+
+    # PyNeat baseline
+    pyneat_time = measure_pyneat_time(files)
+    results.append({
+        'tool': 'PyNeat (Python)',
+        'avg_time_ms': pyneat_time,
+        'files_per_sec': len(files) / (pyneat_time / 1000) if pyneat_time > 0 else 0,
+    })
+
+    # ruff comparison
+    if shutil.which('ruff'):
+        ruff_time = measure_ruff_time(files)
+        results.append({
+            'tool': 'ruff',
+            'avg_time_ms': ruff_time,
+            'files_per_sec': len(files) / (ruff_time / 1000) if ruff_time > 0 else 0,
+        })
+    else:
+        results.append({
+            'tool': 'ruff',
+            'avg_time_ms': None,
+            'files_per_sec': None,
+            'note': 'Not installed',
+        })
+
+    # bandit comparison
+    if shutil.which('bandit'):
+        bandit_time = measure_bandit_time(files)
+        results.append({
+            'tool': 'bandit',
+            'avg_time_ms': bandit_time,
+            'files_per_sec': len(files) / (bandit_time / 1000) if bandit_time > 0 else 0,
+        })
+    else:
+        results.append({
+            'tool': 'bandit',
+            'avg_time_ms': None,
+            'files_per_sec': None,
+            'note': 'Not installed',
+        })
+
+    return results
+
+
+def measure_pyneat_time(files: List[Path]) -> float:
+    """Measure PyNeat scanning time."""
+    import time
+    clear_module_cache()
+    _FALSE17 = (False,) * 17
+    engine = _build_engine({}, None, *_FALSE17, debug_clean_mode='off')
+
+    times = []
+    for file_path in files[:20]:  # Limit for speed
+        if file_path.exists():
+            start = time.perf_counter()
+            engine.process_file(file_path)
+            elapsed = (time.perf_counter() - start) * 1000
+            times.append(elapsed)
+
+    return sum(times) / len(times) if times else 0
+
+
+def measure_ruff_time(files: List[Path]) -> float:
+    """Measure ruff scanning time."""
+    import subprocess
+    import time
+
+    if not files:
+        return 0
+
+    start = time.perf_counter()
+    try:
+        subprocess.run(
+            ['ruff', 'check', '--output-format=json', str(files[0].parent)],
+            capture_output=True,
+            timeout=30,
+        )
+    except Exception:
+        pass
+    elapsed = (time.perf_counter() - start) * 1000
+
+    return elapsed / min(len(files), 20)
+
+
+def measure_bandit_time(files: List[Path]) -> float:
+    """Measure bandit scanning time."""
+    import subprocess
+    import time
+
+    if not files:
+        return 0
+
+    start = time.perf_counter()
+    try:
+        subprocess.run(
+            ['bandit', '-f', 'json', '-r', str(files[0].parent)],
+            capture_output=True,
+            timeout=60,
+        )
+    except Exception:
+        pass
+    elapsed = (time.perf_counter() - start) * 1000
+
+    return elapsed / min(len(files), 20)
+
+
+def print_comparison_table(results: List[Dict[str, Any]]) -> None:
+    """Print competitor comparison table."""
+    print(f"  {'Tool':<20} {'Avg Time':>12} {'Files/sec':>12}")
+    print("  " + "-" * 46)
+    for r in results:
+        if r['avg_time_ms'] is not None:
+            print(f"  {r['tool']:<20} {r['avg_time_ms']:>10.2f}ms {r['files_per_sec']:>10.1f}")
+        else:
+            print(f"  {r['tool']:<20} {'N/A':>12} {r.get('note', 'N/A'):>12}")
 
 
 if __name__ == "__main__":

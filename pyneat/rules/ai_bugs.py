@@ -689,8 +689,11 @@ class AIBugRule(Rule):
             hint=description,
             why=f"Common AI code generator mistake: {issue_type.replace('_', ' ')}",
             confidence=0.85,
+            confidence_note="detected via AST pattern matching on AI-generated code",
             can_auto_fix=False,
             requires_user_input=True,
+            file_path=str(code_file.path),
+            language=code_file.language,
         )
 
 

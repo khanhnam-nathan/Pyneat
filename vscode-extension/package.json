@@ -1,0 +1,202 @@
+{
+  "name": "pyneat",
+  "displayName": "PyNEAT Security Scanner",
+  "description": "AI-generated code security scanner with real-time diagnostics, quick fixes, and AI agent integration",
+  "version": "3.0.0",
+  "publisher": "pyneat",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Linters",
+    "Security",
+    "Other"
+  ],
+  "keywords": [
+    "security",
+    "vulnerability",
+    "lint",
+    "python",
+    "ai"
+  ],
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onCommand:pyneat.checkFile",
+    "onCommand:pyneat.sendContext",
+    "onCommand:pyneat.ignoreIssue",
+    "onCommand:pyneat.applyFix",
+    "onCommand:pyneat.addContext"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pyneat.checkFile",
+        "title": "PyNEAT: Check This File",
+        "category": "PyNEAT",
+        "icon": "$(search)"
+      },
+      {
+        "command": "pyneat.checkWorkspace",
+        "title": "PyNEAT: Check Workspace",
+        "category": "PyNEAT",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "pyneat.sendContext",
+        "title": "PyNEAT: Send Issue to AI Agent",
+        "category": "PyNEAT",
+        "icon": "$(robot)"
+      },
+      {
+        "command": "pyneat.ignoreIssue",
+        "title": "PyNEAT: Ignore This Issue",
+        "category": "PyNEAT",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "pyneat.applyFix",
+        "title": "PyNEAT: Apply Auto-Fix",
+        "category": "PyNEAT",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "pyneat.addContext",
+        "title": "PyNEAT: Add Context Comment",
+        "category": "PyNEAT",
+        "icon": "$(comment)"
+      }
+    ],
+    "configuration": {
+      "title": "PyNEAT",
+      "properties": {
+        "pyneat.enableRealTime": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time diagnostics as you type (may impact performance)",
+          "scope": "resource"
+        },
+        "pyneat.scanOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run security scan on file save",
+          "scope": "resource"
+        },
+        "pyneat.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to Python interpreter with PyNEAT installed",
+          "scope": "machine-overridable"
+        },
+        "pyneat.rulesPackage": {
+          "type": "string",
+          "enum": ["safe", "conservative", "destructive"],
+          "default": "safe",
+          "description": "Rule package level: safe (default), conservative (adds cleanup), destructive (aggressive)",
+          "scope": "resource"
+        },
+        "pyneat.severityThreshold": {
+          "type": "string",
+          "enum": ["info", "low", "medium", "high", "critical"],
+          "default": "info",
+          "description": "Minimum severity level to show diagnostics",
+          "scope": "resource"
+        },
+        "pyneat.enableRustBackend": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use Rust backend for faster scanning (if installed)",
+          "scope": "machine-overridable"
+        },
+        "pyneat.showHoverInfo": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show detailed hover information with fix options",
+          "scope": "resource"
+        },
+        "pyneat.autoFixOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically apply safe fixes on file save (requires confirmation)",
+          "scope": "resource"
+        },
+        "pyneat.workspaceIgnore": {
+          "type": "string",
+          "default": ".pyneatignore",
+          "description": "Path to PyNEAT ignore file",
+          "scope": "resource"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "pyneat.checkFile",
+          "when": "resourceLangId == python || resourceLangId == javascript || resourceLangId == typescript",
+          "group": "2_modification@10"
+        },
+        {
+          "command": "pyneat.applyFix",
+          "when": "pyneatHasFix && resourceLangId == python",
+          "group": "2_modification@11"
+        },
+        {
+          "command": "pyneat.ignoreIssue",
+          "when": "pyneatHasIssue && resourceLangId == python",
+          "group": "2_modification@12"
+        },
+        {
+          "command": "pyneat.sendContext",
+          "when": "pyneatHasIssue && resourceLangId == python",
+          "group": "2_modification@13"
+        },
+        {
+          "command": "pyneat.addContext",
+          "when": "pyneatHasIssue && resourceLangId == python",
+          "group": "2_modification@14"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "pyneat.applyFix",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "pyneatHasFix"
+      },
+      {
+        "command": "pyneat.sendContext",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a",
+        "when": "pyneatHasIssue"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.92.0",
+    "@vscode/test-electron": "^2.3.9",
+    "@types/node": "^20.10.0",
+    "@types/mocha": "^10.0.0",
+    "mocha": "^10.0.0",
+    "typescript": "^5.3.3",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.18.0",
+    "@typescript-eslint/parser": "^6.18.0"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khanhnam-nathan/Pyneat.git"
+  },
+  "license": "AGPL-3.0-or-later"
+}

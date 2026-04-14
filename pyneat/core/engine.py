@@ -33,6 +33,7 @@ import libcst as cst
 from pyneat.core.types import (
     CodeFile, TransformationResult, RuleConfig,
     RuleConflict, RuleRange,
+    security_finding_to_marker,
 )
 from pyneat.rules.base import Rule
 from pyneat.core.atomic import AtomicWriter
@@ -146,6 +147,28 @@ class RuleEngine:
         self._tree_cache.clear()
         clear_module_cache()
 
+    def _detect_language(self, file_path: Path) -> str:
+        """Detect language from file extension.
+
+        Returns "python" as default, or detects from extension:
+        .js -> javascript, .ts -> typescript, .go -> go,
+        .java -> java, .rs -> rust, .cs -> csharp,
+        .php -> php, .rb -> ruby
+        """
+        ext = file_path.suffix.lower().lstrip('.')
+        lang_map = {
+            "py": "python",
+            "js": "javascript", "jsx": "javascript",
+            "ts": "typescript", "tsx": "typescript",
+            "go": "go",
+            "java": "java",
+            "rs": "rust",
+            "cs": "csharp",
+            "php": "php",
+            "rb": "ruby",
+        }
+        return lang_map.get(ext, "python")
+
     def get_cache_stats(self) -> Dict[str, Any]:
         """Get combined cache statistics."""
         inst_total = sum(1 for v in self._tree_cache.values())
@@ -169,8 +192,14 @@ class RuleEngine:
         self.rules = [r for r in self.rules if r.name != rule_name]
         self._rule_map.pop(rule_name, None)
     
-    def process_file(self, file_path: Path, check_conflicts: bool = False) -> TransformationResult:
-        """Process a single file with all enabled rules."""
+    def process_file(self, file_path: Path, check_conflicts: bool = False, language: str = "auto") -> TransformationResult:
+        """Process a single file with all enabled rules.
+
+        Args:
+            file_path: Path to the file to process.
+            check_conflicts: Whether to check for rule conflicts.
+            language: Language of the file. "auto" detects from extension.
+        """
         try:
             # Fix encoding issues including BOM
             encodings = ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']
@@ -196,6 +225,10 @@ class RuleEngine:
                     error=f"File reading failed: Could not decode with any encoding"
                 )
 
+            # Detect language if auto
+            if language == "auto":
+                language = self._detect_language(file_path)
+
             # Layer 7: Create backup before any modification
             backup_path = self.atomic_writer.backup(file_path)
 
@@ -205,7 +238,7 @@ class RuleEngine:
                 type_baseline = self.type_shield.get_baseline(file_path)
                 self._type_baseline[file_path] = type_baseline
 
-            code_file = CodeFile(path=file_path, content=content)
+            code_file = CodeFile(path=file_path, content=content, language=language)
             self._processed_files.add(file_path)
             result = self.process_code_file(code_file, check_conflicts=check_conflicts)
 
@@ -415,28 +448,29 @@ class RuleEngine:
             if result.success:
                 current_content = result.transformed_content
 
-                # Layer 1+: Guard  if a rule produces output that can't be parsed/compiled, revert
-                try:
-                    # Fast check with ast.parse
-                    ast.parse(current_content)
-                    # Full bytecode compile check via temporary file
-                    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8") as tmp:
-                        tmp.write(current_content)
-                        tmp_name = tmp.name
+                # Layer 1+: Guard  skip AST validation for non-Python languages
+                if cf.language == "python":
                     try:
-                        py_compile.compile(tmp_name, doraise=True)
-                    finally:
-                        Path(tmp_name).unlink(missing_ok=True)
-                except (SyntaxError, py_compile.PyCompileError) as e:
-                    # Rule produced invalid output  skip this rule, keep current content
-                    err_lineno = getattr(e, "lineno", None)
-                    err_msg = str(e.args[0]) if e.args else str(e)
-                    logger.warning(
-                        "Rule '%s' produced syntax error in %s (line %s): %s. Skipping rule.",
-                        rule.name, cf.path, err_lineno if err_lineno is not None else "?", err_msg,
-                    )
-                    all_changes.append(f"SKIPPED {rule.name}: syntax error (line {getattr(e, 'lineno', '?')})")
-                    continue
+                        # Fast check with ast.parse
+                        ast.parse(current_content)
+                        # Full bytecode compile check via temporary file
+                        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8") as tmp:
+                            tmp.write(current_content)
+                            tmp_name = tmp.name
+                        try:
+                            py_compile.compile(tmp_name, doraise=True)
+                        finally:
+                            Path(tmp_name).unlink(missing_ok=True)
+                    except (SyntaxError, py_compile.PyCompileError) as e:
+                        # Rule produced invalid output  skip this rule
+                        err_lineno = getattr(e, "lineno", None)
+                        err_msg = str(e.args[0]) if e.args else str(e)
+                        logger.warning(
+                            "Rule '%s' produced syntax error in %s (line %s): %s. Skipping rule.",
+                            rule.name, cf.path, err_lineno if err_lineno is not None else "?", err_msg,
+                        )
+                        all_changes.append(f"SKIPPED {rule.name}: syntax error (line {getattr(e, 'lineno', '?')})")
+                        continue
 
                 # Layer 1+: Guard  don't lose required __future__ imports
                 if self._removed_future_imports(before, current_content):
@@ -447,19 +481,20 @@ class RuleEngine:
                     all_changes.append(f"SKIPPED {rule.name}: would remove __future__ import")
                     continue
 
-                # Layer 5: Semantic diffing  detect unintended structural changes
-                allowed_nodes = rule.allowed_semantic_nodes
-                is_safe, diff_messages = self.semantic_guard.is_safe(
-                    before, current_content, allowed_nodes
-                )
-                if not is_safe:
-                    logger.warning(
-                        "Rule '%s' produced unsafe semantic changes in %s: %s. Skipping rule.",
-                        rule.name, cf.path, diff_messages,
+                # Layer 5: Semantic diffing– skip for non-Python languages
+                if cf.language == "python":
+                    allowed_nodes = rule.allowed_semantic_nodes
+                    is_safe, diff_messages = self.semantic_guard.is_safe(
+                        before, current_content, allowed_nodes
                     )
-                    all_changes.append(f"SKIPPED {rule.name}: semantic safety failed  {diff_messages[0]}")
-                    current_content = before
-                    continue
+                    if not is_safe:
+                        logger.warning(
+                            "Rule '%s' produced unsafe semantic changes in %s: %s. Skipping rule.",
+                            rule.name, cf.path, diff_messages,
+                        )
+                        all_changes.append(f"SKIPPED {rule.name}: semantic safety failed– {diff_messages[0]}")
+                        current_content = before
+                        continue
 
                 all_changes.extend(result.changes_made)
                 # Aggregate security findings from SecurityScannerRule and similar
@@ -496,6 +531,14 @@ class RuleEngine:
             security_findings=all_security_findings,
             auto_fix_applied=all_auto_fix_applied,
             dependency_findings=all_dependency_findings,
+            agent_markers=[
+                security_finding_to_marker(
+                    f,
+                    language=cf.language,
+                    file_path=str(cf.path),
+                )
+                for f in all_security_findings
+            ],
         )
     
     def get_rule_stats(self) -> Dict[str, Any]:

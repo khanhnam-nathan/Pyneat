@@ -1,28 +1,27 @@
-//! PHP-specific security rules for pyneat-rs.
+//! PyNeat Rust Security Scanner
 //!
-//! This module contains rules SEC-073 through SEC-090
-//! for detecting PHP-specific security vulnerabilities in AI-generated code.
+//! Copyright (C) 2026 PyNEAT Authors
+//!
+//! This program is free software: you can redistribute it and/or modify
+//! it under the terms of the GNU Affero General Public License as published
+//! by the Free Software Foundation, either version 3 of the License, or
+//! (at your option) any later version.
+//!
+//! This program is distributed in the hope that it will be useful,
+//! but WITHOUT ANY WARRANTY; without even the implied warranty of
+//! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//! GNU Affero General Public License for more details.
+//!
+//! You should have received a copy of the GNU Affero General Public License
+//! along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::rules::base::{Fix, Finding, Rule, Severity};
+use crate::rules::base::{extract_snippet, Fix, Finding, Rule, Severity};
 use tree_sitter::Tree;
 
-/// Extract a code snippet around the matched region
-fn extract_snippet(source: &str, start: usize, end: usize) -> String {
-    let line_start = source[..start].rfind('\n').map(|i| i + 1).unwrap_or(0);
-    let line_end = source[end..].find('\n').map(|i| end + i).unwrap_or(source.len());
-    let context_before = if line_start > 0 {
-        source[..line_start - 1].rfind('\n').map(|i| i + 1).unwrap_or(0)
-    } else {
-        line_start
-    };
-    let snippet = &source[context_before..line_end];
-    snippet.lines().take(3).collect::<Vec<_>>().join("\n")
-}
-
-// SEC-073: PHP SQL Injection
+// PHP-SEC-001: PHP SQL Injection
 pub struct PhpSqlInjectionRule;
 impl Rule for PhpSqlInjectionRule {
-    fn id(&self) -> &str { "SEC-073" }
+    fn id(&self) -> &str { "PHP-SEC-001" }
     fn name(&self) -> &str { "PHP SQL Injection" }
     fn severity(&self) -> Severity { Severity::Critical }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -37,7 +36,7 @@ impl Rule for PhpSqlInjectionRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-073".to_string(),
+                        rule_id: "PHP-SEC-001".to_string(),
                         severity: Severity::Critical.as_str().to_string(),
                         cwe_id: Some("CWE-89".to_string()),
                         cvss_score: Some(9.8),
@@ -56,10 +55,10 @@ impl Rule for PhpSqlInjectionRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-074: PHP XSS
+// PHP-SEC-002: PHP XSS
 pub struct PhpXssRule;
 impl Rule for PhpXssRule {
-    fn id(&self) -> &str { "SEC-074" }
+    fn id(&self) -> &str { "PHP-SEC-002" }
     fn name(&self) -> &str { "PHP Cross-Site Scripting (XSS)" }
     fn severity(&self) -> Severity { Severity::High }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -73,7 +72,7 @@ impl Rule for PhpXssRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-074".to_string(),
+                        rule_id: "PHP-SEC-002".to_string(),
                         severity: Severity::High.as_str().to_string(),
                         cwe_id: Some("CWE-79".to_string()),
                         cvss_score: Some(8.1),
@@ -92,10 +91,10 @@ impl Rule for PhpXssRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-075: PHP Insecure File Upload
+// PHP-SEC-003: PHP Insecure File Upload
 pub struct PhpInsecureFileUploadRule;
 impl Rule for PhpInsecureFileUploadRule {
-    fn id(&self) -> &str { "SEC-075" }
+    fn id(&self) -> &str { "PHP-SEC-003" }
     fn name(&self) -> &str { "PHP Insecure File Upload" }
     fn severity(&self) -> Severity { Severity::Critical }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -108,7 +107,7 @@ impl Rule for PhpInsecureFileUploadRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-075".to_string(),
+                        rule_id: "PHP-SEC-003".to_string(),
                         severity: Severity::Critical.as_str().to_string(),
                         cwe_id: Some("CWE-434".to_string()),
                         cvss_score: Some(9.1),
@@ -127,10 +126,10 @@ impl Rule for PhpInsecureFileUploadRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-076: PHP Loose Comparison
+// PHP-SEC-004: PHP Loose Comparison
 pub struct PhpLooseComparisonRule;
 impl Rule for PhpLooseComparisonRule {
-    fn id(&self) -> &str { "SEC-076" }
+    fn id(&self) -> &str { "PHP-SEC-004" }
     fn name(&self) -> &str { "PHP Loose Comparison (Type Juggling)" }
     fn severity(&self) -> Severity { Severity::High }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -144,7 +143,7 @@ impl Rule for PhpLooseComparisonRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-076".to_string(),
+                        rule_id: "PHP-SEC-004".to_string(),
                         severity: Severity::High.as_str().to_string(),
                         cwe_id: Some("CWE-20".to_string()),
                         cvss_score: Some(7.5),
@@ -163,10 +162,10 @@ impl Rule for PhpLooseComparisonRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-077: PHP eval/assert
+// PHP-SEC-005: PHP eval/assert
 pub struct PhpEvalAssertRule;
 impl Rule for PhpEvalAssertRule {
-    fn id(&self) -> &str { "SEC-077" }
+    fn id(&self) -> &str { "PHP-SEC-005" }
     fn name(&self) -> &str { "PHP eval() and assert() Usage" }
     fn severity(&self) -> Severity { Severity::Critical }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -181,7 +180,7 @@ impl Rule for PhpEvalAssertRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-077".to_string(),
+                        rule_id: "PHP-SEC-005".to_string(),
                         severity: Severity::Critical.as_str().to_string(),
                         cwe_id: Some("CWE-95".to_string()),
                         cvss_score: Some(9.8),
@@ -200,10 +199,10 @@ impl Rule for PhpEvalAssertRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-078: PHP unserialize
+// PHP-SEC-006: PHP unserialize
 pub struct PhpUnserializeRule;
 impl Rule for PhpUnserializeRule {
-    fn id(&self) -> &str { "SEC-078" }
+    fn id(&self) -> &str { "PHP-SEC-006" }
     fn name(&self) -> &str { "PHP unserialize() Vulnerability" }
     fn severity(&self) -> Severity { Severity::Critical }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -216,7 +215,7 @@ impl Rule for PhpUnserializeRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-078".to_string(),
+                        rule_id: "PHP-SEC-006".to_string(),
                         severity: Severity::Critical.as_str().to_string(),
                         cwe_id: Some("CWE-502".to_string()),
                         cvss_score: Some(9.8),
@@ -235,10 +234,10 @@ impl Rule for PhpUnserializeRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-079: PHP Path Traversal / File Inclusion
+// PHP-SEC-007: PHP Path Traversal / File Inclusion
 pub struct PhpIncludeTraversalRule;
 impl Rule for PhpIncludeTraversalRule {
-    fn id(&self) -> &str { "SEC-079" }
+    fn id(&self) -> &str { "PHP-SEC-007" }
     fn name(&self) -> &str { "PHP Local/Remote File Inclusion" }
     fn severity(&self) -> Severity { Severity::Critical }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -253,7 +252,7 @@ impl Rule for PhpIncludeTraversalRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-079".to_string(),
+                        rule_id: "PHP-SEC-007".to_string(),
                         severity: Severity::Critical.as_str().to_string(),
                         cwe_id: Some("CWE-22".to_string()),
                         cvss_score: Some(9.8),
@@ -272,10 +271,10 @@ impl Rule for PhpIncludeTraversalRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-080: PHP Hardcoded Secrets
+// PHP-SEC-008: PHP Hardcoded Secrets
 pub struct PhpHardcodedSecretsRule;
 impl Rule for PhpHardcodedSecretsRule {
-    fn id(&self) -> &str { "SEC-080" }
+    fn id(&self) -> &str { "PHP-SEC-008" }
     fn name(&self) -> &str { "PHP Hardcoded Database Credentials" }
     fn severity(&self) -> Severity { Severity::High }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -289,7 +288,7 @@ impl Rule for PhpHardcodedSecretsRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-080".to_string(),
+                        rule_id: "PHP-SEC-008".to_string(),
                         severity: Severity::High.as_str().to_string(),
                         cwe_id: Some("CWE-798".to_string()),
                         cvss_score: Some(8.1),
@@ -308,10 +307,10 @@ impl Rule for PhpHardcodedSecretsRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-081: PHP Command Injection
+// PHP-SEC-009: PHP Command Injection
 pub struct PhpCommandInjectionRule;
 impl Rule for PhpCommandInjectionRule {
-    fn id(&self) -> &str { "SEC-081" }
+    fn id(&self) -> &str { "PHP-SEC-009" }
     fn name(&self) -> &str { "PHP OS Command Injection" }
     fn severity(&self) -> Severity { Severity::Critical }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -326,7 +325,7 @@ impl Rule for PhpCommandInjectionRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-081".to_string(),
+                        rule_id: "PHP-SEC-009".to_string(),
                         severity: Severity::Critical.as_str().to_string(),
                         cwe_id: Some("CWE-78".to_string()),
                         cvss_score: Some(9.8),
@@ -345,10 +344,10 @@ impl Rule for PhpCommandInjectionRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-082: PHP SSRF
+// PHP-SEC-010: PHP SSRF
 pub struct PhpSsrfRule;
 impl Rule for PhpSsrfRule {
-    fn id(&self) -> &str { "SEC-082" }
+    fn id(&self) -> &str { "PHP-SEC-010" }
     fn name(&self) -> &str { "PHP Server-Side Request Forgery (SSRF)" }
     fn severity(&self) -> Severity { Severity::High }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -362,7 +361,7 @@ impl Rule for PhpSsrfRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-082".to_string(),
+                        rule_id: "PHP-SEC-010".to_string(),
                         severity: Severity::High.as_str().to_string(),
                         cwe_id: Some("CWE-918".to_string()),
                         cvss_score: Some(8.6),
@@ -381,10 +380,10 @@ impl Rule for PhpSsrfRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-083: PHP Debug Mode
+// PHP-SEC-011: PHP Debug Mode
 pub struct PhpDebugModeRule;
 impl Rule for PhpDebugModeRule {
-    fn id(&self) -> &str { "SEC-083" }
+    fn id(&self) -> &str { "PHP-SEC-011" }
     fn name(&self) -> &str { "PHP Debug Mode and Error Display" }
     fn severity(&self) -> Severity { Severity::Medium }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -399,7 +398,7 @@ impl Rule for PhpDebugModeRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-083".to_string(),
+                        rule_id: "PHP-SEC-011".to_string(),
                         severity: Severity::Medium.as_str().to_string(),
                         cwe_id: Some("CWE-11".to_string()),
                         cvss_score: Some(6.5),
@@ -418,10 +417,10 @@ impl Rule for PhpDebugModeRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-084: PHP Session
+// PHP-SEC-012: PHP Session
 pub struct PhpSessionRule;
 impl Rule for PhpSessionRule {
-    fn id(&self) -> &str { "SEC-084" }
+    fn id(&self) -> &str { "PHP-SEC-012" }
     fn name(&self) -> &str { "PHP Weak Session Management" }
     fn severity(&self) -> Severity { Severity::Medium }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -435,7 +434,7 @@ impl Rule for PhpSessionRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-084".to_string(),
+                        rule_id: "PHP-SEC-012".to_string(),
                         severity: Severity::Medium.as_str().to_string(),
                         cwe_id: Some("CWE-384".to_string()),
                         cvss_score: Some(6.5),
@@ -454,10 +453,10 @@ impl Rule for PhpSessionRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-085: PHP CSRF
+// PHP-SEC-013: PHP CSRF
 pub struct PhpCsrfRule;
 impl Rule for PhpCsrfRule {
-    fn id(&self) -> &str { "SEC-085" }
+    fn id(&self) -> &str { "PHP-SEC-013" }
     fn name(&self) -> &str { "PHP Missing CSRF Protection" }
     fn severity(&self) -> Severity { Severity::Medium }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -470,7 +469,7 @@ impl Rule for PhpCsrfRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-085".to_string(),
+                        rule_id: "PHP-SEC-013".to_string(),
                         severity: Severity::Medium.as_str().to_string(),
                         cwe_id: Some("CWE-352".to_string()),
                         cvss_score: Some(6.5),
@@ -489,10 +488,10 @@ impl Rule for PhpCsrfRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-086: PHP XXE
+// PHP-SEC-014: PHP XXE
 pub struct PhpXxeRule;
 impl Rule for PhpXxeRule {
-    fn id(&self) -> &str { "SEC-086" }
+    fn id(&self) -> &str { "PHP-SEC-014" }
     fn name(&self) -> &str { "PHP XML External Entity (XXE)" }
     fn severity(&self) -> Severity { Severity::High }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -506,7 +505,7 @@ impl Rule for PhpXxeRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-086".to_string(),
+                        rule_id: "PHP-SEC-014".to_string(),
                         severity: Severity::High.as_str().to_string(),
                         cwe_id: Some("CWE-611".to_string()),
                         cvss_score: Some(8.1),
@@ -525,10 +524,10 @@ impl Rule for PhpXxeRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-087: PHP Open Redirect
+// PHP-SEC-015: PHP Open Redirect
 pub struct PhpOpenRedirectRule;
 impl Rule for PhpOpenRedirectRule {
-    fn id(&self) -> &str { "SEC-087" }
+    fn id(&self) -> &str { "PHP-SEC-015" }
     fn name(&self) -> &str { "PHP Open Redirect" }
     fn severity(&self) -> Severity { Severity::Medium }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -542,7 +541,7 @@ impl Rule for PhpOpenRedirectRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-087".to_string(),
+                        rule_id: "PHP-SEC-015".to_string(),
                         severity: Severity::Medium.as_str().to_string(),
                         cwe_id: Some("CWE-601".to_string()),
                         cvss_score: Some(6.1),
@@ -561,10 +560,10 @@ impl Rule for PhpOpenRedirectRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-088: PHP LDAP Injection
+// PHP-SEC-016: PHP LDAP Injection
 pub struct PhpLdapInjectionRule;
 impl Rule for PhpLdapInjectionRule {
-    fn id(&self) -> &str { "SEC-088" }
+    fn id(&self) -> &str { "PHP-SEC-016" }
     fn name(&self) -> &str { "PHP LDAP Injection" }
     fn severity(&self) -> Severity { Severity::High }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -577,7 +576,7 @@ impl Rule for PhpLdapInjectionRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-088".to_string(),
+                        rule_id: "PHP-SEC-016".to_string(),
                         severity: Severity::High.as_str().to_string(),
                         cwe_id: Some("CWE-90".to_string()),
                         cvss_score: Some(7.4),
@@ -596,10 +595,10 @@ impl Rule for PhpLdapInjectionRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-089: PHP Mass Assignment
+// PHP-SEC-017: PHP Mass Assignment
 pub struct PhpMassAssignmentRule;
 impl Rule for PhpMassAssignmentRule {
-    fn id(&self) -> &str { "SEC-089" }
+    fn id(&self) -> &str { "PHP-SEC-017" }
     fn name(&self) -> &str { "PHP Mass Assignment" }
     fn severity(&self) -> Severity { Severity::Medium }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -614,7 +613,7 @@ impl Rule for PhpMassAssignmentRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-089".to_string(),
+                        rule_id: "PHP-SEC-017".to_string(),
                         severity: Severity::Medium.as_str().to_string(),
                         cwe_id: Some("CWE-915".to_string()),
                         cvss_score: Some(6.5),
@@ -633,10 +632,10 @@ impl Rule for PhpMassAssignmentRule {
     fn fix(&self, _finding: &Finding, _code: &str) -> Option<Fix> { None }
 }
 
-// SEC-090: PHP Information Disclosure
+// PHP-SEC-018: PHP Information Disclosure
 pub struct PhpInfoDisclosureRule;
 impl Rule for PhpInfoDisclosureRule {
-    fn id(&self) -> &str { "SEC-090" }
+    fn id(&self) -> &str { "PHP-SEC-018" }
     fn name(&self) -> &str { "PHP Information Disclosure" }
     fn severity(&self) -> Severity { Severity::Medium }
     fn detect(&self, _tree: &Tree, code: &str) -> Vec<Finding> {
@@ -650,7 +649,7 @@ impl Rule for PhpInfoDisclosureRule {
                 for m in re.find_iter(code) {
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
-                        rule_id: "SEC-090".to_string(),
+                        rule_id: "PHP-SEC-018".to_string(),
                         severity: Severity::Medium.as_str().to_string(),
                         cwe_id: Some("CWE-200".to_string()),
                         cvss_score: Some(5.3),
