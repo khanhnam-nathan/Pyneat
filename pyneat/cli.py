@@ -204,8 +204,8 @@ def cli(color: str):
 
 @click.pass_context
 @cli.command()
-@click.argument('input_file', type=click.Path(exists=True))
-@click.option('--output', '-o', type=click.Path(), help='Output file path')
+@click.argument('input_file', type=str)  # Use str instead of click.Path to avoid resolution issues
+@click.option('--output', '-o', type=str, default=None, help='Output file path')
 @click.option('--lang', '-l', 'lang_opt', type=str, default=None,
               help='Language: javascript, typescript, go, java, rust, csharp, php, ruby, python')
 @click.option('--in-place', '-i', is_flag=True, help='Modify file in place')
@@ -265,7 +265,15 @@ def clean(input_file: str, output: str, lang_opt: str, in_place: bool, verbose: 
 
     Supports multi-language cleaning via --lang flag (JS, TS, Go, Java, Rust, C#, PHP, Ruby).
     """
+    # Resolve input path - try relative first, then absolute
     input_path = Path(input_file)
+    if not input_path.is_absolute() and not input_path.exists():
+        # Try relative to current working directory
+        input_path = Path.cwd() / input_file
+    if not input_path.exists():
+        click.echo(f"[ERROR] File not found: {input_file}", err=True)
+        click.echo(f"  Tried: {input_path}", err=True)
+        return 1
 
     if enable_all:
         enable_import_cleaning = True
@@ -1657,11 +1665,15 @@ def _get_menu_suggestions(last_command: str, context: str) -> Dict[str, tuple]:
 
 def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple], ctx: click.Context) -> None:
     """Handle user's menu choice - run the command directly."""
-    # Command map: key -> command_name
+    # Command map: key -> command_name (phải khớp với menu gợi ý)
+    # A=Security Check -> check
+    # B=Clean Code -> clean
+    # C=Explain Rule -> explain
+    # D=Export Report -> report
     choice_map = {
         'A': 'check',
-        'B': 'explain',
-        'C': 'clean',
+        'B': 'clean',
+        'C': 'explain',
         'D': 'report',
     }
 
@@ -1670,12 +1682,12 @@ def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple], ctx: click.C
         click.echo("")
         click.echo(f"  Running: {click.style('pyneat ' + cmd_name + ' --help', fg='cyan', bold=True)}")
         click.echo("")
-        
+
         # Lấy CLI group từ parent context
         try:
-            cli_ctx = ctx.parent
-            if cli_ctx is None:
-                cli_ctx = click.get_current_context()
+            cli_ctx = ctx.parent if ctx and ctx.parent else click.get_current_context()
+            if cli_ctx.parent:
+                cli_ctx = cli_ctx.parent
             
             sub_cmd = cli_ctx.command.commands.get(cmd_name)
             if sub_cmd:
