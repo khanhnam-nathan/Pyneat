@@ -1,6 +1,6 @@
 [package]
 name = "pyneat-rs"
-version = "3.0.0"
+version = "3.0.1"
 edition = "2021"
 description = "High-performance security scanner for PyNeat written in Rust"
 authors = ["Khanh Nam <khanhnam.copywriting@gmail.com>"]
