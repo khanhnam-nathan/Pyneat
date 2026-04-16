@@ -2,12 +2,30 @@
 """
 PyNeat Security Scanning Example
 
+Copyright (c) 2026 PyNEAT Authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 This example demonstrates security scanning with SARIF export:
 1. Scan for security vulnerabilities
 2. Export results to SARIF format
 3. Integrate with CI/CD pipelines
 
 Run: python examples/security_scan.py
+
+Note: SecurityScannerRule requires pyneat-pro-engine package.
+Install with: pip install pyneat-pro-engine
 """
 
 import sys
@@ -20,8 +38,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from pyneat.core import RuleEngine
 from pyneat.core.types import AgentMarker, MarkerIdGenerator
 from pyneat.core.manifest import export_to_sarif, export_to_junit_xml
-from pyneat.rules.security import SecurityScannerRule
 from pyneat.rules.quality import CodeQualityRule
+
+# Import SecurityScannerRule from pyneat-pro-engine (PROPRIETARY)
+try:
+    from pyneat_pro_engine.rules import SecurityScannerRule
+except ImportError:
+    print("ERROR: Security scanning requires pyneat-pro-engine package.")
+    print("Install with: pip install pyneat-pro-engine")
+    print("Or contact khanhnam.copywriting@gmail.com for commercial licensing.")
+    sys.exit(1)
 
 
 def run_security_example():

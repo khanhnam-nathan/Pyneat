@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: khanhnam.copywriting@gmail.com
 
 Compares AST structure (ignoring position metadata) before and after a rule runs.
 If the executable semantics drift in ways the rule didn't explicitly declare as

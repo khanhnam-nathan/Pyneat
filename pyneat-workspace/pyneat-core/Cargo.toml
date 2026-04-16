@@ -1,0 +1,76 @@
+[package]
+name = "pyneat-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license = "AGPL-3.0-or-later"
+description = "PyNEAT Core - Open Source (AGPL) multi-language security scanner"
+repository = "https://github.com/pyneat/pyneat"
+readme = "README.md"
+keywords = ["security", "scanner", "python", "static-analysis", "agpl"]
+categories = ["security", "development-tools"]
+
+[lib]
+name = "pyneat_core"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "pyneat"
+path = "src/bin/main.rs"
+
+[dependencies]
+# Core dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+regex = { workspace = true }
+rayon = { workspace = true }
+ahash = { workspace = true }
+walkdir = { workspace = true }
+
+# CLI
+clap = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Tree-sitter
+tree-sitter = { workspace = true }
+tree-sitter-python = { workspace = true }
+tree-sitter-javascript = { workspace = true }
+tree-sitter-typescript = { workspace = true }
+tree-sitter-go = { workspace = true }
+tree-sitter-java = { workspace = true }
+tree-sitter-rust = { workspace = true }
+tree-sitter-c-sharp = { workspace = true }
+tree-sitter-php = { workspace = true }
+tree-sitter-ruby = { workspace = true }
+
+# Python binding
+pyo3 = { workspace = true }
+
+# Utilities
+once_cell = { workspace = true }
+thiserror = { workspace = true }
+
+[build-dependencies]
+maturin = "1.5"
+cc = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3.10"
+
+[[bench]]
+name = "scanner_benchmark"
+harness = false
+
+[[bench]]
+name = "rule_benchmark"
+harness = false

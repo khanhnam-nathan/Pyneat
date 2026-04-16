@@ -1,0 +1,1661 @@
+{
+  "report_version": "1.0",
+  "generated_at": "2026-04-16T15:22:00.556400+00:00",
+  "total_files_tested": 54,
+  "total_combinations": 2,
+  "total_tests": 108,
+  "elapsed_seconds": 57.889232,
+  "summary": {
+    "crashes": 10,
+    "regressions": 0,
+    "unsupported": 0,
+    "no_ops": 98,
+    "successes": 0,
+    "slow_files": 0,
+    "by_exception_type": {
+      "ValueError": 10
+    }
+  },
+  "crashes": [
+    {
+      "repo": "django/django",
+      "file": "django/conf/global_settings.py",
+      "combination": "base",
+      "status": "crash",
+      "elapsed_ms": 1039.17,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/global_settings.py",
+      "combination": "fstring",
+      "status": "crash",
+      "elapsed_ms": 1039.08,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    },
+    {
+      "repo": "psf/requests",
+      "file": "docs/conf.py",
+      "combination": "fstring",
+      "status": "crash",
+      "elapsed_ms": 353.29,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    },
+    {
+      "repo": "psf/requests",
+      "file": "docs/conf.py",
+      "combination": "base",
+      "status": "crash",
+      "elapsed_ms": 357.46,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/__version__.py",
+      "combination": "base",
+      "status": "crash",
+      "elapsed_ms": 86.83,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/__version__.py",
+      "combination": "fstring",
+      "status": "crash",
+      "elapsed_ms": 115.12,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/auth.py",
+      "combination": "fstring",
+      "status": "crash",
+      "elapsed_ms": 600.22,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/auth.py",
+      "combination": "base",
+      "status": "crash",
+      "elapsed_ms": 702.52,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "docs/conf.py",
+      "combination": "base",
+      "status": "crash",
+      "elapsed_ms": 699.13,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "docs/conf.py",
+      "combination": "fstring",
+      "status": "crash",
+      "elapsed_ms": 708.3,
+      "exception_type": "ValueError",
+      "exception_message": "line must be >= 1, got 0",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\pyneat-final\\pyneat\\tools\\github_fuzz\\fuzz_runner.py\", line 238, in _process\n    result = engine.process_code_file(code_file)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\pyneat-final\\pyneat\\core\\engine.py\", line 535, in process_code_file\n    security_finding_to_marker(\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 663, in security_finding_to_marker\n    return AgentMarker(\n           ^^^^^^^^^^^^\n  File \"<string>\", line 36, in __init__\n  File \"D:\\pyneat-final\\pyneat\\core\\types.py\", line 451, in __post_init__\n    raise ValueError(f\"line must be >= 1, got {self.line}\")\nValueError: line must be >= 1, got 0\n",
+      "line_count": 0
+    }
+  ],
+  "regressions": [],
+  "unsupported": [],
+  "no_ops": [
+    {
+      "repo": "django/django",
+      "file": "django/__main__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 100.61,
+      "line_count": 10
+    },
+    {
+      "repo": "django/django",
+      "file": "django/__main__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 100.47,
+      "line_count": 10
+    },
+    {
+      "repo": "django/django",
+      "file": "django/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 107.64,
+      "changes": [
+        "Missing type hints: setup() at line 8"
+      ],
+      "line_count": 24
+    },
+    {
+      "repo": "django/django",
+      "file": "django/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 108.39,
+      "changes": [
+        "Missing type hints: setup() at line 8"
+      ],
+      "line_count": 24
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 288.35,
+      "changes": [
+        "POTENTIALLY UNUSED IMPORT: apps",
+        "POTENTIALLY UNUSED IMPORT: AppConfig"
+      ],
+      "line_count": 4
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 291.3,
+      "changes": [
+        "POTENTIALLY UNUSED IMPORT: apps",
+        "POTENTIALLY UNUSED IMPORT: AppConfig"
+      ],
+      "line_count": 4
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/config.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 697.17,
+      "changes": [
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: default_auto_field() at line 62",
+        "Missing return type: create() at line 100",
+        "Missing return type: get_model() at line 224",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling"
+      ],
+      "line_count": 274
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/config.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 699.91,
+      "changes": [
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: default_auto_field() at line 62",
+        "Missing return type: create() at line 100",
+        "Missing return type: get_model() at line 224",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling"
+      ],
+      "line_count": 274
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/registry.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 702.96,
+      "changes": [
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: get_app_configs() at line 145",
+        "Missing return type: get_app_config() at line 150",
+        "Missing return type: get_models() at line 169",
+        "Missing return type: get_model() at line 188",
+        "Missing return type: is_installed() at line 242",
+        "Missing return type: get_containing_app_config() at line 251",
+        "Missing return type: get_registered_model() at line 270",
+        "Missing return type: get_swappable_settings_name() at line 284",
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated AppConfig.create() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated model._meta._expire_cache() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated object_name.removeprefix() call in loop - call once and reuse"
+      ],
+      "line_count": 438
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/registry.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 712.44,
+      "changes": [
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: get_app_configs() at line 145",
+        "Missing return type: get_app_config() at line 150",
+        "Missing return type: get_models() at line 169",
+        "Missing return type: get_model() at line 188",
+        "Missing return type: is_installed() at line 242",
+        "Missing return type: get_containing_app_config() at line 251",
+        "Missing return type: get_registered_model() at line 270",
+        "Missing return type: get_swappable_settings_name() at line 284",
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated AppConfig.create() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated model._meta._expire_cache() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated object_name.removeprefix() call in loop - call once and reuse"
+      ],
+      "line_count": 438
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 868.0,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: configured() at line 137",
+        "Missing return type: is_overridden() at line 197",
+        "Missing return type: is_overridden() at line 243"
+      ],
+      "line_count": 257
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 880.5,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: configured() at line 137",
+        "Missing return type: is_overridden() at line 197",
+        "Missing return type: is_overridden() at line 243"
+      ],
+      "line_count": 257
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/ar/formats.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 105.2,
+      "line_count": 21
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/ar/formats.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 112.55,
+      "line_count": 21
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 584.99,
+      "line_count": 636
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 600.28,
+      "line_count": 636
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/ar_DZ/formats.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 110.03,
+      "line_count": 29
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/ar_DZ/formats.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 113.66,
+      "line_count": 29
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/az/formats.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 91.38,
+      "line_count": 30
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/az/formats.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 99.34,
+      "line_count": 30
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/bg/formats.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 66.72,
+      "line_count": 21
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/bg/formats.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 62.83,
+      "line_count": 21
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/bn/formats.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 69.59,
+      "line_count": 32
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/bn/formats.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 89.08,
+      "line_count": 32
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/bs/formats.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 133.34,
+      "line_count": 21
+    },
+    {
+      "repo": "django/django",
+      "file": "django/conf/locale/bs/formats.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 137.62,
+      "line_count": 21
+    },
+    {
+      "repo": "psf/requests",
+      "file": "docs/_themes/flask_theme_support.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 214.25,
+      "line_count": 86
+    },
+    {
+      "repo": "psf/requests",
+      "file": "docs/_themes/flask_theme_support.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 230.73,
+      "line_count": 86
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 244.69,
+      "changes": [
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: TooManyRedirects",
+        "POTENTIALLY UNUSED IMPORT: post",
+        "POTENTIALLY UNUSED IMPORT: options",
+        "POTENTIALLY UNUSED IMPORT: PreparedRequest",
+        "POTENTIALLY UNUSED IMPORT: get",
+        "POTENTIALLY UNUSED IMPORT: ConnectTimeout",
+        "POTENTIALLY UNUSED IMPORT: request",
+        "POTENTIALLY UNUSED IMPORT: URLRequired",
+        "POTENTIALLY UNUSED IMPORT: Session",
+        "POTENTIALLY UNUSED IMPORT: delete",
+        "POTENTIALLY UNUSED IMPORT: Request",
+        "POTENTIALLY UNUSED IMPORT: packages",
+        "POTENTIALLY UNUSED IMPORT: ConnectionError",
+        "POTENTIALLY UNUSED IMPORT: Response",
+        "POTENTIALLY UNUSED IMPORT: Timeout",
+        "POTENTIALLY UNUSED IMPORT: put",
+        "POTENTIALLY UNUSED IMPORT: head",
+        "POTENTIALLY UNUSED IMPORT: JSONDecodeError",
+        "POTENTIALLY UNUSED IMPORT: session",
+        "POTENTIALLY UNUSED IMPORT: HTTPError",
+        "POTENTIALLY UNUSED IMPORT: codes",
+        "POTENTIALLY UNUSED IMPORT: utils",
+        "POTENTIALLY UNUSED IMPORT: RequestException",
+        "POTENTIALLY UNUSED IMPORT: ReadTimeout"
+      ],
+      "line_count": 183
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 216.71,
+      "changes": [
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: TooManyRedirects",
+        "POTENTIALLY UNUSED IMPORT: post",
+        "POTENTIALLY UNUSED IMPORT: options",
+        "POTENTIALLY UNUSED IMPORT: PreparedRequest",
+        "POTENTIALLY UNUSED IMPORT: get",
+        "POTENTIALLY UNUSED IMPORT: ConnectTimeout",
+        "POTENTIALLY UNUSED IMPORT: request",
+        "POTENTIALLY UNUSED IMPORT: URLRequired",
+        "POTENTIALLY UNUSED IMPORT: Session",
+        "POTENTIALLY UNUSED IMPORT: delete",
+        "POTENTIALLY UNUSED IMPORT: Request",
+        "POTENTIALLY UNUSED IMPORT: packages",
+        "POTENTIALLY UNUSED IMPORT: ConnectionError",
+        "POTENTIALLY UNUSED IMPORT: Response",
+        "POTENTIALLY UNUSED IMPORT: Timeout",
+        "POTENTIALLY UNUSED IMPORT: put",
+        "POTENTIALLY UNUSED IMPORT: head",
+        "POTENTIALLY UNUSED IMPORT: JSONDecodeError",
+        "POTENTIALLY UNUSED IMPORT: session",
+        "POTENTIALLY UNUSED IMPORT: HTTPError",
+        "POTENTIALLY UNUSED IMPORT: codes",
+        "POTENTIALLY UNUSED IMPORT: utils",
+        "POTENTIALLY UNUSED IMPORT: RequestException",
+        "POTENTIALLY UNUSED IMPORT: ReadTimeout"
+      ],
+      "line_count": 183
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/_internal_utils.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 254.29,
+      "changes": [
+        "Missing return type: to_native_string() at line 26",
+        "Missing return type: unicode_is_ascii() at line 39"
+      ],
+      "line_count": 51
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/_internal_utils.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 255.98,
+      "changes": [
+        "Missing return type: to_native_string() at line 26",
+        "Missing return type: unicode_is_ascii() at line 39"
+      ],
+      "line_count": 51
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/api.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 336.13,
+      "changes": [
+        "Missing return type: request() at line 14",
+        "Missing return type: get() at line 62",
+        "Missing return type: options() at line 76",
+        "Missing return type: head() at line 88",
+        "Missing return type: post() at line 103",
+        "Missing return type: put() at line 118",
+        "Missing return type: patch() at line 133",
+        "Missing return type: delete() at line 148"
+      ],
+      "line_count": 157
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/api.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 341.32,
+      "changes": [
+        "Missing return type: request() at line 14",
+        "Missing return type: get() at line 62",
+        "Missing return type: options() at line 76",
+        "Missing return type: head() at line 88",
+        "Missing return type: post() at line 103",
+        "Missing return type: put() at line 118",
+        "Missing return type: patch() at line 133",
+        "Missing return type: delete() at line 148"
+      ],
+      "line_count": 157
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/adapters.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 845.17,
+      "changes": [
+        "Missing return type: proxy_manager_for() at line 243",
+        "Missing return type: build_response() at line 337",
+        "Missing return type: build_connection_pool_key_attributes() at line 374",
+        "Missing return type: get_connection_with_tls_context() at line 424",
+        "Missing return type: get_connection() at line 473",
+        "Missing return type: request_url() at line 524",
+        "Missing return type: proxy_headers() at line 570",
+        "Missing return type: send() at line 591",
+        "POTENTIALLY UNUSED IMPORT: socket",
+        "POTENTIALLY UNUSED IMPORT: PreparedRequest",
+        "POTENTIALLY UNUSED IMPORT: os.path"
+      ],
+      "line_count": 697
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/adapters.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 872.78,
+      "changes": [
+        "Missing return type: proxy_manager_for() at line 243",
+        "Missing return type: build_response() at line 337",
+        "Missing return type: build_connection_pool_key_attributes() at line 374",
+        "Missing return type: get_connection_with_tls_context() at line 424",
+        "Missing return type: get_connection() at line 473",
+        "Missing return type: request_url() at line 524",
+        "Missing return type: proxy_headers() at line 570",
+        "Missing return type: send() at line 591",
+        "POTENTIALLY UNUSED IMPORT: socket",
+        "POTENTIALLY UNUSED IMPORT: PreparedRequest",
+        "POTENTIALLY UNUSED IMPORT: os.path"
+      ],
+      "line_count": 697
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/certs.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 158.18,
+      "line_count": 18
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/certs.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 122.18,
+      "line_count": 18
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/compat.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 392.83,
+      "changes": [
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: getproxies_environment",
+        "POTENTIALLY UNUSED IMPORT: Callable",
+        "POTENTIALLY UNUSED IMPORT: quote",
+        "POTENTIALLY UNUSED IMPORT: quote_plus",
+        "POTENTIALLY UNUSED IMPORT: Mapping",
+        "POTENTIALLY UNUSED IMPORT: urlunparse",
+        "POTENTIALLY UNUSED IMPORT: urljoin",
+        "POTENTIALLY UNUSED IMPORT: unquote",
+        "POTENTIALLY UNUSED IMPORT: proxy_bypass",
+        "POTENTIALLY UNUSED IMPORT: json",
+        "POTENTIALLY UNUSED IMPORT: urlparse",
+        "POTENTIALLY UNUSED IMPORT: urldefrag",
+        "POTENTIALLY UNUSED IMPORT: StringIO",
+        "POTENTIALLY UNUSED IMPORT: urlencode",
+        "POTENTIALLY UNUSED IMPORT: cookielib",
+        "POTENTIALLY UNUSED IMPORT: unquote_plus",
+        "POTENTIALLY UNUSED IMPORT: urlsplit",
+        "POTENTIALLY UNUSED IMPORT: getproxies",
+        "POTENTIALLY UNUSED IMPORT: MutableMapping",
+        "POTENTIALLY UNUSED IMPORT: parse_http_list",
+        "POTENTIALLY UNUSED IMPORT: JSONDecodeError",
+        "POTENTIALLY UNUSED IMPORT: proxy_bypass_environment",
+        "POTENTIALLY UNUSED IMPORT: OrderedDict",
+        "POTENTIALLY UNUSED IMPORT: Morsel",
+        "PERFORMANCE: Repeated importlib.import_module() call in loop - call once and reuse"
+      ],
+      "line_count": 106
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/compat.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 366.32,
+      "changes": [
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: getproxies_environment",
+        "POTENTIALLY UNUSED IMPORT: Callable",
+        "POTENTIALLY UNUSED IMPORT: quote",
+        "POTENTIALLY UNUSED IMPORT: quote_plus",
+        "POTENTIALLY UNUSED IMPORT: Mapping",
+        "POTENTIALLY UNUSED IMPORT: urlunparse",
+        "POTENTIALLY UNUSED IMPORT: urljoin",
+        "POTENTIALLY UNUSED IMPORT: unquote",
+        "POTENTIALLY UNUSED IMPORT: proxy_bypass",
+        "POTENTIALLY UNUSED IMPORT: json",
+        "POTENTIALLY UNUSED IMPORT: urlparse",
+        "POTENTIALLY UNUSED IMPORT: urldefrag",
+        "POTENTIALLY UNUSED IMPORT: StringIO",
+        "POTENTIALLY UNUSED IMPORT: urlencode",
+        "POTENTIALLY UNUSED IMPORT: cookielib",
+        "POTENTIALLY UNUSED IMPORT: unquote_plus",
+        "POTENTIALLY UNUSED IMPORT: urlsplit",
+        "POTENTIALLY UNUSED IMPORT: getproxies",
+        "POTENTIALLY UNUSED IMPORT: MutableMapping",
+        "POTENTIALLY UNUSED IMPORT: parse_http_list",
+        "POTENTIALLY UNUSED IMPORT: JSONDecodeError",
+        "POTENTIALLY UNUSED IMPORT: proxy_bypass_environment",
+        "POTENTIALLY UNUSED IMPORT: OrderedDict",
+        "POTENTIALLY UNUSED IMPORT: Morsel",
+        "PERFORMANCE: Repeated importlib.import_module() call in loop - call once and reuse"
+      ],
+      "line_count": 106
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/cookies.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 621.93,
+      "changes": [
+        "Missing return type: get_cookie_header() at line 140",
+        "Missing return type: create_cookie() at line 455",
+        "Missing return type: morsel_to_cookie() at line 492",
+        "Missing return type: cookiejar_from_dict() at line 521",
+        "Missing return type: merge_cookies() at line 542",
+        "Missing return type: get_type() at line 40",
+        "Missing return type: get_host() at line 43",
+        "Missing return type: get_origin_req_host() at line 46",
+        "Missing return type: get_full_url() at line 49",
+        "Missing return type: is_unverifiable() at line 69",
+        "Missing return type: has_header() at line 72",
+        "Missing return type: get_header() at line 75",
+        "Missing return type: get_new_headers() at line 87",
+        "Missing return type: unverifiable() at line 91",
+        "Missing return type: origin_req_host() at line 95",
+        "Missing return type: host() at line 99",
+        "Missing return type: info() at line 117",
+        "Missing return type: get() at line 194",
+        "Missing return type: set() at line 206",
+        "Missing return type: keys() at line 234",
+        "Missing return type: values() at line 251",
+        "Missing return type: items() at line 268",
+        "Missing return type: list_domains() at line 277",
+        "Missing return type: list_paths() at line 285",
+        "Missing return type: multiple_domains() at line 293",
+        "Missing return type: get_dict() at line 306",
+        "Missing return type: set_cookie() at line 349",
+        "Missing return type: copy() at line 428",
+        "Missing return type: get_policy() at line 435",
+        "PERFORMANCE: Repeated cookiejar.set_cookie() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated self.set_cookie() call in loop - call once and reuse"
+      ],
+      "line_count": 561
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/cookies.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 571.66,
+      "changes": [
+        "Missing return type: get_cookie_header() at line 140",
+        "Missing return type: create_cookie() at line 455",
+        "Missing return type: morsel_to_cookie() at line 492",
+        "Missing return type: cookiejar_from_dict() at line 521",
+        "Missing return type: merge_cookies() at line 542",
+        "Missing return type: get_type() at line 40",
+        "Missing return type: get_host() at line 43",
+        "Missing return type: get_origin_req_host() at line 46",
+        "Missing return type: get_full_url() at line 49",
+        "Missing return type: is_unverifiable() at line 69",
+        "Missing return type: has_header() at line 72",
+        "Missing return type: get_header() at line 75",
+        "Missing return type: get_new_headers() at line 87",
+        "Missing return type: unverifiable() at line 91",
+        "Missing return type: origin_req_host() at line 95",
+        "Missing return type: host() at line 99",
+        "Missing return type: info() at line 117",
+        "Missing return type: get() at line 194",
+        "Missing return type: set() at line 206",
+        "Missing return type: keys() at line 234",
+        "Missing return type: values() at line 251",
+        "Missing return type: items() at line 268",
+        "Missing return type: list_domains() at line 277",
+        "Missing return type: list_paths() at line 285",
+        "Missing return type: multiple_domains() at line 293",
+        "Missing return type: get_dict() at line 306",
+        "Missing return type: set_cookie() at line 349",
+        "Missing return type: copy() at line 428",
+        "Missing return type: get_policy() at line 435",
+        "PERFORMANCE: Repeated cookiejar.set_cookie() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated self.set_cookie() call in loop - call once and reuse"
+      ],
+      "line_count": 561
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/exceptions.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 419.17,
+      "line_count": 152
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/exceptions.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 422.05,
+      "line_count": 152
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/help.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 210.02,
+      "changes": [
+        "Missing return type: info() at line 66"
+      ],
+      "line_count": 131
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/help.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 372.39,
+      "changes": [
+        "Missing return type: info() at line 66"
+      ],
+      "line_count": 131
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/hooks.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 412.51,
+      "changes": [
+        "Missing return type: default_hooks() at line 16",
+        "Missing return type: dispatch_hook() at line 23"
+      ],
+      "line_count": 34
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/hooks.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 411.77,
+      "changes": [
+        "Missing return type: default_hooks() at line 16",
+        "Missing return type: dispatch_hook() at line 23"
+      ],
+      "line_count": 34
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/packages.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 544.33,
+      "line_count": 23
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/packages.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 597.16,
+      "line_count": 23
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/models.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 1730.58,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "Missing return type: path_url() at line 88",
+        "Missing return type: deregister_hook() at line 220",
+        "Missing return type: prepare() at line 297",
+        "Missing return type: copy() at line 384",
+        "Missing return type: ok() at line 757",
+        "Missing return type: is_redirect() at line 772",
+        "Missing return type: is_permanent_redirect() at line 779",
+        "Missing return type: next() at line 787",
+        "Missing return type: apparent_encoding() at line 792",
+        "Missing return type: iter_content() at line 801",
+        "Missing return type: content() at line 898",
+        "Missing return type: text() at line 917",
+        "Missing return type: json() at line 954",
+        "Missing return type: links() at line 990",
+        "MAGIC NUMBERS DETECTED: ['512', '1024', '500', '600', '128', '400']",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: encodings.idna",
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated rf.make_multipart() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated self.register_hook() call in loop - call once and reuse"
+      ],
+      "line_count": 1046
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/models.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 1585.68,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "Missing return type: path_url() at line 88",
+        "Missing return type: deregister_hook() at line 220",
+        "Missing return type: prepare() at line 297",
+        "Missing return type: copy() at line 384",
+        "Missing return type: ok() at line 757",
+        "Missing return type: is_redirect() at line 772",
+        "Missing return type: is_permanent_redirect() at line 779",
+        "Missing return type: next() at line 787",
+        "Missing return type: apparent_encoding() at line 792",
+        "Missing return type: iter_content() at line 801",
+        "Missing return type: content() at line 898",
+        "Missing return type: text() at line 917",
+        "Missing return type: json() at line 954",
+        "Missing return type: links() at line 990",
+        "MAGIC NUMBERS DETECTED: ['512', '1024', '500', '600', '128', '400']",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: encodings.idna",
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated rf.make_multipart() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated self.register_hook() call in loop - call once and reuse"
+      ],
+      "line_count": 1046
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/sessions.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 1138.53,
+      "changes": [
+        "Missing return type: merge_setting() at line 62",
+        "Missing return type: merge_hooks() at line 92",
+        "Missing return type: session() at line 821",
+        "Missing return type: get_redirect_target() at line 108",
+        "Missing return type: should_strip_auth() at line 128",
+        "Missing return type: rebuild_proxies() at line 302",
+        "Missing return type: prepare_request() at line 459",
+        "Missing return type: request() at line 502",
+        "Missing return type: get() at line 595",
+        "Missing return type: options() at line 606",
+        "Missing return type: head() at line 617",
+        "Missing return type: post() at line 628",
+        "Missing return type: put() at line 641",
+        "Missing return type: patch() at line 653",
+        "Missing return type: delete() at line 665",
+        "Missing return type: send() at line 675",
+        "Missing return type: merge_environment_settings() at line 752",
+        "Missing return type: get_adapter() at line 783",
+        "MAGIC NUMBERS DETECTED: ['443']",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: should_bypass_proxies",
+        "POTENTIALLY UNUSED IMPORT: REDIRECT_STATI"
+      ],
+      "line_count": 833
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/sessions.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 1213.2,
+      "changes": [
+        "Missing return type: merge_setting() at line 62",
+        "Missing return type: merge_hooks() at line 92",
+        "Missing return type: session() at line 821",
+        "Missing return type: get_redirect_target() at line 108",
+        "Missing return type: should_strip_auth() at line 128",
+        "Missing return type: rebuild_proxies() at line 302",
+        "Missing return type: prepare_request() at line 459",
+        "Missing return type: request() at line 502",
+        "Missing return type: get() at line 595",
+        "Missing return type: options() at line 606",
+        "Missing return type: head() at line 617",
+        "Missing return type: post() at line 628",
+        "Missing return type: put() at line 641",
+        "Missing return type: patch() at line 653",
+        "Missing return type: delete() at line 665",
+        "Missing return type: send() at line 675",
+        "Missing return type: merge_environment_settings() at line 752",
+        "Missing return type: get_adapter() at line 783",
+        "MAGIC NUMBERS DETECTED: ['443']",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: should_bypass_proxies",
+        "POTENTIALLY UNUSED IMPORT: REDIRECT_STATI"
+      ],
+      "line_count": 833
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/status_codes.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 390.51,
+      "changes": [
+        "Missing return type: doc() at line 116",
+        "MAGIC NUMBERS DETECTED: ['402', '100', '410', '306', '307', '424', '504', '449', '505', '404', '451', '414', '510', '300', '429', '401', '422', '205', '207', '102', '304', '302', '416', '418', '450', '226', '202', '500', '204', '417', '301', '421', '444', '499', '400', '122', '103', '501', '101', '511', '403', '503', '502', '305', '405', '426', '406', '411', '509', '206', '412', '408', '201', '431', '409', '428', '200', '407', '423', '203', '208', '425', '303', '413', '308', '507', '506', '415']"
+      ],
+      "line_count": 128
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/status_codes.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 419.39,
+      "changes": [
+        "Missing return type: doc() at line 116",
+        "MAGIC NUMBERS DETECTED: ['402', '100', '410', '306', '307', '424', '504', '449', '505', '404', '451', '414', '510', '300', '429', '401', '422', '205', '207', '102', '304', '302', '416', '418', '450', '226', '202', '500', '204', '417', '301', '421', '444', '499', '400', '122', '103', '501', '101', '511', '403', '503', '502', '305', '405', '426', '406', '411', '509', '206', '412', '408', '201', '431', '409', '428', '200', '407', '423', '203', '208', '425', '303', '413', '308', '507', '506', '415']"
+      ],
+      "line_count": 128
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/structures.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 629.11,
+      "changes": [
+        "Missing return type: lower_items() at line 63",
+        "Missing return type: copy() at line 76",
+        "Missing return type: get() at line 98"
+      ],
+      "line_count": 99
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/structures.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 654.13,
+      "changes": [
+        "Missing return type: lower_items() at line 63",
+        "Missing return type: copy() at line 76",
+        "Missing return type: get() at line 98"
+      ],
+      "line_count": 99
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/utils.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 1214.49,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "Missing return type: dict_to_sequence() at line 126",
+        "Missing return type: super_len() at line 135",
+        "Missing return type: get_netrc_auth() at line 206",
+        "Missing return type: guess_filename() at line 250",
+        "Missing return type: extract_zipped_paths() at line 257",
+        "Missing return type: from_key_val_list() at line 308",
+        "Missing return type: to_key_val_list() at line 335",
+        "Missing return type: parse_list_header() at line 365",
+        "Missing return type: parse_dict_header() at line 397",
+        "Missing return type: unquote_header_value() at line 432",
+        "Missing return type: dict_from_cookiejar() at line 457",
+        "Missing return type: add_dict_to_cookiejar() at line 468",
+        "Missing return type: get_encodings_from_content() at line 479",
+        "Missing return type: get_encoding_from_headers() at line 526",
+        "Missing return type: get_unicode_from_response() at line 578",
+        "Missing return type: unquote_unreserved() at line 623",
+        "Missing return type: requote_uri() at line 647",
+        "Missing return type: address_in_network() at line 669",
+        "Missing return type: dotted_netmask() at line 684",
+        "Missing return type: is_ipv4_address() at line 695",
+        "Missing return type: is_valid_cidr() at line 706",
+        "Missing return type: should_bypass_proxies() at line 752",
+        "Missing return type: get_environ_proxies() at line 813",
+        "Missing return type: select_proxy() at line 825",
+        "Missing return type: resolve_proxies() at line 851",
+        "Missing return type: default_user_agent() at line 878",
+        "Missing return type: default_headers() at line 887",
+        "Missing return type: parse_header_links() at line 901",
+        "Missing return type: guess_json_utf() at line 944",
+        "Missing return type: prepend_scheme_if_needed() at line 976",
+        "Missing return type: get_auth_from_url() at line 1005",
+        "Missing return type: urldefragauth() at line 1051",
+        "Missing return type: proxy_bypass_registry() at line 76",
+        "Missing return type: proxy_bypass() at line 114",
+        "Missing return type: get_proxy() at line 761",
+        "MAGIC NUMBERS DETECTED: ['443', '4294967295']",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: to_native_string",
+        "POTENTIALLY UNUSED IMPORT: HEADER_VALIDATORS",
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated os.path.expanduser() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated re.match() call in loop - call once and reuse"
+      ],
+      "line_count": 1083
+    },
+    {
+      "repo": "psf/requests",
+      "file": "src/requests/utils.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 1133.58,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "Missing return type: dict_to_sequence() at line 126",
+        "Missing return type: super_len() at line 135",
+        "Missing return type: get_netrc_auth() at line 206",
+        "Missing return type: guess_filename() at line 250",
+        "Missing return type: extract_zipped_paths() at line 257",
+        "Missing return type: from_key_val_list() at line 308",
+        "Missing return type: to_key_val_list() at line 335",
+        "Missing return type: parse_list_header() at line 365",
+        "Missing return type: parse_dict_header() at line 397",
+        "Missing return type: unquote_header_value() at line 432",
+        "Missing return type: dict_from_cookiejar() at line 457",
+        "Missing return type: add_dict_to_cookiejar() at line 468",
+        "Missing return type: get_encodings_from_content() at line 479",
+        "Missing return type: get_encoding_from_headers() at line 526",
+        "Missing return type: get_unicode_from_response() at line 578",
+        "Missing return type: unquote_unreserved() at line 623",
+        "Missing return type: requote_uri() at line 647",
+        "Missing return type: address_in_network() at line 669",
+        "Missing return type: dotted_netmask() at line 684",
+        "Missing return type: is_ipv4_address() at line 695",
+        "Missing return type: is_valid_cidr() at line 706",
+        "Missing return type: should_bypass_proxies() at line 752",
+        "Missing return type: get_environ_proxies() at line 813",
+        "Missing return type: select_proxy() at line 825",
+        "Missing return type: resolve_proxies() at line 851",
+        "Missing return type: default_user_agent() at line 878",
+        "Missing return type: default_headers() at line 887",
+        "Missing return type: parse_header_links() at line 901",
+        "Missing return type: guess_json_utf() at line 944",
+        "Missing return type: prepend_scheme_if_needed() at line 976",
+        "Missing return type: get_auth_from_url() at line 1005",
+        "Missing return type: urldefragauth() at line 1051",
+        "Missing return type: proxy_bypass_registry() at line 76",
+        "Missing return type: proxy_bypass() at line 114",
+        "Missing return type: get_proxy() at line 761",
+        "MAGIC NUMBERS DETECTED: ['443', '4294967295']",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling",
+        "POTENTIALLY UNUSED IMPORT: to_native_string",
+        "POTENTIALLY UNUSED IMPORT: HEADER_VALIDATORS",
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated os.path.expanduser() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated re.match() call in loop - call once and reuse"
+      ],
+      "line_count": 1083
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/celery/make_celery.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 90.29,
+      "line_count": 4
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/celery/make_celery.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 103.94,
+      "line_count": 4
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/celery/src/task_app/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 118.4,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[LOW] SEC-043 - Flask app without security headers (X-Frame-Options, CSP, etc.)"
+      ],
+      "line_count": 39
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/celery/src/task_app/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 121.59,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[LOW] SEC-043 - Flask app without security headers (X-Frame-Options, CSP, etc.)"
+      ],
+      "line_count": 39
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/celery/src/task_app/tasks.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 133.73,
+      "changes": [
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated self.update_state() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated time.sleep() call in loop - call once and reuse"
+      ],
+      "line_count": 23
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/celery/src/task_app/tasks.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 133.84,
+      "changes": [
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated self.update_state() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated time.sleep() call in loop - call once and reuse"
+      ],
+      "line_count": 23
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/celery/src/task_app/views.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 102.82,
+      "line_count": 38
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/celery/src/task_app/views.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 128.7,
+      "line_count": 38
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/javascript/js_example/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 83.72,
+      "changes": [
+        "[LOW] SEC-043 - Flask app without security headers (X-Frame-Options, CSP, etc.)",
+        "POTENTIALLY UNUSED IMPORT: views"
+      ],
+      "line_count": 5
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/javascript/js_example/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 83.63,
+      "changes": [
+        "[LOW] SEC-043 - Flask app without security headers (X-Frame-Options, CSP, etc.)",
+        "POTENTIALLY UNUSED IMPORT: views"
+      ],
+      "line_count": 5
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/javascript/js_example/views.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 93.86,
+      "changes": [
+        "Missing return type: index() at line 10",
+        "Missing return type: add() at line 15"
+      ],
+      "line_count": 18
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/javascript/js_example/views.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 106.42,
+      "changes": [
+        "Missing return type: index() at line 10",
+        "Missing return type: add() at line 15"
+      ],
+      "line_count": 18
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/javascript/tests/test_js_example.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 140.74,
+      "line_count": 27
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/javascript/tests/test_js_example.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 181.19,
+      "line_count": 27
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/flaskr/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 151.81,
+      "changes": [
+        "[LOW] SEC-043 - Flask app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: create_app() at line 6",
+        "Missing return type: hello() at line 27"
+      ],
+      "line_count": 48
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/flaskr/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 181.99,
+      "changes": [
+        "[LOW] SEC-043 - Flask app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: create_app() at line 6",
+        "Missing return type: hello() at line 27"
+      ],
+      "line_count": 48
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/flaskr/blog.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 267.3,
+      "changes": [
+        "Missing return type: index() at line 17",
+        "Missing return type: get_post() at line 28",
+        "Missing return type: create() at line 62",
+        "Missing return type: update() at line 88",
+        "Missing return type: delete() at line 115",
+        "MAGIC NUMBERS DETECTED: ['403', '404']"
+      ],
+      "line_count": 125
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/flaskr/auth.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 280.56,
+      "changes": [
+        "Missing return type: login_required() at line 19",
+        "Missing return type: register() at line 47",
+        "Missing return type: login() at line 85",
+        "Missing return type: logout() at line 113",
+        "Missing return type: wrapped_view() at line 23"
+      ],
+      "line_count": 116
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/flaskr/auth.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 322.24,
+      "changes": [
+        "Missing return type: login_required() at line 19",
+        "Missing return type: register() at line 47",
+        "Missing return type: login() at line 85",
+        "Missing return type: logout() at line 113",
+        "Missing return type: wrapped_view() at line 23"
+      ],
+      "line_count": 116
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/flaskr/blog.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 258.12,
+      "changes": [
+        "Missing return type: index() at line 17",
+        "Missing return type: get_post() at line 28",
+        "Missing return type: create() at line 62",
+        "Missing return type: update() at line 88",
+        "Missing return type: delete() at line 115",
+        "MAGIC NUMBERS DETECTED: ['403', '404']"
+      ],
+      "line_count": 125
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/tests/test_auth.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 146.32,
+      "changes": [
+        "MAGIC NUMBERS DETECTED: ['200']"
+      ],
+      "line_count": 69
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/tests/test_auth.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 186.85,
+      "changes": [
+        "MAGIC NUMBERS DETECTED: ['200']"
+      ],
+      "line_count": 69
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/flaskr/db.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 215.31,
+      "changes": [
+        "Missing return type: get_db() at line 9"
+      ],
+      "line_count": 56
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/flaskr/db.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 204.61,
+      "changes": [
+        "Missing return type: get_db() at line 9"
+      ],
+      "line_count": 56
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/tests/test_blog.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 212.05,
+      "changes": [
+        "MAGIC NUMBERS DETECTED: ['403', '200', '404']"
+      ],
+      "line_count": 83
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/tests/test_db.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 200.94,
+      "line_count": 29
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/tests/test_blog.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 227.28,
+      "changes": [
+        "MAGIC NUMBERS DETECTED: ['403', '200', '404']"
+      ],
+      "line_count": 83
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/tests/test_db.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 204.55,
+      "line_count": 29
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/tests/test_factory.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 105.4,
+      "line_count": 12
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "examples/tutorial/tests/test_factory.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 102.41,
+      "line_count": 12
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "src/flask/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 102.52,
+      "changes": [
+        "POTENTIALLY UNUSED IMPORT: current_app",
+        "POTENTIALLY UNUSED IMPORT: appcontext_popped",
+        "POTENTIALLY UNUSED IMPORT: Config",
+        "POTENTIALLY UNUSED IMPORT: stream_with_context",
+        "POTENTIALLY UNUSED IMPORT: jsonify",
+        "POTENTIALLY UNUSED IMPORT: g",
+        "POTENTIALLY UNUSED IMPORT: copy_current_request_context",
+        "POTENTIALLY UNUSED IMPORT: get_flashed_messages",
+        "POTENTIALLY UNUSED IMPORT: after_this_request",
+        "POTENTIALLY UNUSED IMPORT: stream_template",
+        "POTENTIALLY UNUSED IMPORT: url_for",
+        "POTENTIALLY UNUSED IMPORT: template_rendered",
+        "POTENTIALLY UNUSED IMPORT: before_render_template",
+        "POTENTIALLY UNUSED IMPORT: message_flashed",
+        "POTENTIALLY UNUSED IMPORT: request",
+        "POTENTIALLY UNUSED IMPORT: got_request_exception",
+        "POTENTIALLY UNUSED IMPORT: send_from_directory",
+        "POTENTIALLY UNUSED IMPORT: request_tearing_down",
+        "POTENTIALLY UNUSED IMPORT: stream_template_string",
+        "POTENTIALLY UNUSED IMPORT: has_app_context",
+        "POTENTIALLY UNUSED IMPORT: Blueprint",
+        "POTENTIALLY UNUSED IMPORT: has_request_context",
+        "POTENTIALLY UNUSED IMPORT: json",
+        "POTENTIALLY UNUSED IMPORT: flash",
+        "POTENTIALLY UNUSED IMPORT: Request",
+        "POTENTIALLY UNUSED IMPORT: request_started",
+        "POTENTIALLY UNUSED IMPORT: appcontext_pushed",
+        "POTENTIALLY UNUSED IMPORT: Flask",
+        "POTENTIALLY UNUSED IMPORT: redirect",
+        "POTENTIALLY UNUSED IMPORT: Response",
+        "POTENTIALLY UNUSED IMPORT: send_file",
+        "POTENTIALLY UNUSED IMPORT: get_template_attribute",
+        "POTENTIALLY UNUSED IMPORT: request_finished",
+        "POTENTIALLY UNUSED IMPORT: render_template_string",
+        "POTENTIALLY UNUSED IMPORT: session",
+        "POTENTIALLY UNUSED IMPORT: render_template",
+        "POTENTIALLY UNUSED IMPORT: make_response",
+        "POTENTIALLY UNUSED IMPORT: appcontext_tearing_down",
+        "POTENTIALLY UNUSED IMPORT: abort"
+      ],
+      "line_count": 39
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "src/flask/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 110.36,
+      "changes": [
+        "POTENTIALLY UNUSED IMPORT: current_app",
+        "POTENTIALLY UNUSED IMPORT: appcontext_popped",
+        "POTENTIALLY UNUSED IMPORT: Config",
+        "POTENTIALLY UNUSED IMPORT: stream_with_context",
+        "POTENTIALLY UNUSED IMPORT: jsonify",
+        "POTENTIALLY UNUSED IMPORT: g",
+        "POTENTIALLY UNUSED IMPORT: copy_current_request_context",
+        "POTENTIALLY UNUSED IMPORT: get_flashed_messages",
+        "POTENTIALLY UNUSED IMPORT: after_this_request",
+        "POTENTIALLY UNUSED IMPORT: stream_template",
+        "POTENTIALLY UNUSED IMPORT: url_for",
+        "POTENTIALLY UNUSED IMPORT: template_rendered",
+        "POTENTIALLY UNUSED IMPORT: before_render_template",
+        "POTENTIALLY UNUSED IMPORT: message_flashed",
+        "POTENTIALLY UNUSED IMPORT: request",
+        "POTENTIALLY UNUSED IMPORT: got_request_exception",
+        "POTENTIALLY UNUSED IMPORT: send_from_directory",
+        "POTENTIALLY UNUSED IMPORT: request_tearing_down",
+        "POTENTIALLY UNUSED IMPORT: stream_template_string",
+        "POTENTIALLY UNUSED IMPORT: has_app_context",
+        "POTENTIALLY UNUSED IMPORT: Blueprint",
+        "POTENTIALLY UNUSED IMPORT: has_request_context",
+        "POTENTIALLY UNUSED IMPORT: json",
+        "POTENTIALLY UNUSED IMPORT: flash",
+        "POTENTIALLY UNUSED IMPORT: Request",
+        "POTENTIALLY UNUSED IMPORT: request_started",
+        "POTENTIALLY UNUSED IMPORT: appcontext_pushed",
+        "POTENTIALLY UNUSED IMPORT: Flask",
+        "POTENTIALLY UNUSED IMPORT: redirect",
+        "POTENTIALLY UNUSED IMPORT: Response",
+        "POTENTIALLY UNUSED IMPORT: send_file",
+        "POTENTIALLY UNUSED IMPORT: get_template_attribute",
+        "POTENTIALLY UNUSED IMPORT: request_finished",
+        "POTENTIALLY UNUSED IMPORT: render_template_string",
+        "POTENTIALLY UNUSED IMPORT: session",
+        "POTENTIALLY UNUSED IMPORT: render_template",
+        "POTENTIALLY UNUSED IMPORT: make_response",
+        "POTENTIALLY UNUSED IMPORT: appcontext_tearing_down",
+        "POTENTIALLY UNUSED IMPORT: abort"
+      ],
+      "line_count": 39
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "src/flask/__main__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 749.98,
+      "line_count": 3
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "src/flask/__main__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 987.97,
+      "line_count": 3
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "src/flask/blueprints.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 560.88,
+      "changes": [
+        "POTENTIALLY UNUSED IMPORT: BlueprintSetupState",
+        "POTENTIALLY UNUSED IMPORT: annotations"
+      ],
+      "line_count": 128
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "src/flask/blueprints.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 324.99,
+      "changes": [
+        "POTENTIALLY UNUSED IMPORT: BlueprintSetupState",
+        "POTENTIALLY UNUSED IMPORT: annotations"
+      ],
+      "line_count": 128
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "src/flask/app.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 1351.6,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[LOW] SEC-043 - Flask app without security headers (X-Frame-Options, CSP, etc.)",
+        "Found 19 # type: ignore comments - consider fixing types properly",
+        "MAGIC NUMBERS DETECTED: ['307', '5000', '1000', '500000', '4093', '308']",
+        "POTENTIALLY UNUSED IMPORT: annotations",
+        "PERFORMANCE: Repeated inspect.isclass() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated inspect.signature() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated self.ensure_sync() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated warnings.warn() call in loop - call once and reuse"
+      ],
+      "line_count": 1625
+    },
+    {
+      "repo": "pallets/flask",
+      "file": "src/flask/app.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 1359.29,
+      "changes": [
+        "[MEDIUM] SEC-028 - Credentials in URL - will be logged and exposed",
+        "[LOW] SEC-043 - Flask app without security headers (X-Frame-Options, CSP, etc.)",
+        "Found 19 # type: ignore comments - consider fixing types properly",
+        "MAGIC NUMBERS DETECTED: ['307', '5000', '1000', '500000', '4093', '308']",
+        "POTENTIALLY UNUSED IMPORT: annotations",
+        "PERFORMANCE: Repeated inspect.isclass() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated inspect.signature() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated self.ensure_sync() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated warnings.warn() call in loop - call once and reuse"
+      ],
+      "line_count": 1625
+    }
+  ],
+  "successes": [],
+  "slow_files": [],
+  "github_stats": {},
+  "config": {
+    "repos": [
+      "django/django",
+      "psf/requests",
+      "pallets/flask"
+    ],
+    "max_files_per_repo": 20,
+    "combination_preset": "quick",
+    "timeout_seconds": 30.0,
+    "max_workers": 4
+  }
+}

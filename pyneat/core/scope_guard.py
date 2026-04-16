@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: khanhnam.copywriting@gmail.com
 
 Prevents dead-code removal rules from deleting items that are still referenced
 later in the file (e.g. a variable used after its apparent "definition" point

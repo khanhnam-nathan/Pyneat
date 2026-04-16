@@ -1,0 +1,265 @@
+
+============================================================
+PYNEAT FUZZ TEST REPORT — 2026-04-16 22:22:58
+============================================================
+------------------------------------------------------------
+Files tested  : 54  |  Combinations: 2  |  Total tests : 108
+Elapsed time : 57.9s
+------------------------------------------------------------
+CRASHES       : 10  [!]
+REGRESSIONS   : 0
+SLOW FILES    : 0
+UNSUPPORTED   : 0 [Python 2 / invalid input]
+NO_OP         : 98
+SUCCESS       : 0
+------------------------------------------------------------
+Exception breakdown:
+  ValueError: 10
+
+============================================================
+CRASHES
+============================================================
+
+[1m=== CRASH #1[0m
+Repo    : django/django
+File    : django/conf/global_settings.py (line count: 0)
+Rule    : base
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=base
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+[1m=== CRASH #2[0m
+Repo    : django/django
+File    : django/conf/global_settings.py (line count: 0)
+Rule    : fstring
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=fstring
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+[1m=== CRASH #3[0m
+Repo    : psf/requests
+File    : docs/conf.py (line count: 0)
+Rule    : fstring
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=fstring
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+[1m=== CRASH #4[0m
+Repo    : psf/requests
+File    : docs/conf.py (line count: 0)
+Rule    : base
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=base
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+[1m=== CRASH #5[0m
+Repo    : psf/requests
+File    : src/requests/__version__.py (line count: 0)
+Rule    : base
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=base
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+[1m=== CRASH #6[0m
+Repo    : psf/requests
+File    : src/requests/__version__.py (line count: 0)
+Rule    : fstring
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=fstring
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+[1m=== CRASH #7[0m
+Repo    : psf/requests
+File    : src/requests/auth.py (line count: 0)
+Rule    : fstring
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=fstring
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+[1m=== CRASH #8[0m
+Repo    : psf/requests
+File    : src/requests/auth.py (line count: 0)
+Rule    : base
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=base
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+[1m=== CRASH #9[0m
+Repo    : pallets/flask
+File    : docs/conf.py (line count: 0)
+Rule    : base
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=base
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+[1m=== CRASH #10[0m
+Repo    : pallets/flask
+File    : docs/conf.py (line count: 0)
+Rule    : fstring
+Error   : ValueError: line must be >= 1, got 0
+Context : combination_id=fstring
+─── Stack trace ─────────────────────────────────────
+Traceback (most recent call last):
+  File "D:\pyneat-final\pyneat\tools\github_fuzz\fuzz_runner.py", line 238, in _process
+    result = engine.process_code_file(code_file)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pyneat-final\pyneat\core\engine.py", line 535, in process_code_file
+    security_finding_to_marker(
+  File "D:\pyneat-final\pyneat\core\types.py", line 663, in security_finding_to_marker
+    return AgentMarker(
+           ^^^^^^^^^^^^
+  File "<string>", line 36, in __init__
+  File "D:\pyneat-final\pyneat\core\types.py", line 451, in __post_init__
+    raise ValueError(f"line must be >= 1, got {self.line}")
+ValueError: line must be >= 1, got 0
+
+[1m─── Recommendation ─────────────────────────────────────[0m
+Invalid value. Check value constraints in rule logic — e.g., CST node type checks may be failing.
+
+------------------------------------------------------------
+Full JSON report: PYNEAT_FUZZ_REPORT_20260416_152200.json
+Generated at: 2026-04-16 22:22:58

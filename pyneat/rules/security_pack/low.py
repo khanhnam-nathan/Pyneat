@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: khanhnam.copywriting@gmail.com
 
 Low severity issues are informational and may leak sensitive information or violate
 best practices but are unlikely to cause direct harm.

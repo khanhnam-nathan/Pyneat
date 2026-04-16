@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: khanhnam.copywriting@gmail.com
 """
 
 import sys
@@ -1697,6 +1697,91 @@ def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple], ctx: click.C
         click.echo(f"     Press 'q' or Enter to exit.")
         click.echo("")
         click.echo("  📚 Docs: https://pyneat.dev/docs")
+
+
+@cli.command(name='audit-deps')
+@click.option('--path', default='requirements.txt', help='Path to requirements.txt or project directory')
+@click.option('--format', '-f', type=click.Choice(['summary', 'json', 'sarif', 'sbom']),
+              default='summary', help='Output format')
+@click.option('--output', '-o', type=click.Path(), help='Output file path')
+@click.option('--sbom-format', default='cyclonedx-json',
+              type=click.Choice(['cyclonedx-json', 'cyclonedx-xml', 'spdx-json']),
+              help='SBOM format when using --format sbom')
+def audit_deps(path, format, output, sbom_format):
+    """Audit project dependencies for known vulnerabilities using OSV database.
+
+    This command scans your requirements.txt or installed packages against
+    the OSV vulnerability database to find known security issues.
+
+    Examples:
+        pyneat audit-deps
+        pyneat audit-deps --format json --output vulns.json
+        pyneat audit-deps --format sbom --output sbom.json
+        pyneat audit-deps --path requirements.txt --format sarif --output report.sarif
+    """
+    from pyneat.tools.vulnerability_scanner import DependencyScanner
+
+    scanner = DependencyScanner()
+
+    # Parse requirements or scan installed packages
+    if path and path.endswith('.txt'):
+        deps = DependencyScanner._parse_requirements(path)
+        scanner.scan_packages(deps)
+    else:
+        click.echo("Scanning installed packages...")
+        scanner.scan_installed_packages()
+
+    # Generate output
+    if format == 'summary':
+        scanner.print_summary()
+    elif format == 'json':
+        out = scanner.generate_json_report()
+    elif format == 'sarif':
+        out = scanner.generateSarif()
+    elif format == 'sbom':
+        out = scanner.generate_sbom(sbom_format)
+
+    if output:
+        with open(output, 'w') as f:
+            f.write(out)
+        click.echo(f"\nReport written to {output}")
+    else:
+        click.echo(out)
+
+
+@cli.command(name='sbom')
+@click.option('--path', default='requirements.txt', help='Path to requirements.txt')
+@click.option('--format', '-f', type=click.Choice(['cyclonedx-json', 'cyclonedx-xml', 'spdx-json']),
+              default='cyclonedx-json', help='Output format')
+@click.option('--output', '-o', type=click.Path(), help='Output file path')
+@click.option('--include-vulns/--no-vulns', default=True,
+              help='Include vulnerability data in SBOM')
+def sbom_cmd(path, format, output, include_vulns):
+    """Generate Software Bill of Materials (SBOM) in CycloneDX or SPDX format.
+
+    Examples:
+        pyneat sbom --format cyclonedx-json --output sbom.json
+        pyneat sbom --format spdx-json --output sbom.json
+    """
+    from pyneat.tools.vulnerability_scanner import DependencyScanner
+
+    scanner = DependencyScanner()
+
+    # Parse requirements
+    if path and path.endswith('.txt'):
+        deps = DependencyScanner._parse_requirements(path)
+        scanner.scan_packages(deps)
+    else:
+        scanner.scan_installed_packages()
+
+    out = scanner.generate_sbom(format, include_vulnerabilities=include_vulns)
+
+    if output:
+        with open(output, 'w') as f:
+            f.write(out)
+        click.echo(f"SBOM written to {output}")
+    else:
+        click.echo(out)
 
 
 if __name__ == '__main__':

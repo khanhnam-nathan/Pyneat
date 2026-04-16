@@ -31,6 +31,7 @@ pub mod lsp;
 pub use lsp::{run_server, LspConfig};
 pub use rules::base::{Finding, Fix, Rule, Severity};
 pub use rules::security::all_security_rules;
+pub use rules::ast_rules::all_ast_rules;
 pub use rules::quality::all_quality_rules;
 pub use scanner::tree_sitter::parse;
 pub use scanner::multilang::detect_language_from_extension;
@@ -49,7 +50,7 @@ mod lib_tests;
 use pyo3::prelude::*;
 use serde_json::{json, Value};
 
-/// Scan Python code for security vulnerabilities using tree-sitter AST + regex.
+/// Scan Python code for security vulnerabilities using tree-sitter AST + regex + AST-based analysis.
 #[pyfunction]
 fn scan_security(code: &str) -> PyResult<String> {
     let tree = match parse(code) {
@@ -59,10 +60,13 @@ fn scan_security(code: &str) -> PyResult<String> {
         }
     };
 
-    let rules = all_security_rules();
+    // Run both regex-based and AST-based rules
+    let security_rules = all_security_rules();
+    let ast_rules = all_ast_rules();
+    let all_rules: Vec<_> = security_rules.into_iter().chain(ast_rules.into_iter()).collect();
     let mut findings: Vec<Value> = Vec::new();
 
-    for rule in &rules {
+    for rule in &all_rules {
         for finding in rule.detect(&tree, code) {
             findings.push(json!({
                 "rule_id": finding.rule_id,

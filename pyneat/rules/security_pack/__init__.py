@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: khanhnam.copywriting@gmail.com
 
 This module organizes the 50+ security rules into severity-based submodules:
 - critical: Critical severity rules (SEC-001 to SEC-005)

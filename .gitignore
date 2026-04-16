@@ -44,3 +44,35 @@ pyneat-rs/target/
 *_cleaned.py
 *_output.txt
 *.bak
+
+# =============================================================================
+# PROPRIETARY / SECURITY EXCLUSIONS
+# =============================================================================
+
+# PyNeat Pro Engine - PROPRIETARY, DO NOT COMMIT
+# The pyneat-pro-engine directory is located at D:\pyneat-pro-engine
+pyneat-workspace/pyneat-pro-engine/
+
+# Binary files from any Rust compilation (pre-built or accidentally committed)
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+
+# Rust release binaries
+target/release/pyneat*
+target/debug/pyneat*
+pyneat-workspace/target/
+**/target/release/**
+**/target/debug/**
+
+# Any file containing "pro-engine" in the name
+*pro*engine*
+*pro_engine*
+*proprietary*
+
+# License files that might indicate proprietary code
+*PROPRIETARY*
+*LICENSE_PROPRIETARY*
+*COMMERCIAL*

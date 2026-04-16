@@ -1,0 +1,172 @@
+{
+  "report_version": "1.0",
+  "generated_at": "2026-04-16T15:22:54.768464+00:00",
+  "total_files_tested": 5,
+  "total_combinations": 2,
+  "total_tests": 10,
+  "elapsed_seconds": 8.026631,
+  "summary": {
+    "crashes": 0,
+    "regressions": 0,
+    "unsupported": 0,
+    "no_ops": 10,
+    "successes": 0,
+    "slow_files": 0,
+    "by_exception_type": {}
+  },
+  "crashes": [],
+  "regressions": [],
+  "unsupported": [],
+  "no_ops": [
+    {
+      "repo": "django/django",
+      "file": "django/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 69.27,
+      "changes": [
+        "Missing type hints: setup() at line 8"
+      ],
+      "line_count": 24
+    },
+    {
+      "repo": "django/django",
+      "file": "django/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 70.88,
+      "changes": [
+        "Missing type hints: setup() at line 8"
+      ],
+      "line_count": 24
+    },
+    {
+      "repo": "django/django",
+      "file": "django/__main__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 38.91,
+      "line_count": 10
+    },
+    {
+      "repo": "django/django",
+      "file": "django/__main__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 38.69,
+      "line_count": 10
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/__init__.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 34.58,
+      "changes": [
+        "POTENTIALLY UNUSED IMPORT: apps",
+        "POTENTIALLY UNUSED IMPORT: AppConfig"
+      ],
+      "line_count": 4
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/__init__.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 38.03,
+      "changes": [
+        "POTENTIALLY UNUSED IMPORT: apps",
+        "POTENTIALLY UNUSED IMPORT: AppConfig"
+      ],
+      "line_count": 4
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/config.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 379.26,
+      "changes": [
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: default_auto_field() at line 62",
+        "Missing return type: create() at line 100",
+        "Missing return type: get_model() at line 224",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling"
+      ],
+      "line_count": 274
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/config.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 388.95,
+      "changes": [
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: default_auto_field() at line 62",
+        "Missing return type: create() at line 100",
+        "Missing return type: get_model() at line 224",
+        "EMPTY EXCEPT BLOCKS: Add proper error handling"
+      ],
+      "line_count": 274
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/registry.py",
+      "combination": "base",
+      "status": "no_op",
+      "elapsed_ms": 469.65,
+      "changes": [
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: get_app_configs() at line 145",
+        "Missing return type: get_app_config() at line 150",
+        "Missing return type: get_models() at line 169",
+        "Missing return type: get_model() at line 188",
+        "Missing return type: is_installed() at line 242",
+        "Missing return type: get_containing_app_config() at line 251",
+        "Missing return type: get_registered_model() at line 270",
+        "Missing return type: get_swappable_settings_name() at line 284",
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated AppConfig.create() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated model._meta._expire_cache() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated object_name.removeprefix() call in loop - call once and reuse"
+      ],
+      "line_count": 438
+    },
+    {
+      "repo": "django/django",
+      "file": "django/apps/registry.py",
+      "combination": "fstring",
+      "status": "no_op",
+      "elapsed_ms": 467.15,
+      "changes": [
+        "[LOW] SEC-043 - Django app without security headers (X-Frame-Options, CSP, etc.)",
+        "Missing return type: get_app_configs() at line 145",
+        "Missing return type: get_app_config() at line 150",
+        "Missing return type: get_models() at line 169",
+        "Missing return type: get_model() at line 188",
+        "Missing return type: is_installed() at line 242",
+        "Missing return type: get_containing_app_config() at line 251",
+        "Missing return type: get_registered_model() at line 270",
+        "Missing return type: get_swappable_settings_name() at line 284",
+        "INEFFICIENT LOOP: Use list comprehension or extend()",
+        "PERFORMANCE: Repeated AppConfig.create() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated model._meta._expire_cache() call in loop - call once and reuse",
+        "PERFORMANCE: Repeated object_name.removeprefix() call in loop - call once and reuse"
+      ],
+      "line_count": 438
+    }
+  ],
+  "successes": [],
+  "slow_files": [],
+  "github_stats": {},
+  "config": {
+    "repos": [
+      "django/django"
+    ],
+    "max_files_per_repo": 5,
+    "combination_preset": "quick",
+    "timeout_seconds": 30.0,
+    "max_workers": 2
+  }
+}

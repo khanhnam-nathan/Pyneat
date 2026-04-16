@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: khanhnam.copywriting@gmail.com
 """
 
 import ast
@@ -214,7 +214,7 @@ class PerformanceRule(Rule):
                 loop_methods: set[str] = set()
                 # Identify the loop variable(s) so we can skip calls on them
                 loop_vars = self._get_loop_variables(node)
-                # Identify loop-invariant assignments: Name nodes assigned before
+                # Identify loop-invariant assignments: Name nodes assigned once before
                 # the loop body that are still in scope
                 loop_invariants = self._get_loop_invariant_names(node)
 
@@ -307,7 +307,7 @@ class PerformanceRule(Rule):
         return invariants
 
     def _describe_base(self, node: ast.AST) -> str:
-        """Return a human-readable string describing the base of a method call.
+        """Return a human-readable String describing the base of a method call.
 
         Examples:
             ast.Name(id='x')          -> "x"

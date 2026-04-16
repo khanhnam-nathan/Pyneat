@@ -1,0 +1,24 @@
+
+============================================================
+PYNEAT FUZZ TEST REPORT — 2026-04-16 22:31:19
+============================================================
+------------------------------------------------------------
+Files tested  : 79  |  Combinations: 8  |  Total tests : 632
+Elapsed time : 111.1s
+------------------------------------------------------------
+CRASHES       : 0
+REGRESSIONS   : 0
+SLOW FILES    : 2
+UNSUPPORTED   : 0 [Python 2 / invalid input]
+NO_OP         : 626
+SUCCESS       : 6
+
+============================================================
+SLOW FILES (> 5 seconds)
+============================================================
+  psf/requests/tests/test_requests.py — 5962.87ms  [unused]
+  psf/requests/tests/test_requests.py — 5282.32ms  [fstring]
+
+------------------------------------------------------------
+Full JSON report: PYNEAT_FUZZ_REPORT_20260416_152928.json
+Generated at: 2026-04-16 22:31:19

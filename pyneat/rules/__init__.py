@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: khanhnam.copywriting@gmail.com
 """
 
 from pyneat.rules.base import Rule
@@ -44,13 +44,26 @@ from pyneat.rules.ai_bugs import AIBugRule
 from pyneat.rules.duplication import CodeDuplicationRule
 from pyneat.rules.naming import NamingInconsistencyRule
 
+# Taint analysis and secret classification
+from pyneat.rules.secret_classifier import (
+    SecretType,
+    classify_secret,
+    get_fix_hint,
+    get_severity_for_type,
+)
+from pyneat.rules.taint_analysis import (
+    TaintTracker,
+    TaintLevel,
+    TaintSource,
+    DangerousSink,
+    analyze_taint,
+    get_taint_report,
+)
+
 # Rule groupings for easier discovery
 from pyneat.rules import safe
 from pyneat.rules import conservative
 from pyneat.rules import destructive
-
-# Security pack - organized by severity
-from pyneat.rules import security_pack
 
 # Core types for security scanning
 from pyneat.core.types import (

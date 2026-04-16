@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: khanhnam.copywriting@gmail.com
 """
 
 from dataclasses import dataclass, field
@@ -665,8 +665,8 @@ def security_finding_to_marker(
         issue_type=finding.rule_id.lower().replace("sec-", "security_"),
         rule_id=finding.rule_id,
         severity=finding.severity,
-        line=finding.start_line,
-        end_line=finding.end_line,
+        line=max(1, finding.start_line),
+        end_line=max(1, finding.end_line),
         hint=finding.fix_constraints[0] if finding.fix_constraints else None,
         why=finding.problem,
         confidence=finding.confidence,

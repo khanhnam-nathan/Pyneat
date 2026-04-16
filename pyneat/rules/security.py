@@ -15,7 +15,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-For commercial licensing, contact: license@pyneat.dev
+For commercial licensing, contact: khanhnam.copywriting@gmail.com
 
 Handles the full 50+ rule security pack across 5 severity levels:
   - Critical: Command Injection, SQL Injection, Eval/Exec, Deserialization RCE, Path Traversal
@@ -616,7 +616,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                     cvss_score=9.1,
                     cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
                     file="",
-                    start_line=0, end_line=0,
+                    start_line=original.value.lineno, end_line=original.value.lineno,
                     snippet=self._get_call_snippet(original),
                     problem="yaml.load() without SafeLoader can execute arbitrary code",
                     fix_constraints=("Always use yaml.safe_load() or yaml.load(..., Loader=yaml.SafeLoader)",),
@@ -665,7 +665,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                     cvss_score=6.1,
                     cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:N/A:N",
                     file="",
-                    start_line=0, end_line=0,
+                    start_line=original.value.lineno, end_line=original.value.lineno,
                     snippet=self._get_call_snippet(original),
                     problem="render_template_string with user input allows SSTI/XSS",
                     fix_constraints=(
@@ -698,7 +698,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                 cvss_score=7.4,
                 cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                 file="",
-                start_line=0, end_line=0,
+                start_line=original.value.lineno, end_line=original.value.lineno,
                 snippet=self._get_call_snippet(original),
                 problem="MD5/SHA1 are weak cryptographic algorithms",
                 fix_constraints=(
@@ -735,7 +735,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                 cvss_score=7.5,
                 cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                 file="",
-                start_line=0, end_line=0,
+                start_line=original.value.lineno, end_line=original.value.lineno,
                 snippet=self._get_call_snippet(original),
                 problem="'random' module is not cryptographically secure",
                 fix_constraints=(
@@ -1056,7 +1056,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                         cvss_score=7.5,
                         cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                         file="",
-                        start_line=0, end_line=0,
+                        start_line=node.value.lineno, end_line=node.value.lineno,
                         snippet=f"{var_name} = {value_str}" if value_str else var_name,
                         problem=f"Hardcoded secret '{var_name}' detected in source code",
                         fix_constraints=(
@@ -1093,7 +1093,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                             cvss_score=7.5,
                             cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                             file="",
-                            start_line=0, end_line=0,
+                            start_line=node.value.lineno, end_line=node.value.lineno,
                             snippet=var_name,
                             problem="Weak SECRET_KEY detected - too short or uses common pattern",
                             fix_constraints=(
@@ -1137,7 +1137,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                 cvss_score=7.5,
                 cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                 file="",
-                start_line=0, end_line=0,
+                start_line=node.value.lineno, end_line=node.value.lineno,
                 snippet=var_name,
                 problem=f"Hardcoded secret '{var_name}' detected in source code",
                 fix_constraints=(

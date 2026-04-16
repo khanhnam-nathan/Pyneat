@@ -53,3 +53,6 @@ pub mod sec072;
 
 // Extended security rules (SEC-073 to SEC-105+) in extended_security.rs
 pub mod extended_security;
+
+// AST-based security rules (semantic analysis on tree-sitter AST)
+pub mod ast_rules;
