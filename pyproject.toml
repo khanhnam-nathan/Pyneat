@@ -1,13 +1,14 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
 
 [project]
 name = "pyneat-cli"
-version = "3.0.2"
+version = "3.0.3"
 description = "AI-Generated Code Scanner — detects bugs, security vulnerabilities, and quality issues that AI coding assistants introduce"
 readme = "README.md"
-license = "AGPL-3.0-or-later"
+license = {text = "GNU AGPL-3.0-or-later"}
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [
     {name = "Khanh Nam", email = "khanhnam.copywriting@gmail.com"},
@@ -16,6 +17,7 @@ keywords = ["ai", "code-cleaner", "python", "linter", "formatter", "security", "
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Natural Language :: Chinese (Simplified)",
     "Natural Language :: English",
     "Operating System :: OS Independent",
@@ -53,7 +55,6 @@ Repository = "https://github.com/pyneat/pyneat"
 Changelog = "https://github.com/pyneat/pyneat/blob/main/CHANGELOG.md"
 Issues = "https://github.com/pyneat/pyneat/issues"
 
-
 [project.scripts]
 pyneat = "pyneat.cli:cli"
 
@@ -64,20 +65,11 @@ manifest-path = "pyneat-rs/Cargo.toml"
 module-name = "pyneat_rs"
 args = ["--release"]
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["pyneat*"]
-exclude = ["demo*", "test_samples*", "pyneat_fuzz_results*"]
-
 [tool.pyneat]
 # Default rule settings for pyneat clean / pyneat clean-dir
-# All rules are enabled by default; set to false to disable
-
 enable_security = false
 enable_quality = false
 enable_performance = false
 enable_unused_imports = true
 enable_redundant = true
-
-# Auto export PYNAGENT manifest on clean/clean-dir
 export_manifest = true
