@@ -42,6 +42,7 @@ from pyneat.rules.base import Rule
 from pyneat.rules.security_registry import (
     SECURITY_RULES_REGISTRY, get_security_rule, get_all_rule_ids
 )
+from libcst.metadata import MetadataWrapper, PositionProvider
 
 
 class SecurityScannerRule(Rule):
@@ -89,18 +90,22 @@ class SecurityScannerRule(Rule):
                 except Exception:
                     return self._apply_regex_only(content, code_file, lines)
 
-            # Phase 1: LibCST transformer for structural detections
+            # Phase 1: LibCST transformer for structural detections (with PositionProvider for line numbers)
             transformer = _SecurityTransformer()
-            new_tree = tree.visit(transformer)
-            transformed = new_tree.code
+            try:
+                new_tree = MetadataWrapper(tree).visit(transformer)
+                transformed = new_tree.code
+            except Exception:
+                # Transformer crashed (e.g., due to unknown node patterns).
+                # Continue with regex scans so we still get findings.
+                new_tree = None
+                transformed = content
 
-            # Collect auto-fixes applied
-            for change in transformer.changes:
-                if change.startswith("AUTO-FIX:"):
-                    self._auto_fix_applied.append(change)
-                else:
-                    # Parse changes into findings
-                    pass
+            # Collect auto-fix changes from transformer
+            if new_tree is not None:
+                for change in transformer.changes:
+                    if change.startswith("AUTO-FIX:"):
+                        self._auto_fix_applied.append(change)
 
             # Phase 2: Regex-based detections for patterns needing context
             self._scan_regex_patterns(content, lines)
@@ -392,13 +397,21 @@ class SecurityScannerRule(Rule):
             )
 
     def _scan_yaml_unsafe(self, content: str, lines: List[str]) -> None:
-        """Detect yaml.load() without SafeLoader."""
+        """Detect yaml.load() without SafeLoader and yaml.unsafe_load()."""
         for match in re.finditer(r'yaml\.load\s*\([^)]*(?<!Loader=)(?<!loader=)', content):
             line_no = content[:match.start()].count('\n') + 1
             snippet = self._get_snippet(lines, line_no, match.group()[:80])
             self._add_finding(
                 "SEC-014", line_no, line_no, snippet,
                 "yaml.load without SafeLoader can execute arbitrary code"
+            )
+        # Also detect yaml.unsafe_load() explicitly
+        for match in re.finditer(r'yaml\.unsafe_load\s*\(', content):
+            line_no = content[:match.start()].count('\n') + 1
+            snippet = self._get_snippet(lines, line_no, match.group()[:80])
+            self._add_finding(
+                "SEC-014", line_no, line_no, snippet,
+                "yaml.unsafe_load can execute arbitrary code"
             )
 
     def _scan_information_disclosure(self, content: str, lines: List[str]) -> None:
@@ -593,8 +606,8 @@ class _SecurityTransformer(cst.CSTTransformer):
             if result is not None:
                 return result
 
-        # Check for yaml.load or yaml.unsafe_load
-        if func_name in ('yaml.load', 'yaml.unsafe_load', 'load'):
+        # Check for yaml.load (NOT yaml.unsafe_load — adding SafeLoader there is nonsensical)
+        if func_name in ('yaml.load', 'load'):
             # Check if Loader is already provided
             has_loader = any(
                 arg.keyword is not None and arg.keyword.value in ('Loader', 'loader')
@@ -616,7 +629,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                     cvss_score=9.1,
                     cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
                     file="",
-                    start_line=original.value.lineno, end_line=original.value.lineno,
+                    start_line=original.lineno, end_line=original.lineno,
                     snippet=self._get_call_snippet(original),
                     problem="yaml.load() without SafeLoader can execute arbitrary code",
                     fix_constraints=("Always use yaml.safe_load() or yaml.load(..., Loader=yaml.SafeLoader)",),
@@ -665,7 +678,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                     cvss_score=6.1,
                     cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:N/A:N",
                     file="",
-                    start_line=original.value.lineno, end_line=original.value.lineno,
+                    start_line=original.lineno, end_line=original.lineno,
                     snippet=self._get_call_snippet(original),
                     problem="render_template_string with user input allows SSTI/XSS",
                     fix_constraints=(
@@ -698,7 +711,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                 cvss_score=7.4,
                 cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                 file="",
-                start_line=original.value.lineno, end_line=original.value.lineno,
+                start_line=original.lineno, end_line=original.lineno,
                 snippet=self._get_call_snippet(original),
                 problem="MD5/SHA1 are weak cryptographic algorithms",
                 fix_constraints=(
@@ -735,7 +748,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                 cvss_score=7.5,
                 cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                 file="",
-                start_line=original.value.lineno, end_line=original.value.lineno,
+                start_line=original.lineno, end_line=original.lineno,
                 snippet=self._get_call_snippet(original),
                 problem="'random' module is not cryptographically secure",
                 fix_constraints=(
@@ -759,7 +772,7 @@ class _SecurityTransformer(cst.CSTTransformer):
     def _get_call_snippet(self, call: cst.Call) -> str:
         """Extract a readable snippet from a Call node."""
         try:
-            return call.value.code if hasattr(call.value, 'code') else ""
+            return call.func.value if hasattr(call.func, 'value') else str(call)
         except Exception:
             return ""
 
@@ -1056,7 +1069,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                         cvss_score=7.5,
                         cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                         file="",
-                        start_line=node.value.lineno, end_line=node.value.lineno,
+                        start_line=getattr(node.value, 'lineno', None) or 0, end_line=getattr(node.value, 'lineno', None) or 0,
                         snippet=f"{var_name} = {value_str}" if value_str else var_name,
                         problem=f"Hardcoded secret '{var_name}' detected in source code",
                         fix_constraints=(
@@ -1093,7 +1106,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                             cvss_score=7.5,
                             cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                             file="",
-                            start_line=node.value.lineno, end_line=node.value.lineno,
+                            start_line=getattr(node.value, 'lineno', None) or 0, end_line=getattr(node.value, 'lineno', None) or 0,
                             snippet=var_name,
                             problem="Weak SECRET_KEY detected - too short or uses common pattern",
                             fix_constraints=(
@@ -1137,7 +1150,7 @@ class _SecurityTransformer(cst.CSTTransformer):
                 cvss_score=7.5,
                 cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
                 file="",
-                start_line=node.value.lineno, end_line=node.value.lineno,
+                start_line=node.value.lineno if hasattr(node.value, 'lineno') else (getattr(node, 'lineno', 0) or 0), end_line=node.value.lineno if hasattr(node.value, 'lineno') else (getattr(node, 'lineno', 0) or 0),
                 snippet=var_name,
                 problem=f"Hardcoded secret '{var_name}' detected in source code",
                 fix_constraints=(

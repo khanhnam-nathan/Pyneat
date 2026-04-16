@@ -4,6 +4,21 @@ Tất cả thay đổi đáng chú ý của dự án này sẽ được ghi ché
 
 Dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/) và [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [3.0.1] - 2026-04-16
+
+### Fixed
+
+- Convert license headers from docstrings to comments to fix Python syntax errors
+- Fix LibCST PositionProvider metadata wrapper integration for accurate line numbers
+- Fix `original.value.lineno` to `original.lineno` in multiple security transformers
+- Add fallback handling for nodes without lineno attribute
+- Fix `_get_call_snippet()` to use `call.func.value` instead of `call.value.code`
+
+### Changed
+
+- Update security scanner to use `MetadataWrapper` for LibCST transformer
+- Improved error handling when transformer crashes (continues with regex scans)
+
 ## [2.4.0] - 2026-04-10
 
 ### Added

@@ -1978,7 +1978,7 @@ dependencies = [
 
 [[package]]
 name = "pyneat-rs"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "ahash",
  "cc",
