@@ -1,6 +1,6 @@
 # PyNeat: AI-Generated Code Cleaner
 
-**PyNeat 3.0.0** is a code scanning and cleanup tool built specifically for AI-generated code. Unlike generic linters, PyNeat targets the patterns that AI coding assistants systematically produce -- phantom packages, hallucinated parameters, resource leaks, OWASP vulnerabilities, AI-specific security risks -- and cleans them up automatically. Supports 9 languages.
+**PyNeat 3.1.0** is a code scanning and cleanup tool built specifically for AI-generated code. Unlike generic linters, PyNeat targets the patterns that AI coding assistants systematically produce -- phantom packages, hallucinated parameters, resource leaks, OWASP vulnerabilities, AI-specific security risks -- and cleans them up automatically. Supports 9 languages.
 
 ## What It Does
 
@@ -55,6 +55,18 @@ pyneat clean your_file.py --in-place --backup
 ```
 
 For Python API usage and examples, see [docs/quickstart.md](docs/quickstart.md).
+
+### Running pyneat without installation
+
+If you are working from the source repository (e.g., after `git clone` or `pip install -e .`), you can run pyneat as a Python module without needing to install it:
+
+```bash
+# Run CLI commands via module invocation
+python -m pyneat check your_file.py
+python -m pyneat clean your_file.py --dry-run
+```
+
+Both `pyneat check` (after install) and `python -m pyneat check` (from source) are equivalent.
 
 ## 3-Tier Package System
 
@@ -229,9 +241,15 @@ cd Pyneat
 pip install -e .
 ```
 
+After installation, the `pyneat` CLI command is available system-wide. Alternatively, you can always run pyneat as a Python module (no install required) from the repository root:
+
+```bash
+python -m pyneat check your_file.py
+```
+
 ## CLI Reference
 
-PyNeat exposes 8 commands:
+PyNeat exposes 11 commands:
 
 | Command | Description |
 |---------|-------------|
@@ -243,13 +261,17 @@ PyNeat exposes 8 commands:
 | `pyneat ignore` | Ignore a rule (per-file or globally) |
 | `pyneat report` | Export security report (JSON/SARIF/HTML) |
 | `pyneat security-db` | Manage CVE and GitHub Advisory databases |
+| `pyneat audit-deps` | Audit dependencies for known vulnerabilities (OSV) |
+| `pyneat sbom` | Generate Software Bill of Materials (CycloneDX/SPDX) |
+| `pyneat mcp` | Start MCP server for Cursor/IDE integration |
 
 Additional flags:
 
 | Flag | Description |
 |------|-------------|
 | `--enable-all` | Enable all rules at once (destructive package) |
-| `--export-manifest` | Auto-export PYNAGENT manifest on exit |
+| `--export-manifest` | Auto-export `.pyneat.manifest.yaml` on exit |
+| `--annotate` | Inject PYNAGENT YAML comments into source code |
 | `--dry-run` | Preview changes without writing |
 | `--diff` | Show diff before applying |
 | `--backup` | Backup file before modifying |
@@ -257,6 +279,13 @@ Additional flags:
 | `--fail-on` | Exit with error on specific severity threshold |
 | `--baseline` | Ignore known issues from baseline file |
 | `--parallel` | Number of parallel threads |
+| `--rust/--no-rust` | Force Rust/Python engine (default: Rust primary, Python fallback) |
+| `--lang` | Target language for multi-language scanning (JS, TS, Go, Java...) |
+| `--exclude` | Exclude files matching pattern (can be used multiple times) |
+| `--rule` | Only run specific rules (can be used multiple times) |
+| `--lock-files` | Discover and list lock files in the target directory |
+| `--check-cve` | Include CVE scan in dependency audit |
+| `--check-license` | Check license compliance of dependencies |
 
 ### Clean a single file
 
@@ -315,8 +344,14 @@ pyneat ignore SEC-003 --global --reason "not applicable to our codebase"
 pyneat report ./src -f sarif -o security.sarif      # GitHub Code Scanning
 pyneat report ./src -f json -o report.json          # Custom integration
 pyneat report ./src -f html -o report.html          # Human-readable
-pyneat report ./src -f codeclimate -o cc.json        # Code Climate
+pyneat report ./src -f yaml -o report.yaml          # PyNEAT manifest (full AgentMarker data)
 pyneat report ./src -f junit -o junit.xml           # JUnit XML
+pyneat report ./src -f gitlab -o gitlab.json        # GitLab SAST
+pyneat report ./src -f sonarqube -o sq.json          # SonarQube Generic Issue
+pyneat report ./src -f markdown -o report.md        # Markdown summary
+
+# Use Rust scanner for speed (default: auto-detect)
+pyneat report ./src -f sarif -o security.sarif --rust
 ```
 
 ### Manage security databases
@@ -469,6 +504,239 @@ Full template at [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 - `MarkerCleanup` class removes markers after issues are fixed
 - `remove_stale_markers()` — only removes markers not in remaining_issues
 - `remove_all_markers()` — strips all PYNAGENT comments
+
+## AgentMarker System
+
+Every finding in PyNEAT is represented as an **AgentMarker** — a structured, self-contained object designed for agent-to-agent handoff. Unlike raw findings, AgentMarkers carry full context that lets an AI agent understand, fix, and track issues without external lookup.
+
+### AgentMarker Fields
+
+```python
+@dataclass(frozen=True)
+class AgentMarker:
+    marker_id: str       # Unique ID, e.g. "PYN-SEC-0001"
+    issue_type: str     # e.g. "sql_injection", "unused_import"
+    rule_id: str        # e.g. "SecurityScannerRule", "DeadCodeRule"
+    severity: str       # "critical", "high", "medium", "low", "info"
+    line: int           # 1-indexed start line
+    end_line: int       # 1-indexed end line
+    hint: str           # Suggested fix
+    why: str            # Why this is a problem
+    impact: str         # Consequences if exploited
+    confidence: float   # 0.0-1.0 detection confidence
+    can_auto_fix: bool  # Whether auto-fix is conceptually possible
+    fix_diff: str       # Unified diff for the fix
+    snippet: str        # Code snippet (max 200 chars)
+    cwe_id: str         # CWE-89, CWE-79...
+    cvss_score: float   # e.g. 9.8
+    cvss_vector: str    # CVSS:3.1/AV:N/AC:L/...
+    owasp_id: str       # OWASP-A03
+    related_markers: Tuple[str]  # Related marker IDs
+```
+
+### Manifest Export
+
+Export full scan results as `.pyneat.manifest.yaml`:
+
+```bash
+pyneat clean your_file.py --export-manifest
+```
+
+The manifest contains:
+- All AgentMarkers with full metadata
+- Severity breakdown (critical/high/medium/low/info counts)
+- Rules that were enabled
+- Tool version and scan timestamp
+
+### Manifest Diff — Track Progress
+
+Compare two manifests to track code quality progress across commits:
+
+```python
+from pyneat.core.manifest_schema import diff_manifests, format_diff
+
+old_manifest = load_manifest_or_fail("baseline.pyneat.manifest.yaml")
+new_manifest = load_manifest_or_fail("current.pyneat.manifest.yaml")
+diff = diff_manifests(old_manifest, new_manifest)
+print(format_diff(diff))
+```
+
+## SBOM — Software Bill of Materials
+
+Generate a complete inventory of your dependencies:
+
+```bash
+# CycloneDX JSON (default)
+pyneat sbom --format cyclonedx-json --output sbom.json
+
+# SPDX
+pyneat sbom --format spdx-json --output sbom.json
+
+# Include known vulnerabilities
+pyneat sbom --format cyclonedx-json --output sbom.json --include-vulns
+```
+
+SBOM formats supported: **CycloneDX JSON**, **SPDX JSON**. Integrates with OSV database for vulnerability enrichment.
+
+## Dependency Audit
+
+Scan dependencies against the OSV vulnerability database:
+
+```bash
+# Scan installed packages
+pyneat audit-deps
+
+# Scan requirements.txt
+pyneat audit-deps --path requirements.txt
+
+# Export as SARIF for GitHub
+pyneat audit-deps --format sarif --output vulns.sarif
+
+# Export as SBOM with vulnerability data
+pyneat audit-deps --format sbom --output sbom.json
+
+# Check license compliance
+pyneat audit-deps --check-license
+```
+
+## MCP Server — IDE Integration
+
+PyNEAT includes a **Model Context Protocol (MCP)** server, enabling Cursor and other MCP-compatible editors to invoke PyNEAT as a native tool. This brings security scanning directly into your AI coding workflow without leaving the editor.
+
+### Architecture
+
+The MCP server runs as a **STDIO JSON-RPC 2.0** service — no network sockets, no HTTP, just stdin/stdout. This makes it safe, fast, and compatible with any MCP client.
+
+```
+Cursor (MCP Client)
+    │
+    ├─ JSON-RPC 2.0 over STDIO
+    │
+    ▼
+PyNEAT MCP Server (pyneat.tools.mcp_server)
+    │
+    ├─ pyneat_scan        → Scan code string for issues
+    ├─ pyneat_scan_file   → Scan file on disk
+    ├─ pyneat_explain     → Get rule metadata
+    ├─ pyneat_auto_fix    → Apply auto-fix
+    ├─ pyneat_list_rules  → List available rules
+    └─ pyneat_audit_deps  → Audit dependencies
+```
+
+### Setup
+
+**1. Configure Cursor MCP**
+
+Add to your Cursor settings (`settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "pyneat": {
+      "command": "python",
+      "args": ["-m", "pyneat.tools.mcp_server"]
+    }
+  }
+}
+```
+
+Or use the CLI shortcut:
+
+```bash
+# Just run this once to verify MCP is working
+pyneat mcp --verbose
+```
+
+**2. Available MCP Tools**
+
+| Tool | Description | Input |
+|------|-------------|-------|
+| `pyneat_scan` | Scan code string | `code`, `language` |
+| `pyneat_scan_file` | Scan file on disk | `file_path`, `language` |
+| `pyneat_explain` | Get rule metadata | `rule_id`, `issue_type` |
+| `pyneat_auto_fix` | Apply auto-fix | `marker_id`, `code`, `language` |
+| `pyneat_list_rules` | List all rules | `category`, `severity` |
+| `pyneat_audit_deps` | Audit dependencies | `path`, `check_vulns` |
+
+### Usage Examples
+
+After setup, use PyNEAT tools directly in Cursor:
+
+```
+# Scan code for security issues
+Tool: pyneat_scan
+code: eval(user_input)
+language: python
+
+# Scan a file
+Tool: pyneat_scan_file
+file_path: ./src/auth.py
+
+# Get rule explanation
+Tool: pyneat_explain
+rule_id: SEC-001
+
+# Auto-fix a finding
+Tool: pyneat_auto_fix
+marker_id: PYN-SEC-0001
+code: os.system(user_input)
+language: python
+
+# List security rules
+Tool: pyneat_list_rules
+category: security
+severity: high
+
+# Audit dependencies
+Tool: pyneat_audit_deps
+path: requirements.txt
+check_vulns: true
+```
+
+### Response Format
+
+Every tool returns structured **AgentMarkers**:
+
+```json
+{
+  "marker_id": "PYN-SEC-0001",
+  "issue_type": "sql_injection",
+  "rule_id": "SecurityScannerRule",
+  "severity": "critical",
+  "line": 42,
+  "end_line": 42,
+  "hint": "Use parameterized queries instead of string concatenation",
+  "why": "User input is directly embedded in SQL query",
+  "impact": "Attacker can read/modify/delete database records",
+  "confidence": 0.95,
+  "can_auto_fix": false,
+  "cwe_id": "CWE-89",
+  "cvss_score": 9.8,
+  "owasp_id": "OWASP-A03"
+}
+```
+
+This structure gives AI agents everything they need to understand and fix the issue — without any external lookup.
+
+### Python API — MCP Tools
+
+You can also use the MCP tool functions directly from Python:
+
+```python
+from pyneat.tools.mcp_server import (
+    scan_code, scan_file, explain_rule,
+    auto_fix_code, list_rules, audit_deps
+)
+
+# Scan code
+results = scan_code("eval(user_input)", language="python")
+for marker in results:
+    print(f"{marker.marker_id}: {marker.issue_type}")
+
+# Audit dependencies
+vulns = audit_deps("requirements.txt", check_vulns=True)
+print(f"Found {len(vulns)} vulnerabilities")
+```
 
 ## VSCode Extension
 

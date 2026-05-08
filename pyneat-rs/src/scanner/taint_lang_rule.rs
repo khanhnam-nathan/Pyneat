@@ -130,10 +130,7 @@ impl TaintLangScanner {
     /// Uses the worklist-based TaintEngine within each function.
     #[allow(dead_code)]
     fn run_taint(&self, code: &str) -> Vec<LangFinding> {
-        let ast_json = match parse_ln_ast(code, &self.lang) {
-            Ok(a) => a,
-            Err(_) => return Vec::new(),
-        };
+        let ast_json = parse_ln_ast(code, &self.lang);
 
         let taint_rules: Vec<Box<dyn TaintRule>> = all_taint_rules();
         let mut engine = TaintEngine::new(code);
@@ -157,10 +154,7 @@ impl TaintLangScanner {
     /// For single files, it analyzes all functions in the file.
     /// For multi-file projects, pass multiple (path, ast) pairs.
     pub fn run_taint_interproc(&self, code: &str) -> Vec<LangFinding> {
-        let ast = match parse_ln_ast(code, &self.lang) {
-            Ok(a) => a,
-            Err(_) => return Vec::new(),
-        };
+        let ast = parse_ln_ast(code, &self.lang);
 
         let mut engine = InterProceduralEngine::new(code);
         engine.build_call_graph(&ast);
@@ -224,7 +218,7 @@ impl LanguageScanner for TaintLangScanner {
     }
 
     fn parse(&self, code: &str) -> Result<LnAst, ParseError> {
-        parse_ln_ast(code, &self.lang)
+        Ok(parse_ln_ast(code, &self.lang))
     }
 
     fn rules(&self) -> Vec<Box<dyn LangRule>> {

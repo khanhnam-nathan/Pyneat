@@ -103,7 +103,7 @@ class UniversalRule(Rule):
             applied = []
 
             for finding in findings:
-                if not finding.get("auto_fix_available", False):
+                if not finding.get("auto_fix", finding.get("auto_fix_available", False)):
                     applied.append(f"[{finding.get('rule_id', self.rule_id)}] {finding.get('problem', '')}")
                     continue
 

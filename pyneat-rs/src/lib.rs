@@ -23,6 +23,7 @@ pub mod integrations;
 pub mod ai_security;
 pub mod ai_analysis;
 pub mod lsp;
+pub mod findings_dedup;
 
 pub use lsp::{run_server, LspConfig};
 pub use clap::{Parser, ValueEnum};
@@ -82,7 +83,7 @@ pub use scanner::{
 };
 pub use sarif::writer::SarifBuilder;
 pub use scanner::ml::{AnomalyEngine, AnomalyFinding, CodeMetrics};
-pub use ai_analysis::{LlmAnalyzer, has_api_key};
+pub use ai_analysis::{LlmAnalyzer, LlmAnalysisResult, AiFix, has_api_key};
 
 #[cfg(test)]
 mod lib_tests;
@@ -96,6 +97,7 @@ use std::time::Instant;
 use crate::scanner::supplychain::{
     discover_lock_files, parse_lock_file, Ecosystem, OsvClient,
 };
+use crate::ai_security::AiSecurityScanner;
 
 /// Metadata about a scan result.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -120,6 +122,9 @@ pub struct ScanResult {
     /// Discovered SBOM (JSON string) if requested.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sbom: Option<String>,
+    /// Taint analysis findings if enabled.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub taint_findings: Option<Vec<Value>>,
 }
 
 /// A finding from dependency / supply chain scanning.
@@ -150,6 +155,7 @@ pub struct DependencyFinding {
 }
 
 /// Scan options controlling what to include in a full project scan.
+#[pyo3::pyclass(from_py_object)]
 #[derive(Debug, Clone, Default)]
 pub struct ScanOptions {
     /// Scan lock files for dependency analysis.
@@ -164,6 +170,12 @@ pub struct ScanOptions {
     pub root: Option<String>,
     /// Languages to scan (empty = all).
     pub languages: Vec<String>,
+    /// Enable taint analysis.
+    pub taint: bool,
+    /// Enable interprocedural analysis.
+    pub interproc: bool,
+    /// Enable AI security scanner.
+    pub ai_security: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
@@ -221,7 +233,9 @@ fn findings_to_json(findings: Vec<Value>) -> Vec<Value> {
         .into_iter()
         .map(|f| {
             json!({
+                "id": f.get("id"),
                 "rule_id": f["rule_id"],
+                "name": f.get("name"),
                 "severity": f["severity"],
                 "cwe_id": f["cwe_id"],
                 "cvss_score": f["cvss_score"],
@@ -231,7 +245,8 @@ fn findings_to_json(findings: Vec<Value>) -> Vec<Value> {
                 "snippet": f["snippet"],
                 "problem": f["problem"],
                 "fix_hint": f["fix_hint"],
-                "auto_fix_available": f["auto_fix_available"],
+                "auto_fix": f.get("auto_fix"),
+                "replacement": f.get("replacement"),
             })
         })
         .collect()
@@ -294,6 +309,7 @@ fn scan_security_internal(
                 severity_counts: SeverityCounts::default(),
                 dependency_findings: None,
                 sbom: None,
+                taint_findings: None,
             };
         }
     };
@@ -314,8 +330,15 @@ fn scan_security_internal(
             rule.detect(&tree, code)
                 .into_iter()
                 .map(|finding| {
+                    let replacement = if finding.auto_fix_available {
+                        rule.fix(&finding, code).map(|f| f.replacement).unwrap_or_default()
+                    } else {
+                        String::new()
+                    };
                     json!({
+                        "id": rule.id(),
                         "rule_id": finding.rule_id,
+                        "name": rule.name(),
                         "severity": finding.severity,
                         "cwe_id": finding.cwe_id,
                         "cvss_score": finding.cvss_score,
@@ -325,7 +348,8 @@ fn scan_security_internal(
                         "snippet": finding.snippet,
                         "problem": finding.problem,
                         "fix_hint": finding.fix_hint,
-                        "auto_fix_available": finding.auto_fix_available,
+                        "auto_fix": finding.auto_fix_available,
+                        "replacement": replacement,
                     })
                 })
                 .collect::<Vec<_>>()
@@ -361,7 +385,49 @@ fn scan_security_internal(
         severity_counts,
         dependency_findings: None,
         sbom: None,
+        taint_findings: None,
     }
+}
+
+/// Run taint analysis on source code and convert findings to Value array.
+fn run_taint_analysis_internal(code: &str, language: &str) -> Result<Vec<serde_json::Value>, String> {
+    let ast_json = crate::scanner::multilang::parse_ln_ast(code, language);
+
+    let ast: LnAst = serde_json::from_str(&ast_json.to_json())
+        .map_err(|e| e.to_string())?;
+
+    let rules = all_taint_rules();
+    let mut engine = TaintEngine::new(code);
+
+    for rule in rules {
+        engine.add_rule(rule);
+    }
+
+    engine.analyze_with_ast(&ast);
+    let findings = engine.findings();
+
+    let output: Vec<serde_json::Value> = findings.iter().map(|f| {
+        serde_json::json!({
+            "rule_id": f.rule_id,
+            "severity": f.severity,
+            "line": f.line,
+            "column": f.column,
+            "start_byte": f.start_byte,
+            "end_byte": f.end_byte,
+            "snippet": f.snippet,
+            "problem": f.problem,
+            "labels": f.labels.iter().map(|l| format!("{:?}", l)).collect::<Vec<_>>(),
+            "trace": f.trace.iter().map(|n| serde_json::json!({
+                "kind": format!("{:?}", n.kind),
+                "description": n.description,
+                "line": n.line,
+                "column": n.column,
+                "snippet": n.snippet,
+            })).collect::<Vec<_>>(),
+        })
+    }).collect();
+
+    Ok(output)
 }
 
 /// Apply a single auto-fix to code.
@@ -461,10 +527,8 @@ fn get_scanner_version() -> String {
 /// Used for multi-language support in the Python engine.
 #[pyfunction]
 fn parse_ln_ast(code: &str, language: &str) -> PyResult<String> {
-    match crate::scanner::multilang::parse_ln_ast(code, language) {
-        Ok(ast) => Ok(ast.to_json()),
-        Err(e) => Err(pyo3::exceptions::PyValueError::new_err(e.to_string())),
-    }
+    let ast = crate::scanner::multilang::parse_ln_ast(code, language);
+    Ok(ast.to_json())
 }
 
 /// Detect language from file extension.
@@ -891,6 +955,7 @@ fn scan_dependencies(root: &str, check_cve: bool, check_license: bool) -> PyResu
         severity_counts: SeverityCounts::default(),
         dependency_findings: Some(all_findings),
         sbom: None,
+        taint_findings: None,
     };
 
     serde_json::to_string(&result)
@@ -934,40 +999,367 @@ use crate::scanner::ln_ast::LnAst;
 /// Run taint analysis on source code.
 #[pyfunction]
 fn run_taint_analysis(code: &str, language: &str) -> PyResult<String> {
-    let ast_json = crate::scanner::multilang::parse_ln_ast(code, language)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let output = run_taint_analysis_internal(code, language)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))?;
 
-    let ast: LnAst = serde_json::from_str(&ast_json.to_json())
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    serde_json::to_string(&output)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
+}
 
-    let rules = all_taint_rules();
-    let mut engine = TaintEngine::new(code);
+/// Scan code with security rules and optional taint analysis.
+#[pyfunction]
+fn scan_security_with_taint(code: &str, language: &str, enable_taint: bool) -> PyResult<String> {
+    let lang = if language.is_empty() { "python" } else { language };
+    let start = Instant::now();
 
-    for rule in rules {
-        engine.add_rule(rule);
-    }
+    // Parse AST
+    let tree = match crate::scanner::tree_sitter::parse(code) {
+        Ok(t) => t,
+        Err(_) => {
+            let result = ScanResult {
+                findings: vec![],
+                total_lines: code.lines().count(),
+                language: lang.to_string(),
+                file_path: None,
+                scan_time_ms: start.elapsed().as_millis() as u64,
+                rules_evaluated: 0,
+                severity_counts: SeverityCounts::default(),
+                dependency_findings: None,
+                sbom: None,
+                taint_findings: None,
+            };
+            return serde_json::to_string(&result)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()));
+        }
+    };
 
-    engine.analyze_with_ast(&ast);
-    let findings = engine.findings();
+    // Security rules
+    let security_rules = all_security_rules();
+    let ast_rules = all_ast_rules();
+    let all_rules: Vec<_> = security_rules.into_iter().chain(ast_rules.into_iter()).collect();
+    let rules_evaluated = all_rules.len();
+
+    let mut raw_findings: Vec<Value> = all_rules
+        .par_iter()
+        .flat_map(|rule| {
+            rule.detect(&tree, code)
+                .into_iter()
+                .map(|finding| {
+                    let replacement = if finding.auto_fix_available {
+                        rule.fix(&finding, code).map(|f| f.replacement).unwrap_or_default()
+                    } else {
+                        String::new()
+                    };
+                    json!({
+                        "id": rule.id(),
+                        "rule_id": finding.rule_id,
+                        "name": rule.name(),
+                        "severity": finding.severity,
+                        "cwe_id": finding.cwe_id,
+                        "cvss_score": finding.cvss_score,
+                        "owasp_id": finding.owasp_id,
+                        "start": finding.start,
+                        "end": finding.end,
+                        "snippet": finding.snippet,
+                        "problem": finding.problem,
+                        "fix_hint": finding.fix_hint,
+                        "auto_fix": finding.auto_fix_available,
+                        "replacement": replacement,
+                    })
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect();
+
+    raw_findings.sort_by_key(|f| f["start"].as_u64().unwrap_or(0));
+    let findings = findings_to_json(raw_findings.clone());
+    let severity_counts = count_severities(&findings);
+
+    // Taint analysis if enabled
+    let taint_findings: Option<Vec<Value>> = if enable_taint {
+        match run_taint_analysis_internal(code, lang) {
+            Ok(findings) => Some(findings),
+            Err(e) => {
+                eprintln!("Taint analysis failed: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let result = ScanResult {
+        findings,
+        total_lines: code.lines().count(),
+        language: lang.to_string(),
+        file_path: None,
+        scan_time_ms: start.elapsed().as_millis() as u64,
+        rules_evaluated,
+        severity_counts,
+        dependency_findings: None,
+        sbom: None,
+        taint_findings,
+    };
+
+    serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
+}
+
+/// Scan code with security rules and optional AI security analysis.
+#[pyfunction]
+fn scan_security_with_ai(code: &str, language: &str, options: ScanOptions) -> PyResult<String> {
+    let lang = if language.is_empty() { "python" } else { language };
+    let start = Instant::now();
+
+    // Parse AST
+    let tree = match crate::scanner::tree_sitter::parse(code) {
+        Ok(t) => t,
+        Err(_) => {
+            let result = ScanResult {
+                findings: vec![],
+                total_lines: code.lines().count(),
+                language: lang.to_string(),
+                file_path: None,
+                scan_time_ms: start.elapsed().as_millis() as u64,
+                rules_evaluated: 0,
+                severity_counts: SeverityCounts::default(),
+                dependency_findings: None,
+                sbom: None,
+                taint_findings: None,
+            };
+            return serde_json::to_string(&result)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()));
+        }
+    };
+
+    // Security rules
+    let security_rules = all_security_rules();
+    let ast_rules = all_ast_rules();
+    let all_rules: Vec<_> = security_rules.into_iter().chain(ast_rules.into_iter()).collect();
+    let rules_evaluated = all_rules.len();
+
+    let mut raw_findings: Vec<Value> = all_rules
+        .par_iter()
+        .flat_map(|rule| {
+            rule.detect(&tree, code)
+                .into_iter()
+                .map(|finding| {
+                    let replacement = if finding.auto_fix_available {
+                        rule.fix(&finding, code).map(|f| f.replacement).unwrap_or_default()
+                    } else {
+                        String::new()
+                    };
+                    json!({
+                        "id": rule.id(),
+                        "rule_id": finding.rule_id,
+                        "name": rule.name(),
+                        "severity": finding.severity,
+                        "cwe_id": finding.cwe_id,
+                        "cvss_score": finding.cvss_score,
+                        "owasp_id": finding.owasp_id,
+                        "start": finding.start,
+                        "end": finding.end,
+                        "snippet": finding.snippet,
+                        "problem": finding.problem,
+                        "fix_hint": finding.fix_hint,
+                        "auto_fix": finding.auto_fix_available,
+                        "replacement": replacement,
+                    })
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect();
+
+    raw_findings.sort_by_key(|f| f["start"].as_u64().unwrap_or(0));
+    let findings = findings_to_json(raw_findings.clone());
+    let severity_counts = count_severities(&findings);
+
+    // AI security analysis if enabled
+    let ai_findings: Option<Vec<Value>> = if options.ai_security {
+        let scanner = AiSecurityScanner::new();
+        let ai_results = scanner.scan(code, lang);
+        Some(ai_results.iter().map(|f| {
+            json!({
+                "rule_id": f.rule_id,
+                "severity": f.severity,
+                "vulnerability_type": f.vulnerability_type.as_str(),
+                "problem": f.problem,
+                "line": f.line,
+                "column": f.column,
+                "snippet": f.snippet,
+                "fix_hint": f.fix_hint,
+                "auto_fix_available": f.auto_fix_available,
+                "confidence": f.confidence,
+                "attack_vector": f.attack_vector,
+            })
+        }).collect())
+    } else {
+        None
+    };
+
+    // Merge AI findings into main findings if present
+    let final_findings = if let Some(ai) = ai_findings {
+        let mut combined = findings;
+        combined.extend(ai);
+        combined
+    } else {
+        findings
+    };
+
+    let result = ScanResult {
+        findings: final_findings,
+        total_lines: code.lines().count(),
+        language: lang.to_string(),
+        file_path: None,
+        scan_time_ms: start.elapsed().as_millis() as u64,
+        rules_evaluated,
+        severity_counts,
+        dependency_findings: None,
+        sbom: None,
+        taint_findings: None,
+    };
+
+    serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
+}
+
+/// Scan a file with full options including taint and interprocedural analysis.
+#[pyfunction]
+fn scan_file_with_options(path: &str, options: ScanOptions) -> PyResult<String> {
+    use std::fs;
+
+    let code = fs::read_to_string(path)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!(
+            "Failed to read file {}: {}", path, e
+        )))?;
+
+    let start = Instant::now();
+
+    // Detect language from extension
+    let path_obj = std::path::Path::new(path);
+    let ext = path_obj
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("");
+    let language = crate::scanner::multilang::detect_language_from_extension(ext)
+        .unwrap_or_else(|| "python".to_string());
+
+    // Parse AST
+    let tree = match crate::scanner::tree_sitter::parse(&code) {
+        Ok(t) => t,
+        Err(_) => {
+            let result = ScanResult {
+                findings: vec![],
+                total_lines: code.lines().count(),
+                language: language.clone(),
+                file_path: Some(path.to_string()),
+                scan_time_ms: start.elapsed().as_millis() as u64,
+                rules_evaluated: 0,
+                severity_counts: SeverityCounts::default(),
+                dependency_findings: None,
+                sbom: None,
+                taint_findings: None,
+            };
+            return serde_json::to_string(&result)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()));
+        }
+    };
+
+    // Security rules
+    let security_rules = all_security_rules();
+    let ast_rules = all_ast_rules();
+    let all_rules: Vec<_> = security_rules.into_iter().chain(ast_rules.into_iter()).collect();
+    let rules_evaluated = all_rules.len();
+
+    let mut raw_findings: Vec<Value> = all_rules
+        .par_iter()
+        .flat_map(|rule| {
+            rule.detect(&tree, &code)
+                .into_iter()
+                .map(|finding| {
+                    let replacement = if finding.auto_fix_available {
+                        rule.fix(&finding, &code).map(|f| f.replacement).unwrap_or_default()
+                    } else {
+                        String::new()
+                    };
+                    json!({
+                        "id": rule.id(),
+                        "rule_id": finding.rule_id,
+                        "name": rule.name(),
+                        "severity": finding.severity,
+                        "cwe_id": finding.cwe_id,
+                        "cvss_score": finding.cvss_score,
+                        "owasp_id": finding.owasp_id,
+                        "start": finding.start,
+                        "end": finding.end,
+                        "snippet": finding.snippet,
+                        "problem": finding.problem,
+                        "fix_hint": finding.fix_hint,
+                        "auto_fix": finding.auto_fix_available,
+                        "replacement": replacement,
+                    })
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect();
+
+    raw_findings.sort_by_key(|f| f["start"].as_u64().unwrap_or(0));
+    let findings = findings_to_json(raw_findings.clone());
+    let severity_counts = count_severities(&findings);
+
+    // Taint analysis if enabled
+    let taint_findings: Option<Vec<Value>> = if options.taint {
+        match run_taint_analysis_internal(&code, &language) {
+            Ok(findings) => Some(findings),
+            Err(e) => {
+                eprintln!("Taint analysis failed: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let result = ScanResult {
+        findings,
+        total_lines: code.lines().count(),
+        language,
+        file_path: Some(path.to_string()),
+        scan_time_ms: start.elapsed().as_millis() as u64,
+        rules_evaluated,
+        severity_counts,
+        dependency_findings: None,
+        sbom: None,
+        taint_findings,
+    };
+
+    serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
+}
+
+// ============================================================================
+// AI Security Scanner (Python API)
+// ============================================================================
+
+/// Scan code for AI-specific security vulnerabilities including MCP rules.
+#[pyfunction]
+fn scan_ai_security(code: &str, language: &str) -> PyResult<String> {
+    let scanner = AiSecurityScanner::new();
+    let findings = scanner.scan(code, language);
 
     let output: Vec<serde_json::Value> = findings.iter().map(|f| {
         serde_json::json!({
             "rule_id": f.rule_id,
             "severity": f.severity,
+            "vulnerability_type": f.vulnerability_type.as_str(),
+            "problem": f.problem,
             "line": f.line,
             "column": f.column,
-            "start_byte": f.start_byte,
-            "end_byte": f.end_byte,
             "snippet": f.snippet,
-            "problem": f.problem,
-            "labels": f.labels.iter().map(|l| format!("{:?}", l)).collect::<Vec<_>>(),
-            "trace": f.trace.iter().map(|n| serde_json::json!({
-                "kind": format!("{:?}", n.kind),
-                "description": n.description,
-                "line": n.line,
-                "column": n.column,
-                "snippet": n.snippet,
-            })).collect::<Vec<_>>(),
+            "fix_hint": f.fix_hint,
+            "auto_fix_available": f.auto_fix_available,
+            "confidence": f.confidence,
+            "attack_vector": f.attack_vector,
         })
     }).collect();
 
@@ -1050,6 +1442,12 @@ fn pyneat_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // Taint analysis
     m.add_function(wrap_pyfunction!(run_taint_analysis, m)?)?;
+    m.add_function(wrap_pyfunction!(scan_security_with_taint, m)?)?;
+    m.add_function(wrap_pyfunction!(scan_file_with_options, m)?)?;
+
+    // AI security
+    m.add_function(wrap_pyfunction!(scan_ai_security, m)?)?;
+    m.add_function(wrap_pyfunction!(scan_security_with_ai, m)?)?;
 
     // LSP server
     m.add_function(wrap_pyfunction!(run_lsp_server, m)?)?;

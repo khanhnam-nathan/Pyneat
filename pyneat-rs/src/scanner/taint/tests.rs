@@ -13,7 +13,7 @@ use crate::scanner::taint::rules::{
 };
 
 fn parse_code(code: &str, lang: &str) -> LnAst {
-    parse_ln_ast(code, lang).expect("failed to parse code")
+    parse_ln_ast(code, lang)
 }
 
 fn run_taint_analysis<'a>(code: &'a str, lang: &str) -> TaintEngine<'a> {
@@ -385,8 +385,8 @@ fn test_taint_lang_scanner_multi_file_completes() {
     let scanner = TaintLangScanner::new("python");
     let file1 = "def foo():\n    return 1";
     let file2 = "def bar():\n    return 2";
-    let ast1 = parse_ln_ast(file1, "python").unwrap();
-    let ast2 = parse_ln_ast(file2, "python").unwrap();
+    let ast1 = parse_ln_ast(file1, "python");
+    let ast2 = parse_ln_ast(file2, "python");
     let files = vec![
         ("a.py".to_string(), ast1),
         ("b.py".to_string(), ast2),

@@ -31,7 +31,7 @@ from datetime import datetime
 from pyneat.core.engine import RuleEngine, clear_module_cache
 from pyneat.core.incremental_cache import IncrementalCache
 from pyneat import __version__
-from pyneat.core.types import RuleConfig
+from pyneat.core.types import RuleConfig, AgentMarker
 from pyneat.rules.imports import ImportCleaningRule
 from pyneat.rules.naming import NamingConventionRule
 from pyneat.rules.refactoring import RefactoringRule
@@ -54,6 +54,19 @@ from pyneat.rules.dataclass import DataclassSuggestionRule
 from pyneat.plugins.loader import PluginLoader
 
 # ----------------------------------------------------------------------
+# Logo
+# ----------------------------------------------------------------------
+
+def _print_logo() -> None:
+    """Print minimalist PyNEAT logo at the top of terminal output."""
+    click.echo("")
+    click.echo(click.style(" PyNEAT ", fg="white", bg="cyan", bold=True) +
+                click.style(f"  v{__version__}  ", fg="cyan", bold=False) +
+                click.style("Python AI Code Cleaner & Security Scanner", fg="bright_black"))
+    click.echo("")
+
+
+# ----------------------------------------------------------------------
 # Helpers
 # ----------------------------------------------------------------------
 
@@ -71,6 +84,62 @@ def show_diff(original: str, transformed: str, filename: str) -> str:
         lineterm=""
     )
     return "".join(diff)
+
+
+def _inject_pyneat_comments(content: str, markers: list, language: str) -> str:
+    """Inject PYNAGENT YAML comments for each AgentMarker into the source code.
+
+    Each marker is injected as a multi-line YAML comment block immediately
+    before the line it references. Duplicate markers (same line) are
+    deduplicated.
+
+    Args:
+        content: The source code content.
+        markers: List of AgentMarker objects.
+        language: Programming language for comment syntax.
+
+    Returns:
+        Modified content with PYNAGENT comments injected.
+    """
+    lines = content.splitlines(keepends=True)
+    # Handle files without trailing newline
+    if lines and not lines[-1].endswith('\n'):
+        trailing_newline = False
+        lines[-1] = lines[-1] + '\n'
+    else:
+        trailing_newline = True
+
+    # Group markers by line number, deduplicate
+    markers_by_line: dict[int, list] = {}
+    seen: set = set()
+    for m in markers:
+        key = (m.line, m.issue_type, m.rule_id)
+        if key not in seen:
+            seen.add(key)
+            markers_by_line.setdefault(m.line, []).append(m)
+
+    # Build annotation lines per target line
+    insert_map: dict[int, list[str]] = {}
+    for line_no, line_markers in markers_by_line.items():
+        for m in line_markers:
+            yaml_comment = m.to_yaml_comment(language=language)
+            insert_map.setdefault(line_no, []).append(yaml_comment)
+
+    # Insert comments — process from bottom to top to preserve line numbers
+    result_lines: list[str] = []
+    offset = 0  # Track how many comment lines have been inserted above
+
+    for i, line in enumerate(lines):
+        real_line = i + 1
+        if real_line in insert_map:
+            for comment in insert_map[real_line]:
+                result_lines.append(comment + '\n')
+        result_lines.append(line)
+
+    final = ''.join(result_lines)
+    if not trailing_newline and final.endswith('\n'):
+        final = final[:-1]
+    return final
 
 
 # ----------------------------------------------------------------------
@@ -213,6 +282,7 @@ def cli(color: str):
               help='Language: javascript, typescript, go, java, rust, csharp, php, ruby, python')
 @click.option('--in-place', '-i', is_flag=True, help='Modify file in place')
 @click.option('--verbose', '-v', is_flag=True, help='Verbose output')
+@click.option('--quiet', '-q', is_flag=True, help='Suppress interactive menu and hints')
 @click.option('--package', '-p', type=click.Choice(['safe', 'conservative', 'destructive']), default='safe',
               help='Rule package: safe (default), conservative (adds cleanup rules), destructive (adds aggressive rules)')
 @click.option('--enable-all', is_flag=True,
@@ -248,8 +318,11 @@ def cli(color: str):
 @click.option('--diff', '-d', is_flag=True, help='Show unified diff of changes')
 @click.option('--check-conflicts', is_flag=True, help='Detect overlapping modifications between rules')
 @click.option('--clear-cache', is_flag=True, help='Clear the module-level AST cache before processing')
-@click.option('--export-manifest', is_flag=True, help='Export PYNAGENT manifest JSON file')
+@click.option('--export-manifest', is_flag=True, help='Export PYNAGENT manifest YAML file')
+@click.option('--annotate', is_flag=True,
+              help='Inject PYNAGENT YAML comments into source code for agent handoff')
 def clean(input_file: str, output: str, lang_opt: str, in_place: bool, verbose: bool,
+          quiet: bool,
           package: str,
           enable_all: bool,
           enable_security: bool, enable_quality: bool, enable_performance: bool,
@@ -263,12 +336,12 @@ def clean(input_file: str, output: str, lang_opt: str, in_place: bool, verbose: 
           enable_refactoring: bool,
           enable_comment_clean: bool,
           debug_mode: str, dry_run: bool, diff: bool,
-          check_conflicts: bool, clear_cache: bool, export_manifest: bool):
+          check_conflicts: bool, clear_cache: bool, export_manifest: bool, annotate: bool):
     """Clean AI-generated code.
 
     Supports multi-language cleaning via --lang flag (JS, TS, Go, Java, Rust, C#, PHP, Ruby).
     """
-    # Resolve input path - try current dir first, then recursive search
+    _print_logo()
     input_path = Path(input_file)
     if not input_path.is_absolute():
         # Try as-is first (relative to cwd)
@@ -415,22 +488,51 @@ def clean(input_file: str, output: str, lang_opt: str, in_place: bool, verbose: 
             ))
         return 0
 
-    # Export manifest if requested
+    # Export manifest if requested (Phase 1.2 — rich AgentMarker manifest)
     if export_manifest:
-        manifest_path = input_path.with_suffix('.pyneat.manifest.json')
+        manifest_path = input_path.with_suffix('.pyneat.manifest.yaml')
         try:
-            manifest_data = {
-                'version': __version__,
+            markers = getattr(result, 'agent_markers', []) or []
+            yaml_data = {
+                'version': '2.0',
+                'scan_id': f"clean-{int(time.time())}",
+                'tool': 'pyneat',
+                'tool_version': __version__,
+                'created_at': datetime.now().isoformat(),
                 'file': str(input_path),
                 'rules_enabled': [r['name'] for r in engine.get_rule_stats()['rules'] if r['enabled']],
                 'changes_count': len(result.changes_made) if result.changes_made else 0,
+                'summary': {
+                    'total': len(markers),
+                    'critical': len([m for m in markers if m.severity == 'critical']),
+                    'high': len([m for m in markers if m.severity == 'high']),
+                    'medium': len([m for m in markers if m.severity == 'medium']),
+                    'low': len([m for m in markers if m.severity == 'low']),
+                    'info': len([m for m in markers if m.severity == 'info']),
+                },
+                'markers': [_marker_to_dict(m) for m in markers],
             }
-            import json
+            import yaml as yaml_mod
             with open(manifest_path, 'w', encoding='utf-8') as f:
-                json.dump(manifest_data, f, indent=2)
-            click.echo(f"[MANIFEST] Exported: {manifest_path}")
+                yaml_mod.dump(yaml_data, f, default_flow_style=False, sort_keys=False)
+            click.echo(f"[MANIFEST] Exported: {manifest_path} ({len(markers)} markers)")
         except Exception as e:
             click.echo(f"[WARN] Manifest export failed: {e}", err=True)
+
+    # Inject PYNAGENT YAML comments into source code (Phase 1.3 — agent annotation)
+    if annotate:
+        markers = getattr(result, 'agent_markers', []) or []
+        if markers:
+            annotated_content = _inject_pyneat_comments(
+                result.transformed_content, markers, lang_opt or "python"
+            )
+            output_path_for_annotate = output_path
+        else:
+            click.echo("[INFO] No markers to annotate — skipping annotation")
+            annotated_content = None
+
+        if annotated_content is not None:
+            result = result._replace(transformed_content=annotated_content)
 
     if diff:
         click.echo("=" * 60)
@@ -471,7 +573,9 @@ def clean(input_file: str, output: str, lang_opt: str, in_place: bool, verbose: 
 
     # Hiển thị menu gợi ý tính năng khác
     ctx = click.get_current_context()
-    show_feature_menu("clean", f"{len(result.changes_made)} changes made", ctx)
+    # Skip menu in quiet mode
+    if not quiet:
+        show_feature_menu("clean", f"{len(result.changes_made)} changes made", ctx)
 
     return 0
 
@@ -488,6 +592,7 @@ def _process_single_file(
         'file_path': file_path,
         'rel_path': rel_path,
         'result': result,
+        'agent_markers': getattr(result, 'agent_markers', []) or [],
     }
 
 
@@ -771,6 +876,7 @@ def clean_dir(ctx, dir_path: str, pattern: str, in_place: bool, backup: bool,
                 'success': result.success,
                 'changes': len(result.changes_made),
                 'error': result.error,
+                'agent_markers': getattr(result, 'agent_markers', []) or [],
             })
 
     success_count = sum(1 for r in results if r['success'])
@@ -789,20 +895,40 @@ def clean_dir(ctx, dir_path: str, pattern: str, in_place: bool, backup: bool,
         cache.save()
     cache = None  # type: ignore
     if export_manifest:
-        manifest_path = Path(dir_path) / '.pyneat.manifest.json'
+        manifest_path = Path(dir_path) / '.pyneat.manifest.yaml'
         try:
-            import json
-            manifest_data = {
-                'version': __version__,
+            all_markers: list = []
+            for r in results:
+                mks = r.get('agent_markers', [])
+                if mks:
+                    all_markers.extend(mks)
+            yaml_data = {
+                'version': '2.0',
+                'scan_id': f"clean-{int(time.time())}",
+                'tool': 'pyneat',
+                'tool_version': __version__,
+                'created_at': datetime.now().isoformat(),
                 'dir': str(dir_path),
                 'pattern': pattern,
                 'files_processed': success_count,
                 'files_failed': failed_count,
                 'total_changes': total_changes,
+                'summary': {
+                    'total': len(all_markers),
+                    'critical': len([m for m in all_markers if m.severity == 'critical']),
+                    'high': len([m for m in all_markers if m.severity == 'high']),
+                    'medium': len([m for m in all_markers if m.severity == 'medium']),
+                    'low': len([m for m in all_markers if m.severity == 'low']),
+                    'info': len([m for m in all_markers if m.severity == 'info']),
+                },
+                'markers': [_marker_to_dict(m) for m in all_markers],
             }
+            import yaml as yaml_mod
             with open(manifest_path, 'w', encoding='utf-8') as f:
-                json.dump(manifest_data, f, indent=2)
-            click.echo(f"[MANIFEST] Exported: {manifest_path}")
+                yaml_mod.dump(yaml_data, f, default_flow_style=False, sort_keys=False)
+            click.echo(f"[MANIFEST] Exported: {manifest_path} ({len(all_markers)} markers)")
+        except Exception as e:
+            click.echo(f"[WARN] Manifest export failed: {e}", err=True)
         except Exception as e:
             click.echo(f"[WARN] Manifest export failed: {e}", err=True)
 
@@ -935,10 +1061,15 @@ def _make_dep_finding(df: dict) -> 'DependencyFinding':
               help='Check license compliance of dependencies')
 @click.option('--lock-files', is_flag=True,
               help='Discover and list lock files in the target directory')
+@click.option('--rule', '-r', 'rule_filter', multiple=True,
+              help='Only run specific rules (e.g., --rule SEC-001 --rule SEC-002)')
+@click.option('--exclude', '-e', multiple=True,
+              help='Exclude files matching pattern (e.g., --exclude test_ --exclude .venv)')
 @click.option('--verbose', '-v', is_flag=True, help='Verbose output')
+@click.option('--quiet', '-q', is_flag=True, help='Suppress interactive menu and hints')
 @click.option('--rust/--no-rust', 'use_rust', default=None,
               help='Force enable/disable Rust scanner (default: auto-detect)')
-def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, use_deps, check_cve, check_license, lock_files, verbose, use_rust):
+def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, use_deps, check_cve, check_license, lock_files, rule_filter, exclude, verbose, quiet, use_rust):
     """Security scan - detect vulnerabilities without auto-fix.
 
     Runs the full security pack (50+ rules) against the target file or directory.
@@ -958,6 +1089,8 @@ def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, 
     from pyneat.core.types import SecurityFinding, SecuritySeverity
     import json
     import time
+
+    _print_logo()
 
     # Resolve target path - try current dir first, then recursive search
     target_path = Path(target)
@@ -987,32 +1120,23 @@ def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, 
 
     ignore_mgr = IgnoreManager()
 
-    # Try Rust scanner first if available and not disabled
-    rust_results = []
+    # Rust scanner is the primary engine for performance
+    # Python engine is only used as fallback when Rust is unavailable or --no-rust is set
     rust_available = False
-    if use_rust is None or use_rust:
+    if use_rust is not False:  # None or True = try Rust
         from pyneat.scanner.rust_scanner import get_scanner
         scanner = get_scanner()
         if scanner.is_available:
             rust_available = True
             if verbose:
-                click.echo(f"Using Rust scanner (v{scanner.version}) for security scan")
-            rust_results = scanner.scan_file(str(target_path))
-        elif use_rust:
-            click.echo("Warning: Rust scanner requested but not available", err=True)
+                click.echo(f"  Using Rust scanner (v{scanner.version})")
+        elif use_rust is True:
+            click.echo("  Warning: Rust scanner requested but not available", err=True)
 
-    # Build security engine for Python fallback
-    # When Rust scanner is available, skip Python regex rules to avoid duplicates
-    # (Rust already covers the same patterns). Python AST-based rules still run
-    # for AI bug detection (AIBugRule).
+    # Python engine is ONLY used when Rust is unavailable or --no-rust is set
+    # Use cases: rule development/testing, or environments without Rust binary
     if rust_available:
-        engine = RuleEngine()
-        # Only add AIBugRule for AI-specific pattern detection
-        try:
-            from pyneat.rules.ai_bugs import AIBugRule
-            engine.add_rule(AIBugRule())
-        except ImportError:
-            pass
+        engine = None  # No Python engine needed - Rust handles everything
     else:
         engine = RuleEngine([SecurityScannerRule()])
     # For multi-language mode, also add universal rules (cross-language)
@@ -1031,7 +1155,6 @@ def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, 
     start_time = time.time()
     all_findings: List[SecurityFinding] = []
     all_changes: List[str] = []  # For universal rule findings
-    rust_findings: List[SecurityFinding] = []  # Rust scanner results
     total_files = 0
 
     # Multi-language glob patterns
@@ -1068,45 +1191,120 @@ def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, 
             skip in f.parts for skip in ["__pycache__", ".venv", "venv", ".git"]
         )]
 
-    for file_path in sorted(files_to_scan):
+    # Apply exclude patterns
+    if exclude:
+        def matches_exclude(f):
+            fstr = str(f)
+            for pat in exclude:
+                if pat in fstr:
+                    return True
+            return False
+        files_to_scan = [f for f in files_to_scan if not matches_exclude(f)]
+
+    # Progress display
+    total_file_count = len(files_to_scan)
+    if total_file_count > 3 and not verbose:
+        click.echo(f"  Scanning {total_file_count} files...")
+
+    for idx, file_path in enumerate(sorted(files_to_scan)):
         total_files += 1
+        if verbose or (total_file_count > 10 and total_file_count <= 50 and total_file_count > 3):
+            click.echo(f"  [{total_files}/{total_file_count}] {file_path.name}", nl=False)
         lang = lang_opt.lower() if lang_opt else "auto"
-        result = engine.process_file(file_path, language=lang)
 
-        for finding in result.security_findings:
-            # Update finding with file info
-            updated_finding = SecurityFinding(
-                rule_id=finding.rule_id,
-                severity=finding.severity,
-                confidence=finding.confidence,
-                cwe_id=finding.cwe_id,
-                owasp_id=finding.owasp_id,
-                cvss_score=finding.cvss_score,
-                cvss_vector=finding.cvss_vector,
-                file=str(file_path),
-                start_line=finding.start_line,
-                end_line=finding.end_line,
-                snippet=finding.snippet,
-                problem=finding.problem,
-                fix_constraints=finding.fix_constraints,
-                do_not=finding.do_not,
-                verify=finding.verify,
-                resources=finding.resources,
-                can_auto_fix=finding.can_auto_fix,
-                auto_fix_available=finding.auto_fix_available,
-                auto_fix_before=finding.auto_fix_before,
-                auto_fix_after=finding.auto_fix_after,
-                auto_fix_diff=finding.auto_fix_diff,
-            )
-            # Check ignores
-            if not ignore_mgr.should_ignore(
-                updated_finding.rule_id, file_path, updated_finding.start_line
-            ):
-                all_findings.append(updated_finding)
+        if rust_available:
+            # Rust is primary - scan each file individually
+            from pyneat.scanner.rust_scanner import get_scanner
+            scanner = get_scanner()
+            file_rust_results = scanner.scan_file(str(file_path))
 
-        # Collect universal rule findings (changes_made contains findings)
-        if use_universal and result.changes_made:
-            all_changes.extend(result.changes_made)
+            for rust_finding in file_rust_results:
+                start_byte = rust_finding.get("start", 0)
+                end_byte = rust_finding.get("end", start_byte)
+                try:
+                    file_content = Path(str(file_path)).read_text(encoding="utf-8")
+                except Exception:
+                    file_content = ""
+                start_line = file_content[:start_byte].count('\n') + 1 if start_byte > 0 else 1
+                end_line = file_content[:end_byte].count('\n') + 1 if end_byte > 0 else start_line
+                sev_str = rust_finding.get("severity", "info")
+                sev_map = {"critical": SecuritySeverity.CRITICAL, "high": SecuritySeverity.HIGH,
+                           "medium": SecuritySeverity.MEDIUM, "low": SecuritySeverity.LOW}
+                sev = sev_map.get(sev_str, SecuritySeverity.INFO)
+                cvss_score = rust_finding.get("cvss_score")
+                rust_finding_obj = SecurityFinding(
+                    rule_id=rust_finding.get("rule_id", "SEC-UNK"),
+                    severity=sev,
+                    confidence=0.95,
+                    cwe_id=rust_finding.get("cwe_id") or "",
+                    owasp_id=rust_finding.get("owasp_id") or "",
+                    cvss_score=float(cvss_score) if cvss_score else 0.0,
+                    cvss_vector=f"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H" if cvss_score else "",
+                    file=str(file_path),
+                    start_line=start_line,
+                    end_line=end_line,
+                    snippet=rust_finding.get("snippet", "")[:200],
+                    problem=rust_finding.get("problem", "Security issue detected"),
+                    fix_constraints=(rust_finding.get("fix_hint", "Fix this security issue"),),
+                    do_not=("Do not ignore this finding.",),
+                    verify=("Review and fix the code.",),
+                    resources=(),
+                    can_auto_fix=rust_finding.get("auto_fix", rust_finding.get("auto_fix_available", False)),
+                    auto_fix_available=rust_finding.get("auto_fix", rust_finding.get("auto_fix_available", False)),
+                )
+                if rule_filter and rust_finding_obj.rule_id not in rule_filter:
+                    continue
+                if not ignore_mgr.should_ignore(rust_finding_obj.rule_id, file_path, rust_finding_obj.start_line):
+                    all_findings.append(rust_finding_obj)
+
+            if verbose or (total_file_count > 10 and total_file_count <= 50 and total_file_count > 3):
+                issue_count = len(file_rust_results)
+                if issue_count > 0:
+                    click.echo(f"  ... {issue_count} issues", fg="yellow")
+                else:
+                    click.echo("  ... ok", fg="green")
+        else:
+            # Python engine only runs when Rust is unavailable
+            result = engine.process_file(file_path, language=lang)
+            if verbose or (total_file_count > 10 and total_file_count <= 50 and total_file_count > 3):
+                issue_count = len(result.security_findings)
+                if issue_count > 0:
+                    click.echo(f"  ... {issue_count} issues", fg="yellow")
+                else:
+                    click.echo("  ... ok", fg="green")
+
+            for finding in result.security_findings:
+                updated_finding = SecurityFinding(
+                    rule_id=finding.rule_id,
+                    severity=finding.severity,
+                    confidence=finding.confidence,
+                    cwe_id=finding.cwe_id,
+                    owasp_id=finding.owasp_id,
+                    cvss_score=finding.cvss_score,
+                    cvss_vector=finding.cvss_vector,
+                    file=str(file_path),
+                    start_line=finding.start_line,
+                    end_line=finding.end_line,
+                    snippet=finding.snippet,
+                    problem=finding.problem,
+                    fix_constraints=finding.fix_constraints,
+                    do_not=finding.do_not,
+                    verify=finding.verify,
+                    resources=finding.resources,
+                    can_auto_fix=finding.can_auto_fix,
+                    auto_fix_available=finding.auto_fix_available,
+                    auto_fix_before=finding.auto_fix_before,
+                    auto_fix_after=finding.auto_fix_after,
+                    auto_fix_diff=finding.auto_fix_diff,
+                )
+                if rule_filter and updated_finding.rule_id not in rule_filter:
+                    continue
+                if not ignore_mgr.should_ignore(updated_finding.rule_id, file_path, updated_finding.start_line):
+                    all_findings.append(updated_finding)
+
+            # Collect universal rule findings
+            if use_universal and result.changes_made:
+                all_changes.extend(result.changes_made)
 
     # Scan dependencies if not skipped
     dep_findings = []
@@ -1156,77 +1354,8 @@ def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, 
 
     elapsed = time.time() - start_time
 
-    # --------------------------------------------------------------------------
-    # Merge Rust scanner results into all_findings
-    # --------------------------------------------------------------------------
-    # rust_results is a list of dicts from the Rust scanner, keyed by byte offset
-    # We need to convert them to SecurityFinding objects and add to all_findings
-    rust_findings: List[SecurityFinding] = []
-    for rust_finding in rust_results:
-        # Extract line number from byte offset (approximate: count newlines)
-        start_byte = rust_finding.get("start", 0)
-        end_byte = rust_finding.get("end", start_byte)
-
-        # Get file content for line calculation
-        try:
-            file_content = Path(str(target_path)).read_text(encoding="utf-8")
-        except Exception:
-            file_content = ""
-
-        # Convert byte offset to line number (1-indexed)
-        start_line = file_content[:start_byte].count('\n') + 1 if start_byte > 0 else 1
-        end_line = file_content[:end_byte].count('\n') + 1 if end_byte > 0 else start_line
-
-        # Parse severity (Rust uses "critical", Python uses "critical")
-        sev_str = rust_finding.get("severity", "info")
-        if sev_str == "critical":
-            sev = SecuritySeverity.CRITICAL
-        elif sev_str == "high":
-            sev = SecuritySeverity.HIGH
-        elif sev_str == "medium":
-            sev = SecuritySeverity.MEDIUM
-        elif sev_str == "low":
-            sev = SecuritySeverity.LOW
-        else:
-            sev = SecuritySeverity.INFO
-
-        # Build CVSS vector from score
-        cvss_score = rust_finding.get("cvss_score")
-        cvss_vector = f"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H" if cvss_score else ""
-
-        rust_finding_obj = SecurityFinding(
-            rule_id=rust_finding.get("rule_id", "SEC-UNK"),
-            severity=sev,
-            confidence=0.95,  # Rust scanner has high confidence
-            cwe_id=rust_finding.get("cwe_id") or "",
-            owasp_id=rust_finding.get("owasp_id") or "",
-            cvss_score=float(cvss_score) if cvss_score else 0.0,
-            cvss_vector=cvss_vector,
-            file=str(target_path),
-            start_line=start_line,
-            end_line=end_line,
-            snippet=rust_finding.get("snippet", "")[:200],
-            problem=rust_finding.get("problem", "Security issue detected"),
-            fix_constraints=(rust_finding.get("fix_hint", "Fix this security issue"),),
-            do_not=("Do not ignore this finding.",),
-            verify=("Review and fix the code.",),
-            resources=(),
-            can_auto_fix=rust_finding.get("auto_fix_available", False),
-            auto_fix_available=rust_finding.get("auto_fix_available", False),
-        )
-        rust_findings.append(rust_finding_obj)
-
     # Aggregate by severity
     summary = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0, "dep": len(dep_findings)}
-
-    # Count Python findings
-    for f in all_findings:
-        summary[f.severity] = summary.get(f.severity, 0) + 1
-
-    # Count Rust findings (merge into all_findings)
-    all_findings.extend(rust_findings)
-    for f in rust_findings:
-        summary[f.severity] = summary.get(f.severity, 0) + 1
 
     if format == 'json':
         output_data = {
@@ -1246,6 +1375,10 @@ def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, 
         else:
             click.echo(json_output)
         return 0
+
+    # Aggregate findings by severity
+    for f in all_findings:
+        summary[f.severity] = summary.get(f.severity, 0) + 1
 
     # Text format (default)
     _print_security_banner(summary, total_files, elapsed)
@@ -1340,42 +1473,53 @@ def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, 
             click.echo("")
             click.secho(f"  [FAIL] Found {sev_label} issue(s) - exiting with code 1", fg="red", bold=True)
 
-    # Hiển thị menu gợi ý tính năng khác
-    ctx = click.get_current_context()
-    show_feature_menu("check", f"{sum(summary.values()) - summary.get('dep', 0)} issues found", ctx)
+    # Hiển thị menu gợi ý tính năng khác (skip in quiet mode)
+    if not quiet:
+        ctx = click.get_current_context()
+        show_feature_menu("check", f"{sum(summary.values()) - summary.get('dep', 0)} issues found", ctx)
 
     return exit_code
 
 
 def _print_security_banner(summary: Dict[str, int], total_files: int, elapsed: float) -> None:
     """Print the security scan results banner."""
-    click.echo("")
-    click.echo("+======================================================================+")
-    click.echo("|              PYNEAT SECURITY SCAN RESULTS                    |")
-    click.echo("+======================================================================+")
-    click.echo(f"|  Total files scanned: {total_files:<42}|")
-    click.echo(f"|  Scan time: {elapsed:.2f}s{' ' * 47}|")
-    click.echo("+======================================================================+")
-
     critical = summary.get("critical", 0)
     high = summary.get("high", 0)
     medium = summary.get("medium", 0)
     low = summary.get("low", 0)
     info = summary.get("info", 0)
     dep = summary.get("dep", 0)
+    total = critical + high + medium + low + info
 
-    def fmt(label, count):
-        return f"|  [{label}] {count:<48}|"
+    click.echo("")
+    click.echo(click.style("┌─", fg="bright_black") + "─" * 64 + click.style("┐", fg="bright_black"))
+    click.echo(click.style("│", fg="bright_black") + f"  {click.style('Security Scan Results', bold=True)}".ljust(66) + click.style("│", fg="bright_black"))
+    click.echo(click.style("├─", fg="bright_black") + "─" * 64 + click.style("┤", fg="bright_black"))
+    click.echo(click.style("│", fg="bright_black") +
+                f"  {total} issues  ·  {total_files} file{'s' if total_files != 1 else ''}  ·  {elapsed:.2f}s".ljust(66) +
+                click.style("│", fg="bright_black"))
+    click.echo(click.style("└─", fg="bright_black") + "─" * 64 + click.style("┘", fg="bright_black"))
+    click.echo("")
 
-    click.echo(fmt("CRITICAL", f"{critical} issues"))
-    click.echo(fmt("HIGH", f"{high} issues"))
-    click.echo(fmt("MEDIUM", f"{medium} issues"))
-    click.echo(fmt("LOW", f"{low} issues"))
-    click.echo(fmt("INFO", f"{info} issues"))
-    click.echo("+======================================================================+")
+    def sev_line(sev, label, count):
+        icon = {"critical": "✗", "high": "⚠", "medium": "·", "low": "○", "info": "○"}.get(sev, "·")
+        fg = {"critical": "red", "high": "yellow", "medium": "magenta", "low": "blue", "info": "bright_black"}.get(sev, "white")
+        bar = "█" * min(count, 10)
+        return f"  {click.style(icon, fg=fg)} {click.style(label.upper(), bold=True)}  {bar}  {count}"
+
+    if critical > 0:
+        click.echo(sev_line("critical", "CRITICAL", critical))
+    if high > 0:
+        click.echo(sev_line("high", "HIGH", high))
+    if medium > 0:
+        click.echo(sev_line("medium", "MEDIUM", medium))
+    if low > 0:
+        click.echo(sev_line("low", "LOW", low))
+    if info > 0:
+        click.echo(sev_line("info", "INFO", info))
     if dep > 0:
-        click.echo(f"|  Dependency issues: {dep:<44}|")
-    click.echo("+======================================================================+")
+        click.echo(f"  {click.style('◆', fg='cyan')} DEPENDENCY  {dep}")
+    click.echo("")
 
 
 @cli.command()
@@ -1501,24 +1645,41 @@ def ignore(rule_id, file, line, is_global, reason):
 
 @cli.command()
 @click.argument('target', type=str, default='.', required=False)
-@click.option('--format', '-f', type=click.Choice(['json', 'sarif', 'html']),
+@click.option('--format', '-f', type=click.Choice(['json', 'sarif', 'html', 'yaml', 'junit', 'gitlab', 'sonarqube', 'markdown']),
               default='json', help='Report format')
 @click.option('--output', '-o', type=click.Path(), required=True, help='Output file path')
-def report(target, format, output):
+@click.option('--rust/--no-rust', 'use_rust', default=None,
+              help='Force enable/disable Rust scanner (default: auto-detect, Rust is primary)')
+def report(target, format, output, use_rust):
     """Generate a security report for CI/CD integration.
 
-    Supports SARIF format for GitHub Code Scanning, Azure DevOps, and GitLab.
-    Supports JSON format for custom integrations.
+    Supports multiple formats for different tools:
+      - sarif:   GitHub Code Scanning, Azure DevOps, GitLab SAST
+      - json:    Custom integrations
+      - yaml:    PyNEAT manifest (full AgentMarker data)
+      - junit:   CI/CD test suites (JUnit XML)
+      - gitlab:  GitLab SAST format
+      - sonarqube: SonarQube Generic Issue Import
+      - html:    Human-readable HTML report
+      - markdown: Markdown summary
 
     Examples:
         pyneat report . --format sarif --output security.sarif
-        pyneat report . --format json --output report.json
+        pyneat report . --format yaml --output report.pyneat.yaml
+        pyneat report . --format junit --output results.xml
     """
-    from pyneat.rules.security import SecurityScannerRule
     from pyneat.core.engine import RuleEngine
     from pyneat.config import IgnoreManager
+    from pyneat.core.manifest import (
+        export_to_sarif, export_to_html_report, export_to_junit_xml,
+        export_to_gitlab_sast, export_to_sonarqube, export_to_markdown,
+    )
+    from pyneat.core.types import AgentMarker, SecuritySeverity, security_finding_to_marker
     import json
     import time
+
+    _print_logo()
+    import yaml
 
     # Resolve target path
     target_path = Path(target)
@@ -1543,11 +1704,23 @@ def report(target, format, output):
         click.echo(f"  Searched in: {Path.cwd()}", err=True)
         return 1
 
+    # Rust is primary scanner; Python only used as fallback
+    rust_available = False
+    if use_rust is not False:
+        from pyneat.scanner.rust_scanner import get_scanner
+        scanner = get_scanner()
+        rust_available = scanner.is_available
+
     ignore_mgr = IgnoreManager()
-    engine = RuleEngine([SecurityScannerRule()])
+
+    if not rust_available:
+        from pyneat.rules.security import SecurityScannerRule
+        engine = RuleEngine([SecurityScannerRule()])
+    else:
+        engine = None
 
     start_time = time.time()
-    all_findings = []
+    all_markers: List[AgentMarker] = []
     total_files = 0
 
     if target_path.is_file():
@@ -1560,22 +1733,154 @@ def report(target, format, output):
 
     for file_path in sorted(files_to_scan):
         total_files += 1
-        result = engine.process_file(file_path)
 
-        for finding in result.security_findings:
-            if not ignore_mgr.should_ignore(finding.rule_id, file_path, finding.start_line):
-                updated = finding
-                all_findings.append(updated)
+        if rust_available:
+            from pyneat.scanner.rust_scanner import get_scanner
+            scanner = get_scanner()
+            rust_results = scanner.scan_file(str(file_path))
+
+            for rf in rust_results:
+                start_byte = rf.get("start", 0)
+                end_byte = rf.get("end", start_byte)
+                try:
+                    fc = Path(str(file_path)).read_text(encoding="utf-8")
+                except Exception:
+                    fc = ""
+                sl = fc[:start_byte].count('\n') + 1 if start_byte > 0 else 1
+                el = fc[:end_byte].count('\n') + 1 if end_byte > 0 else sl
+                sev_str = rf.get("severity", "info")
+                sev_map = {"critical": SecuritySeverity.CRITICAL, "high": SecuritySeverity.HIGH,
+                           "medium": SecuritySeverity.MEDIUM, "low": SecuritySeverity.LOW}
+                sev = sev_map.get(sev_str, SecuritySeverity.INFO)
+                cvss_score = rf.get("cvss_score")
+                from pyneat.core.types import security_finding_to_marker
+                marker = AgentMarker(
+                    rule_id=rf.get("rule_id", "SEC-UNK"),
+                    severity=sev_str,
+                    file=str(file_path),
+                    line=sl,
+                    end_line=el,
+                    message=rf.get("problem", "Security issue detected"),
+                    fix_suggestion=rf.get("fix_hint", ""),
+                    cwe=rf.get("cwe_id") or "",
+                    owasp=rf.get("owasp_id") or "",
+                )
+                if not ignore_mgr.should_ignore(marker.rule_id, file_path, marker.line):
+                    all_markers.append(marker)
+        else:
+            result = engine.process_file(file_path)
+
+            for finding in result.security_findings:
+                if not ignore_mgr.should_ignore(finding.rule_id, file_path, finding.start_line):
+                    marker = security_finding_to_marker(
+                        finding, language="python", file_path=str(file_path)
+                    )
+                    all_markers.append(marker)
+
+            # Also aggregate direct agent_markers from rules
+            if hasattr(result, 'agent_markers') and result.agent_markers:
+                for m in result.agent_markers:
+                    all_markers.append(m)
 
     elapsed = time.time() - start_time
 
+    # Generate report based on format
     if format == 'sarif':
-        _generate_sarif_report(all_findings, target_path, total_files, elapsed, output)
+        sarif_output = export_to_sarif(
+            markers=all_markers,
+            source_file=target_path,
+            tool_name="PyNEAT",
+            tool_version=__version__,
+        )
+        Path(output_path if (output_path := output) else output).write_text(
+            json.dumps(sarif_output, indent=2), encoding="utf-8"
+        )
+    elif format == 'yaml':
+        yaml_data = {
+            'version': '2.0',
+            'scan_id': f"scan-{int(time.time())}",
+            'tool': 'pyneat',
+            'tool_version': __version__,
+            'created_at': __import__('datetime').datetime.now().isoformat(),
+            'project': str(target_path),
+            'total_files': total_files,
+            'scan_duration_seconds': round(elapsed, 2),
+            'summary': {
+                'total': len(all_markers),
+                'critical': len([m for m in all_markers if m.severity == 'critical']),
+                'high': len([m for m in all_markers if m.severity == 'high']),
+                'medium': len([m for m in all_markers if m.severity == 'medium']),
+                'low': len([m for m in all_markers if m.severity == 'low']),
+                'info': len([m for m in all_markers if m.severity == 'info']),
+            },
+            'markers': [_marker_to_dict(m) for m in all_markers],
+        }
+        Path(output).write_text(yaml.dump(yaml_data, default_flow_style=False, sort_keys=False), encoding="utf-8")
+    elif format == 'junit':
+        junit_xml = export_to_junit_xml(
+            markers=all_markers,
+            source_file=target_path,
+            test_name=f"PyNEAT Security Scan ({target_path.name})",
+        )
+        Path(output).write_text(junit_xml, encoding="utf-8")
+    elif format == 'gitlab':
+        gitlab_data = export_to_gitlab_sast(
+            markers=all_markers,
+            project=str(target_path),
+        )
+        Path(output).write_text(json.dumps(gitlab_data, indent=2), encoding="utf-8")
+    elif format == 'sonarqube':
+        sq_data = export_to_sonarqube(
+            markers=all_markers,
+            source_file=target_path,
+        )
+        Path(output).write_text(json.dumps(sq_data, indent=2), encoding="utf-8")
+    elif format == 'html':
+        html_output = export_to_html_report(
+            markers=all_markers,
+            title=f"PyNEAT Security Report — {target_path.name}",
+        )
+        Path(output).write_text(html_output, encoding="utf-8")
+    elif format == 'markdown':
+        md_output = export_to_markdown(
+            markers=all_markers,
+            title=f"PyNEAT Security Report — {target_path.name}",
+            source_file=target_path,
+        )
+        Path(output).write_text(md_output, encoding="utf-8")
     else:
         _generate_json_report(all_findings, target_path, total_files, elapsed, output)
 
     click.echo(f"[OK] Report written to {output}")
     return 0
+
+
+def _marker_to_dict(m: AgentMarker) -> dict:
+    """Convert an AgentMarker to a serializable dict for YAML/JSON export."""
+    return {
+        'marker_id': m.marker_id,
+        'issue_type': m.issue_type,
+        'rule_id': m.rule_id,
+        'severity': m.severity,
+        'line': m.line,
+        'file_path': m.file_path,
+        'language': m.language,
+        'why': m.why,
+        'hint': m.hint,
+        'impact': m.impact,
+        'confidence': m.confidence,
+        'confidence_note': m.confidence_note,
+        'can_auto_fix': m.can_auto_fix,
+        'snippet': m.snippet,
+        'fix_constraints': list(m.fix_constraints) if m.fix_constraints else [],
+        'do_not': list(m.do_not) if m.do_not else [],
+        'verify': list(m.verify) if m.verify else [],
+        'resources': list(m.resources) if m.resources else [],
+        'cwe_id': m.cwe_id,
+        'owasp_id': m.owasp_id,
+        'cvss_score': m.cvss_score,
+        'detected_at': m.detected_at,
+    }
 
 
 def _generate_sarif_report(findings, target_path, total_files, elapsed, output_path):
@@ -1793,36 +2098,38 @@ def show_feature_menu(last_command: str = "", context: str = "", ctx: click.Cont
         last_command: The command that was just run (e.g., "check", "clean")
         context: Optional context about what was scanned/analyzed
     """
-    click.echo("")
-    click.echo("")
-    click.echo("  ┌─────────────────────────────────────────────────────────────┐")
-    click.echo("  │                  EXPLORE MORE FEATURES                     │")
-    click.echo("  └─────────────────────────────────────────────────────────────┘")
-    click.echo("")
+    import select
+    import threading
+    import sys
 
-    # Gợi ý thông minh dựa trên command vừa chạy
     suggestions = _get_menu_suggestions(last_command, context)
+    click.echo("")
+    click.echo("")
+    click.echo("  " + click.style("Explore More", fg="bright_black", bold=True))
     for key, (icon, title, desc, cmd) in suggestions.items():
         click.echo(f"  {click.style(f'[{key}]', fg='cyan', bold=True)} {icon} {click.style(title, bold=True)}")
         click.echo(f"      {desc}")
         click.echo(f"      → {click.style(cmd, fg='green')}")
         click.echo("")
-
-    click.echo(f"  {click.style('[q]', fg='yellow', bold=True)} Exit")
-    click.echo("")
-    click.echo("  ────────────────────────────────────────────────────────────")
+    click.echo(f"  {click.style('[q]', fg='yellow', bold=True)} Exit  {click.style('(auto-exit in 10s)', fg='bright_black')}")
     click.echo("")
 
-    # Chờ input - giữ nguyên hoa/thường vì dùng phím A, B, C, D
-    try:
-        choice = input("  Select option (Enter to exit): ").strip().upper()
-    except (EOFError, KeyboardInterrupt):
-        choice = 'Q'
+    # Non-blocking input with timeout (thread-based for cross-platform)
+    choice_ref = [None]
+    def read_input():
+        try:
+            line = sys.stdin.readline()
+            choice_ref[0] = line.strip().upper()
+        except Exception:
+            pass
 
-    if choice in ('Q', 'QUIT', 'EXIT', ''):
+    t = threading.Thread(target=read_input, daemon=True)
+    t.start()
+    t.join(timeout=10)
+
+    choice = choice_ref[0]
+    if choice is None or choice in ('Q', 'QUIT', 'EXIT', ''):
         return
-
-    # Xử lý lựa chọn
     _handle_menu_choice(choice, suggestions, ctx)
 
 
@@ -1996,6 +2303,36 @@ def sbom_cmd(path, format, output, include_vulns):
         click.echo(f"SBOM written to {output}")
     else:
         click.echo(out)
+
+
+@cli.command(name='mcp')
+@click.option('--stdio', 'transport', flag_value='stdio', default=True,
+              help='Use stdio transport (default, for Cursor MCP integration)')
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging to stderr')
+def mcp(transport: str, verbose: bool):
+    """Start the PyNEAT MCP server over stdio (JSON-RPC 2.0).
+
+    This command starts the Model Context Protocol server, allowing Cursor
+    and other MCP-compatible editors to invoke PyNEAT as a tool.
+
+    \b
+    Example Cursor MCP configuration:
+      {
+        "mcpServers": {
+          "pyneat": {
+            "command": "python",
+            "args": ["-m", "pyneat.tools.mcp_server"]
+          }
+        }
+      }
+
+    Or use the CLI shortcut:
+      pyneat mcp
+    """
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    from pyneat.tools.mcp_server import main
+    main()
 
 
 @cli.command(name='lsp')

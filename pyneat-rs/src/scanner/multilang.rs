@@ -90,18 +90,31 @@ pub fn detect_language_from_extension(ext: &str) -> Option<String> {
     EXT_MAP.get(ext.as_str()).map(|s| s.to_string())
 }
 
-pub fn parse_ln_ast(code: &str, language: &str) -> Result<LnAst, ParseError> {
-    let lang = Language::from_str(language)
-        .ok_or_else(|| ParseError::LanguageError(language.to_string()))?;
+pub fn parse_ln_ast(code: &str, language: &str) -> LnAst {
+    let lang = match Language::from_str(language) {
+        Some(l) => l,
+        None => {
+            let mut ast = LnAst::empty(language);
+            ast.source_hash = compute_md5(code);
+            return ast;
+        }
+    };
 
-    let tree = parse_with_language(code, &lang)?;
+    let tree = match parse_with_language(code, &lang) {
+        Ok(t) => t,
+        Err(_) => {
+            let mut ast = LnAst::empty(language);
+            ast.source_hash = compute_md5(code);
+            return ast;
+        }
+    };
     let mut ast = LnAst::empty(language);
     ast.source_hash = compute_md5(code);
 
     walk_tree_and_extract(&tree.root_node(), code, &lang, &mut ast);
     extract_deep_nesting(&tree.root_node(), &lang, &mut ast);
 
-    Ok(ast)
+    ast
 }
 
 /// Parse with a cached language reference for better performance
@@ -156,6 +169,116 @@ fn get_text(n: &Node, code: &str) -> String {
     n.utf8_text(code.as_bytes()).map(|s| s.to_string()).unwrap_or_default()
 }
 
+/// Check if an AST node kind or text should be skipped in argument extraction.
+fn is_punctuation_or_ignored(kind: &str, text: &str) -> bool {
+    matches!(kind,
+        "(" | ")" | "[" | "]" | "{" | "}" | "," | ":" | ";"
+        | "[>" | "<]"
+        | "argument_list"
+        | "positional_argument"
+        | "keyword_argument"
+        | "default_parameter"
+        | "list_splat_pattern"
+        | "tuple"
+        | "list"
+        | "dictionary"
+        | "pair"
+        | "element"
+        | "statement_block"
+        | "block"
+        | "expression_list"
+    ) || text.trim().is_empty()
+}
+
+/// Recursively extract assignments from a node tree (handles nested blocks in Python).
+fn extract_assignments_recursive(node: &Node, code: &str, ast: &mut LnAst) {
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        let child_kind = child.kind();
+        if child_kind == "assignment" {
+            let sp = child.start_position();
+            let value_text = child.child_by_field_name("value").map(|n| get_text(&n, code));
+            // Try different field names for the target
+            let target_node = child.child_by_field_name("target")
+                .or_else(|| child.child_by_field_name("targets"))
+                .or_else(|| child.child_by_field_name("left"));
+            if let Some(targets) = target_node {
+                for tgt in targets.children(&mut targets.walk()) {
+                    let tgt_kind = tgt.kind();
+                    if tgt_kind == "identifier" || tgt_kind == "attribute" || tgt_kind == "subscript" {
+                        let t = get_text(&tgt, code);
+                        if !t.is_empty() {
+                            ast.assignments.push(LnAssignment {
+                                name: t,
+                                value: value_text.clone(),
+                                is_constant: false,
+                                start_line: sp.row + 1,
+                                end_line: sp.row + 1,
+                            });
+                        }
+                    }
+                }
+            }
+        } else if child_kind == "expression_statement" {
+            // Expression statement may contain assignment as a child
+            let mut ec = child.walk();
+            for echild in child.children(&mut ec) {
+                if echild.kind() == "assignment" {
+                    let sp = echild.start_position();
+                    // Try different field names for value (right is tree-sitter-python's field name)
+                    let value_text = echild.child_by_field_name("value")
+                        .or_else(|| echild.child_by_field_name("right"))
+                        .or_else(|| echild.child_by_field_name("expression"))
+                        .map(|n| get_text(&n, code));
+                    // Try different field names for target
+                    // tree-sitter-python uses "left" as a direct identifier node
+                    // Some parsers use "target" or "targets" as a container
+                    let target_node = echild.child_by_field_name("target")
+                        .or_else(|| echild.child_by_field_name("targets"))
+                        .or_else(|| echild.child_by_field_name("left"));
+
+                    if let Some(target_node) = target_node {
+                        let tgt_kind = target_node.kind();
+                        if tgt_kind == "identifier" || tgt_kind == "attribute" || tgt_kind == "subscript" {
+                            // Direct identifier (tree-sitter-python style: left = identifier)
+                            let t = get_text(&target_node, code);
+                            if !t.is_empty() {
+                                ast.assignments.push(LnAssignment {
+                                    name: t,
+                                    value: value_text.clone(),
+                                    is_constant: false,
+                                    start_line: sp.row + 1,
+                                    end_line: sp.row + 1,
+                                });
+                            }
+                        } else {
+                            // Container (list of targets)
+                            let mut tc = target_node.walk();
+                            for tgt in target_node.children(&mut tc) {
+                                let tgt_kind = tgt.kind();
+                                if tgt_kind == "identifier" || tgt_kind == "attribute" || tgt_kind == "subscript" {
+                                    let t = get_text(&tgt, code);
+                                    if !t.is_empty() {
+                                        ast.assignments.push(LnAssignment {
+                                            name: t,
+                                            value: value_text.clone(),
+                                            is_constant: false,
+                                            start_line: sp.row + 1,
+                                            end_line: sp.row + 1,
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else if child_kind == "block" || child_kind == "body" || child_kind == "clause" {
+            extract_assignments_recursive(&child, code, ast);
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Python
 // ---------------------------------------------------------------------------
@@ -170,10 +293,25 @@ fn extract_python(node: &Node, code: &str, kind: &str, ast: &mut LnAst) {
             let params = get_python_params(node, code);
             let is_async = node.child_by_field_name("async").is_some();
             ast.functions.push(LnFunction {
-                name, start_line: sp.row + 1, end_line: ep.row + 1,
+                name: name.clone(), start_line: sp.row + 1, end_line: ep.row + 1,
                 start_byte: node.start_byte(), end_byte: node.end_byte(),
-                params, is_async, is_method: false, return_type: None,
+                params: params.clone(), is_async, is_method: false, return_type: None,
             });
+            // Register function parameters as identifiers for taint analysis
+            for param in &params {
+                ast.identifiers.push(crate::scanner::ln_ast::LnIdentifier {
+                    name: param.clone(),
+                    start_line: sp.row + 1,
+                    end_line: ep.row + 1,
+                    start_byte: node.start_byte(),
+                    end_byte: node.end_byte(),
+                    is_definition: true,
+                });
+            }
+            // Extract assignments from function body (block node)
+            if let Some(block) = node.child_by_field_name("body") {
+                extract_assignments_recursive(&block, code, ast);
+            }
         }
         "class_definition" => {
             let name = node.child_by_field_name("name").map(|n| get_text(&n, code)).unwrap_or_default();
@@ -208,15 +346,21 @@ fn extract_python(node: &Node, code: &str, kind: &str, ast: &mut LnAst) {
             }
         }
         "assignment" => {
-            if let Some(targets) = node.child_by_field_name("targets") {
+            // tree-sitter-python uses "left" for assignment targets (unlike JS which uses "left")
+            let targets = node.child_by_field_name("targets")
+                .or_else(|| node.child_by_field_name("left"));
+            if let Some(targets_node) = targets {
                 let value_text = node.child_by_field_name("value").map(|n| get_text(&n, code));
-                for child in targets.children(&mut targets.walk()) {
-                    if child.kind() == "identifier" {
+                for child in targets_node.children(&mut targets_node.walk()) {
+                    let kind = child.kind();
+                    if kind == "identifier" || kind == "attribute" {
                         let t = get_text(&child, code);
-                        ast.assignments.push(LnAssignment {
-                            name: t, value: value_text.clone(), is_constant: false,
-                            start_line: sp.row + 1, end_line: ep.row + 1,
-                        });
+                        if !t.is_empty() {
+                            ast.assignments.push(LnAssignment {
+                                name: t, value: value_text.clone(), is_constant: false,
+                                start_line: sp.row + 1, end_line: ep.row + 1,
+                            });
+                        }
                     }
                 }
             }
@@ -230,9 +374,12 @@ fn extract_python(node: &Node, code: &str, kind: &str, ast: &mut LnAst) {
                     let mut cursor = args_node.walk();
                     for child in args_node.children(&mut cursor) {
                         let text = get_text(&child, code);
-                        if !text.is_empty() {
-                            arg_texts.push(text);
+                        let kind = child.kind();
+                        // Skip punctuation, whitespace, and other non-argument nodes
+                        if text.is_empty() || is_punctuation_or_ignored(kind, &text) {
+                            continue;
                         }
+                        arg_texts.push(text);
                     }
                     arg_texts
                 })
@@ -851,7 +998,7 @@ mod tests {
     #[test]
     fn test_parse_python() {
         let code = "def hello():\n    pass\n";
-        let ast = parse_ln_ast(code, "python").unwrap();
+        let ast = parse_ln_ast(code, "python");
         assert_eq!(ast.language, "python");
         assert!(!ast.functions.is_empty());
         assert_eq!(ast.functions[0].name, "hello");
@@ -860,7 +1007,7 @@ mod tests {
     #[test]
     fn test_parse_js() {
         let code = "function hello() { console.log('hi'); }\n";
-        let ast = parse_ln_ast(code, "javascript").unwrap();
+        let ast = parse_ln_ast(code, "javascript");
         assert_eq!(ast.language, "javascript");
         assert!(!ast.functions.is_empty());
     }
@@ -868,7 +1015,7 @@ mod tests {
     #[test]
     fn test_deep_nesting() {
         let code = "if True:\n    if True:\n        if True:\n            if True:\n                pass\n";
-        let ast = parse_ln_ast(code, "python").unwrap();
+        let ast = parse_ln_ast(code, "python");
         assert!(!ast.deep_nesting.is_empty());
     }
 }
