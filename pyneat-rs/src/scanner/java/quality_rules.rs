@@ -93,6 +93,7 @@ impl LangRule for JavaEmptyCatchBlock {
                         At minimum, log the exception: \
                         } catch (Exception e) { logger.error(\"Error occurred\", e); }".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -125,6 +126,7 @@ impl LangRule for JavaEmptyCatchBlock {
                     problem: "Empty catch block detected.".to_string(),
                     fix_hint: "Add error handling: log the exception or rethrow with context.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -201,6 +203,7 @@ impl LangRule for JavaSystemOutUsage {
                                 Logger logger = Logger.getLogger(ClassName.class); \
                                 logger.info(\"message\"); // or logger.debug(), logger.warn(), logger.error()".to_string(),
                             auto_fix_available: true,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -271,6 +274,7 @@ impl LangRule for JavaDeepNesting {
                         Extract nested logic into helper methods with descriptive names. \
                         Use polymorphism or strategy pattern for complex conditional logic.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -338,6 +342,7 @@ impl LangRule for JavaSwitchWithoutDefault {
                         default: throw new IllegalStateException(\"Unexpected value: \" + value); \
                         Or: default: break; // no action for unexpected values".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -404,6 +409,7 @@ impl LangRule for JavaRawTypeCollection {
                                 fix_hint: "Specify the generic type: List<String>, Map<String, Integer>, etc. \
                                     This provides compile-time type checking and prevents ClassCastException.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -464,6 +470,7 @@ impl LangRule for JavaLongMethod {
                         - Extract business rules into processData() \
                         - Extract formatting into formatOutput()".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }

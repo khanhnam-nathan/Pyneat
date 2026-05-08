@@ -56,6 +56,7 @@ impl LanguageScanner for GoScanner {
     fn rules(&self) -> Vec<Box<dyn LangRule>> {
         let mut all_rules = rules::go_rules();
         all_rules.extend(quality_rules::go_quality_rules());
+        all_rules.extend(rules::gosec_rules());
         all_rules
     }
 

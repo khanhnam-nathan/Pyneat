@@ -26,6 +26,8 @@ pub enum TaintLabel {
     Html,
     /// Path traversal risk
     Path,
+    /// XML/XXE injection risk
+    Xml,
     /// Cryptographic weakness
     Crypto,
     /// Format string injection risk
@@ -40,6 +42,12 @@ pub enum TaintLabel {
     LogInject,
     /// YAML unsafe deserialization risk
     YamlUnsafe,
+    /// Prompt injection: user input that flows into LLM prompts
+    PromptInjection,
+    /// LLM output: data from LLM model responses
+    LlmOutput,
+    /// System prompt: internal prompt/instruction content
+    SystemPrompt,
     /// Custom labeled taint
     Custom(String),
 }
@@ -55,7 +63,7 @@ impl std::fmt::Display for TaintLabel {
             TaintLabel::Sql => write!(f, "sql"),
             TaintLabel::Html => write!(f, "html"),
             TaintLabel::Path => write!(f, "path"),
-            TaintLabel::Custom(s) => write!(f, "{}", s),
+            TaintLabel::Xml => write!(f, "xml"),
             TaintLabel::Crypto => write!(f, "crypto"),
             TaintLabel::Format => write!(f, "format"),
             TaintLabel::MassAssign => write!(f, "mass_assign"),
@@ -63,6 +71,10 @@ impl std::fmt::Display for TaintLabel {
             TaintLabel::TypeConfuse => write!(f, "type_confuse"),
             TaintLabel::LogInject => write!(f, "log_inject"),
             TaintLabel::YamlUnsafe => write!(f, "yaml_unsafe"),
+            TaintLabel::PromptInjection => write!(f, "prompt_injection"),
+            TaintLabel::LlmOutput => write!(f, "llm_output"),
+            TaintLabel::SystemPrompt => write!(f, "system_prompt"),
+            TaintLabel::Custom(s) => write!(f, "{}", s),
         }
     }
 }
@@ -162,7 +174,17 @@ impl TaintSink {
 
     /// Check if this sink accepts the given taint label.
     pub fn accepts_taint(&self, label: &TaintLabel) -> bool {
-        self.requires.is_empty() || self.requires.iter().any(|r| r == label)
+        match label {
+            // UserInput and Tainted are universal — user input can cause any vulnerability
+            TaintLabel::UserInput | TaintLabel::Tainted => true,
+            // Specific labels only match if the sink specifically requires them
+            _ => self.requires.is_empty() || self.requires.iter().any(|r| r == label),
+        }
+    }
+
+    /// Check if ANY label in the list is acceptable for this sink.
+    pub fn accepts_any_label(&self, labels: &[TaintLabel]) -> bool {
+        labels.iter().any(|l| self.accepts_taint(l))
     }
 }
 

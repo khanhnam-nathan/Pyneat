@@ -121,6 +121,7 @@ impl LangRule for JsUnusedVariable {
                     fix_hint: "Remove the unused variable declaration or prefix it with '_' \
                         to indicate it's intentionally unused.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -196,6 +197,7 @@ impl LangRule for JsEmptyBlock {
                     fix_hint: "Either remove the empty block or add meaningful logic. \
                         For catch blocks, consider logging the error or re-throwing.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -265,6 +267,7 @@ impl LangRule for JsDeepNesting {
                         into separate functions. Consider using a state machine or event-driven approach \
                         instead of deeply nested callbacks.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -289,6 +292,7 @@ impl LangRule for JsDeepNesting {
                     fix_hint: "Use async/await for cleaner, more readable asynchronous code. \
                         Example: const result = await fetchData(); process(result);".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -352,6 +356,7 @@ impl LangRule for JsMutatingGlobalState {
                             or dependency injection. If you must modify window/document, document \
                             the side effects clearly.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -376,6 +381,7 @@ impl LangRule for JsMutatingGlobalState {
                     fix_hint: "Consider encapsulating global modifications in modules or services. \
                         Document side effects and ensure proper cleanup.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -440,6 +446,7 @@ impl LangRule for JsComplexCondition {
                         helper functions. Example: const isValid = hasName && hasEmail && hasPassword; \
                         if (isValid) { ... }".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
 
@@ -459,6 +466,7 @@ impl LangRule for JsComplexCondition {
                         fix_hint: "Replace nested ternaries with if/else statements or extract \
                             into helper functions for better readability.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -519,6 +527,7 @@ impl LangRule for JsDuplicateImport {
                             Example: import { a } from 'mod'; import { b } from 'mod'; \
                             -> import {{ a, b }} from 'mod';".to_string(),
                         auto_fix_available: true,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -579,6 +588,7 @@ impl LangRule for JsDeepNestingQuality {
                     problem: format!("Deep nesting (depth {}).", depth),
                     fix_hint: "Extract nested logic into separate functions.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -627,6 +637,7 @@ impl LangRule for JsCallbackHell {
                         problem: format!("Callback nesting depth {}. Consider using async/await.", nesting),
                         fix_hint: "Refactor to async/await for better readability.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                     break;
                 }
@@ -670,6 +681,7 @@ impl LangRule for JsMagicNumbers {
                         problem: format!("Magic number '{}'. Use a named constant instead.", m.as_str()),
                         fix_hint: "Define as const: const MAX_RETRIES = 500;".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -719,6 +731,7 @@ impl LangRule for JsMissingPromiseCatch {
                     problem: "Promise chain without .catch() handler. Unhandled rejections may cause silent failures.".to_string(),
                     fix_hint: "Add .catch() or use try/catch with async/await.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -760,6 +773,7 @@ impl LangRule for JsGlobalVariables {
                     problem: format!("Variable '{}' is declared globally without being in a module.", var),
                     fix_hint: "Use 'const' or 'let' inside a module scope.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -799,6 +813,7 @@ impl LangRule for JsEmptyCatchBlock {
                 problem: "Empty catch block detected.".to_string(),
                 fix_hint: "Add error handling or logging.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings.sort_by_key(|f| f.line);
@@ -842,6 +857,7 @@ impl LangRule for JsConsoleLogProduction {
                         problem: format!("{} found in code.", desc),
                         fix_hint: "Remove debug statements or use a logging library with levels.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -888,6 +904,7 @@ impl LangRule for JsTodoCommentsQuality {
                         problem: format!("{} found.", label),
                         fix_hint: "Resolve or add tracking issue.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

@@ -1,0 +1,77 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "pyneat-cli"
+version = "3.0.4"
+description = "AI-Generated Code Scanner — detects bugs, security vulnerabilities, and quality issues that AI coding assistants introduce"
+readme = "README.md"
+license = {text = "GNU AGPL-3.0-or-later"}
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [
+    {name = "Khanh Nam", email = "khanhnam.copywriting@gmail.com"},
+]
+keywords = ["ai", "code-cleaner", "python", "linter", "formatter", "security", "dead-code", "refactoring", "ast", "auto-fix"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Natural Language :: Chinese (Simplified)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "click>=8.0.0",
+    "libcst>=0.4.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+pre-commit = [
+    "pre-commit>=3.0.0",
+]
+rust = [
+    "maturin>=1.5,<2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/pyneat/pyneat"
+Documentation = "https://github.com/pyneat/pyneat#readme"
+Repository = "https://github.com/pyneat/pyneat"
+Changelog = "https://github.com/pyneat/pyneat/blob/main/CHANGELOG.md"
+Issues = "https://github.com/pyneat/pyneat/issues"
+
+[project.scripts]
+pyneat = "pyneat.cli:cli"
+
+# Maturin configuration for Rust extension
+[tool.maturin]
+features = ["pyo3/extension-module"]
+manifest-path = "pyneat-rs/Cargo.toml"
+module-name = "pyneat_rs"
+args = ["--release"]
+packages = ["pyneat-rs/pyneat"]
+
+[tool.pyneat]
+# Default rule settings for pyneat clean / pyneat clean-dir
+enable_security = false
+enable_quality = false
+enable_performance = false
+enable_unused_imports = true
+enable_redundant = true
+export_manifest = true

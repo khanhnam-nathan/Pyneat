@@ -44,6 +44,8 @@ pub struct LangFinding {
     pub fix_hint: String,
     /// Whether auto-fix is available for this finding
     pub auto_fix_available: bool,
+    /// Pre-computed replacement text for auto-fix
+    pub replacement: String,
 }
 
 impl LangFinding {
@@ -60,6 +62,7 @@ impl LangFinding {
             problem: problem.to_string(),
             fix_hint: fix_hint.to_string(),
             auto_fix_available: false,
+            replacement: String::new(),
         }
     }
 
@@ -76,6 +79,7 @@ impl LangFinding {
             problem: problem.to_string(),
             fix_hint: fix_hint.to_string(),
             auto_fix_available: false,
+            replacement: String::new(),
         }
     }
 }

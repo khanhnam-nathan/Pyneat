@@ -54,6 +54,7 @@ impl Rule for FrontendPriceManipulationRule {
                         problem: format!("Client-side price calculation detected: {}", desc),
                         fix_hint: "Calculate prices server-side only. Never trust client-submitted prices.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

@@ -1,0 +1,43 @@
+# PyNEAT Web Dashboard API
+#
+# FastAPI-based REST API for security scanning, reporting, and real-time monitoring.
+
+name: PyNEAT Dashboard API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pyneat_dashboard/**'
+      - 'pyneat-rs/pyneat/**'
+  pull_request:
+    paths:
+      - 'pyneat_dashboard/**'
+      - 'pyneat-rs/pyneat/**'
+
+jobs:
+  test:
+    name: Test Dashboard API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -e pyneat-rs/
+          pip install -r pyneat_dashboard/requirements.txt
+
+      - name: Run tests
+        run: |
+          cd pyneat_dashboard
+          python -m pytest tests/ -v
+
+      - name: Lint
+        run: |
+          pip install ruff
+          ruff check pyneat_dashboard/

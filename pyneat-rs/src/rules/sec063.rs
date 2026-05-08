@@ -65,6 +65,7 @@ impl Rule for MissingRateLimitingRule {
                             problem: format!("Sensitive endpoint '{}' without rate limiting protection", endpoint_name),
                             fix_hint: "Add rate limiting using @rate_limit decorator or flask-limiter middleware.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }

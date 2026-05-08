@@ -50,6 +50,7 @@ impl Rule for Sec044 {
                         problem: format!("EXIF data handling: {}", desc),
                         fix_hint: "Strip EXIF metadata from uploaded images using PIL or similar library before saving.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

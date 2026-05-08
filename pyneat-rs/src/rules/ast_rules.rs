@@ -143,6 +143,7 @@ impl AstCommandInjectionRule {
                         problem: "User input is passed directly to a shell command.".to_string(),
                         fix_hint: "Use subprocess.run with shell=False and pass command as a list.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -185,6 +186,7 @@ impl AstCommandInjectionRule {
                             problem: "Shell execution detected via AST analysis.".to_string(),
                             fix_hint: "Use subprocess.run with shell=False.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                         seen_starts.insert(info.start_byte);
                     }
@@ -309,6 +311,7 @@ impl Rule for AstHardcodedSecretsRule {
                     problem,
                     fix_hint: format!("Use env vars: {} = os.environ.get('{}')", var_name, var_name.to_uppercase()),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         });
@@ -353,6 +356,7 @@ impl AstHardcodedSecretsRule {
                         problem: format!("Hardcoded {} detected", cred_type),
                         fix_hint: "Use environment variables instead of hardcoding secrets.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -402,6 +406,7 @@ impl Rule for AstSqlInjectionRule {
                         problem: "SQL query built by string concatenation - injection risk.".to_string(),
                         fix_hint: "Use parameterized queries with placeholders.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -433,6 +438,7 @@ impl Rule for AstSqlInjectionRule {
                             problem: "SQL query built by string concatenation - injection risk.".to_string(),
                             fix_hint: "Use parameterized queries with placeholders.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }

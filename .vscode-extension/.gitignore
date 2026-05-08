@@ -1,0 +1,7 @@
+out/
+node_modules/
+*.vsix
+.vsix/
+vsix_check/
+*.log
+.DS_Store

@@ -126,6 +126,7 @@ impl LangRule for GoInsecureDeser {
                             use toml.NewDecoder() with validation. Validate schema and bounds before \
                             deserializing into structs.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -156,6 +157,7 @@ fn add_finding(findings: &mut Vec<LangFinding>, rule_id: &str, severity: &str,
                 problem: desc.to_string(),
                 fix_hint: String::new(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
     }
@@ -200,6 +202,7 @@ impl LangRule for GoCommandInjection {
                             problem: format!("Command injection risk: {} - verify input is sanitized.", fun),
                             fix_hint: "Use exec.Command with separate args: exec.Command(\"ls\", \"-la\") instead of shell string.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -672,6 +675,7 @@ impl LangRule for GoSlopsquatting {
                         ),
                         fix_hint: "Verify this package exists on pkg.go.dev before installing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -766,6 +770,7 @@ impl LangRule for GoAiGenComment {
                             problem: "AI-Generated Code Detected".to_string(),
                             fix_hint: "Review AI-generated code carefully before production use.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -844,6 +849,7 @@ impl LangRule for GoRaceCondition {
                         problem: "Map access detected without mutex protection. Concurrent map access causes race condition.".to_string(),
                         fix_hint: "Protect map access with sync.Mutex or sync.RWMutex. For high-concurrency code, consider sync.Map or a concurrent data structure.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1152,6 +1158,7 @@ impl LangRule for GoSlopsquattingTypo {
                         problem: format!("Slopsquatting Risk: {}", desc),
                         fix_hint: "Verify this package exists on pkg.go.dev before using.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1179,6 +1186,7 @@ impl LangRule for GoSlopsquattingTypo {
                         problem: format!("Slopsquatting Risk: {} in import path", desc),
                         fix_hint: "Verify this package exists on pkg.go.dev before using.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1243,6 +1251,7 @@ impl LangRule for GoMissingNilCheckAfterMarshal {
                                         problem: format!("Missing nil/error check after JSON operations: {}", unmarshal_desc),
                                         fix_hint: "Always check the error return from json.Unmarshal before accessing fields. Example: if err := json.Unmarshal(data, &obj); err != nil { return err }. Verify obj is not nil before accessing fields.".to_string(),
                                         auto_fix_available: false,
+                        replacement: String::new(),
                                     });
                                     break;
                                 }
@@ -1280,6 +1289,7 @@ impl LangRule for GoMissingNilCheckAfterMarshal {
                             problem: format!("Missing error check after JSON marshal: {}", desc),
                             fix_hint: "Always check the error return from json.Marshal. Example: data, err := json.Marshal(v); if err != nil { return err }".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1335,6 +1345,7 @@ impl LangRule for GoOffByOneLoopBounds {
                         problem: format!("Off-by-one in loop bounds: {}", desc),
                         fix_hint: "Use < (strict less than) instead of <= when iterating over array/slice indices. Arrays are 0-indexed, so valid indices are 0 to len-1.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1357,6 +1368,7 @@ impl LangRule for GoOffByOneLoopBounds {
                         problem: format!("Potential off-by-one: {}", desc),
                         fix_hint: "When using range, remember it returns index and value. Check that index access patterns are correct.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1432,6 +1444,7 @@ impl LangRule for GoInsecureTlsConfig {
                             Example: &tls.Config{MinVersion: tls.VersionTLS12, CipherSuites: [...]}. \
                             For testing only: wrap in feature flag and never use in production.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1529,6 +1542,7 @@ impl LangRule for GoGormRawInjection {
                             if !allowedFields[sortField] { return error }; \
                             db.Order(sortField + \" \" + direction);".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1602,6 +1616,7 @@ impl LangRule for GoIdor {
                             if resource.UserID != currentUser.ID { return error }; \
                             Use middleware or service-layer authorization checks.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1667,6 +1682,964 @@ impl LangRule for GoCommandInjectionLookPath {
                             if !allowedCmds[cmd] { return error }; \
                             exec.Command(cmd, args...).Run().".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-038: HTTP KeepAlive Disabled
+// Severity: medium | CWE-910
+// Transport.DisableKeepAlives = true causes connection overhead and potential DoS
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoHttpKeepAliveDisabled;
+
+impl LangRule for GoHttpKeepAliveDisabled {
+    fn id(&self) -> &str { "GO-SEC-038" }
+    fn name(&self) -> &str { "HTTP KeepAlive Disabled" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns: Vec<(&str, &str)> = vec![
+            (r#"DisableKeepAlives\s*:\s*true"#, "DisableKeepAlives: true — disables HTTP keep-alive (CWE-910)"),
+            (r#"transport\s*=\s*&http\.Transport\s*\{[^}]*DisableKeepAlives\s*:\s*true"#, "HTTP Transport with DisableKeepAlives: true"),
+            (r#"Client\s*\{\s*Transport\s*:\s*&http\.Transport\s*\{[^}]*DisableKeepAlives\s*:\s*true"#, "HTTP Client with DisableKeepAlives: true"),
+        ];
+        for (pat, desc) in &patterns {
+            add_finding(&mut findings, self.id(), self.severity(), pat, desc, code);
+        }
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-039: HTTP No Timeout
+// Severity: medium | CWE-910
+// Transport with no timeout can cause resource exhaustion
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoHttpNoTimeout;
+
+impl LangRule for GoHttpNoTimeout {
+    fn id(&self) -> &str { "GO-SEC-039" }
+    fn name(&self) -> &str { "HTTP Request Without Timeout" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for HTTP client without Timeout set
+        let no_timeout_patterns: Vec<(&str, &str)> = vec![
+            (r#"http\.Client\s*\{\s*\}"#, "Empty http.Client{} — no Timeout configured"),
+            (r#"http\.Client\s*\{\s*Transport\s*:"#, "http.Client with Transport but no Timeout"),
+            (r#"TLSClientConfig\s*:\s*&tls\.Config\s*\{\s*\}"#, "TLSClientConfig without Timeout (CWE-910)"),
+        ];
+
+        for (pat, desc) in &no_timeout_patterns {
+            add_finding(&mut findings, self.id(), self.severity(), pat, desc, code);
+        }
+
+        // Check for Timeout: 0 patterns
+        let zero_timeout_patterns: Vec<(&str, &str)> = vec![
+            (r#"Timeout\s*:\s*0\s*[,\}]"#, "Timeout: 0 — no timeout (infinite wait)"),
+            (r#"client\.Timeout\s*=\s*0"#, "client.Timeout set to 0"),
+        ];
+
+        for (pat, desc) in &zero_timeout_patterns {
+            add_finding(&mut findings, self.id(), self.severity(), pat, desc, code);
+        }
+
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-040: Go Template Injection
+// Severity: critical | CWE-1336
+// User input passed to html/template.Parse can cause XSS
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoTemplateInjection;
+
+impl LangRule for GoTemplateInjection {
+    fn id(&self) -> &str { "GO-SEC-040" }
+    fn name(&self) -> &str { "Go Template Injection" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = vec![
+            (r#"template\.New\s*\([^)]*\)\s*\.Parse\s*\([^)]*(?:r\.Form|r\.URL|r\.Body|r\.PostForm|request\.)"#, "template.Parse with user input — template injection (CWE-1336)"),
+            (r#"template\.Must\s*\([^)]*template\.New\s*\([^)]*\)\s*\.Parse\s*\([^)]*(?:r\.Form|r\.URL)"#, "template.Must with Parse from user input"),
+            (r#"template\.ParseFiles?\s*\([^)]*(?:r\.Form|r\.URL|r\.Param)"#, "template.ParseFiles with user-controlled path"),
+            (r#"template\.ParseGlob\s*\([^)]*(?:r\.Form|r\.URL|r\.Param)"#, "template.ParseGlob with user-controlled pattern"),
+            (r#"\.Execute\s*\([^)]*,\s*(?:r\.Form|r\.URL|r\.Body)"#, "template.Execute with user data"),
+            (r#"text\/template\.(?:New|Must|Parse|ParseFiles)\s*\([^)]*(?:r\.Form|r\.URL|os\.Args|flag)"#, "text/template with user input — potential command injection"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Template injection: {}. CWE-1336: User input passed to template parsing \
+                            can lead to XSS or template injection attacks.",
+                            desc
+                        ),
+                        fix_hint: "Never pass unsanitized user input to template.Parse(). Always validate \
+                            template paths against a whitelist. For dynamic templates, use a sandboxed engine \
+                            or pre-compile templates from trusted sources only.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-041: Host of Death (Unbounded Response Read)
+// Severity: high | CWE-400
+// Reading full HTTP response without size limit can cause memory exhaustion
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoHostOfDeath;
+
+impl LangRule for GoHostOfDeath {
+    fn id(&self) -> &str { "GO-SEC-041" }
+    fn name(&self) -> &str { "Host of Death - Unbounded Response Read" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = vec![
+            (r#"io\.ReadAll\s*\(\s*resp\.Body\s*\)"#, "io.ReadAll on response body — no size limit (CWE-400)"),
+            (r#"ioutil\.ReadAll\s*\(\s*resp\.Body\s*\)"#, "ioutil.ReadAll on response body — no size limit"),
+            (r#"ioutil\.ReadAll\s*\([^)]*Response\)"#, "ioutil.ReadAll on HTTP response without limit"),
+            (r#"io\.Copy\s*\([^,]+,\s*resp\.Body\s*\)"#, "io.Copy with response body — verify destination has limit"),
+            (r#"\.Read\s*\(\s*resp\.Body\s*\)"#, "Read from response body — ensure bounded buffer"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Host of Death vulnerability: {}. CWE-400: Unbounded reading of HTTP response \
+                            can cause memory exhaustion if server sends massive or infinite data.",
+                            desc
+                        ),
+                        fix_hint: "Use io.LimitReader() to bound response reads: \
+                            io.Copy(w, io.LimitReader(resp.Body, 10<<20)). \
+                            Set a reasonable max response size (e.g., 10MB) and reject oversized responses.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-042: Constant Math Overflow
+// Severity: medium | CWE-682
+// Arithmetic operations with all constant operands that could overflow
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoConstantMathOverflow;
+
+impl LangRule for GoConstantMathOverflow {
+    fn id(&self) -> &str { "GO-SEC-042" }
+    fn name(&self) -> &str { "Constant Math Overflow Risk" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let constant_math_patterns = vec![
+            (r#"\b0[xX][0-9a-fA-F]+\s*[\+\-\*]\s*0[xX][0-9a-fA-F]+"#, "Hex constant arithmetic — verify no overflow"),
+            (r#"\b\d{10,}\s*[\+\-\*]"#, "Large decimal constant arithmetic — potential overflow"),
+            (r#"\b[\+\-]?\d+\s*[\+\-]\s*[\+\-]?\d+\s*[\+\-]\s*[\+\-]?\d+\s*[\+\-]"#, "Chained constant additions — verify bounds"),
+            (r#"(?<![\w])[12]\d{9}(?!\d)"#, "Unix timestamp literal — verify time range handling"),
+            (r#"\b\d{4,}\s*\*\s*\d{4,}"#, "Large number multiplication — verify overflow check"),
+            (r#"int64\s*\([^)]*[0-9]{19,}"#, "int64 cast of very large constant — possible overflow"),
+            (r#"uint\s*\([^)]*-[0-9]+"#, "uint cast of negative constant — wraps around"),
+        ];
+
+        for (pattern, desc) in &constant_math_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = get_line_from_byte(code, m.start());
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Constant math overflow risk: {}. CWE-682: Operations with all constant operands \
+                            may overflow at runtime without warning.",
+                            desc
+                        ),
+                        fix_hint: "Use checked arithmetic or explicit overflow handling. Consider using \
+                            big.Int for large numbers. Example: import \"math/big\"; n := new(big.Int).SetString(\"12345678901234567890\", 10)".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-043: Multipart Form Boundary Validation
+// Severity: medium | CWE-68
+// Custom MIME boundary without validation can be exploited
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoMultipartBoundary;
+
+impl LangRule for GoMultipartBoundary {
+    fn id(&self) -> &str { "GO-SEC-043" }
+    fn name(&self) -> &str { "Multipart Form Boundary Validation Missing" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for multipart imports
+        let has_multipart = tree.imports.iter().any(|imp| {
+            imp.module.contains("mime/multipart") || imp.module.contains("net/http")
+        });
+
+        if !has_multipart && !code.contains("multipart") {
+            return findings;
+        }
+
+        let dangerous_patterns = vec![
+            (r#"multipart\.NewWriter\s*\([^)]*\)\s*\n[^}]*\.WriteField\s*\("#, "Multipart writer without boundary validation"),
+            (r#"r\.ParseMultipartForm\s*\([^)]*\)"#, "ParseMultipartForm — verify size limits"),
+            (r#"r\.FormFile\s*\([^)]*\)"#, "FormFile — verify boundary handling"),
+            (r#"boundary\s*=\s*["'][^"']{0,20}["']"#, "Short MIME boundary — easier to bypass"),
+            (r#"boundary\s*=\s*r\.FormValue|r\.PostFormValue"#, "Boundary from user input — boundary injection (CWE-68)"),
+            (r#"mime\.TypeByExtension\s*\([^)]*\)\s*\n[^}]*Content-Type"#, "Content-Type from file extension — verify type"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Multipart boundary issue: {}. CWE-68: Custom or user-controlled MIME boundaries \
+                            can be exploited for request smuggling or content-type bypass.",
+                            desc
+                        ),
+                        fix_hint: "Use cryptographically random boundaries (min 16 bytes). \
+                            Validate Content-Type before processing. Set ParseMultipartForm max memory limit.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-044: HTTP Request Smuggling
+// Severity: high | CWE-444
+// Ambiguous HTTP request parsing between proxy and server
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoHttpRequestSmuggling;
+
+impl LangRule for GoHttpRequestSmuggling {
+    fn id(&self) -> &str { "GO-SEC-044" }
+    fn name(&self) -> &str { "HTTP Request Smuggling Vulnerability" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = vec![
+            (r#"Transfer-Encoding[^;]*chunked"#, "Transfer-Encoding: chunked — verify proxy handling (CWE-444)"),
+            (r#"transfer-encoding[^;]*chunked"#, "transfer-encoding: chunked — ambiguous parsing risk"),
+            (r#"r\.Header\.Set\s*\([^)]*["']Transfer-Encoding["']"#, "Setting Transfer-Encoding header — smuggling risk"),
+            (r#"r\.Header\.Add\s*\([^)]*["']Transfer-Encoding["']"#, "Adding Transfer-Encoding header"),
+            (r#"Content-Length[^:]*:\s*0\s*[^}]*Transfer-Encoding"#, "Both Content-Length and Transfer-Encoding — smuggling"),
+            (r#"(?i)Transfer-Encoding[^:]*:\s*gzip|deflate|compress"#, "Transfer-Encoding with unsupported values — proxy confusion"),
+            (r#"\.Write\s*\(\s*\[\]byte\s*\(\s*r\.Body\s*\)\s*\)"#, "Forwarding raw body without Content-Length — smuggling"),
+            (r#"http\.Write\s*\([^)]*r\s*\)"#, "http.Write with request — verify headers"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "HTTP request smuggling: {}. CWE-444: Ambiguous Transfer-Encoding or \
+                            Content-Length can cause desync between proxies and servers.",
+                            desc
+                        ),
+                        fix_hint: "Ensure consistent header handling between proxy and server. \
+                            Disable Transfer-Encoding when Content-Length is present. \
+                            Validate and normalize all HTTP headers before forwarding.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-045: HTTP CORS Misconfiguration
+// Severity: medium | CWE-942
+// Access-Control-Allow-Origin: * with credentials exposes data
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoCorsMisconfiguration;
+
+impl LangRule for GoCorsMisconfiguration {
+    fn id(&self) -> &str { "GO-SEC-045" }
+    fn name(&self) -> &str { "CORS Misconfiguration" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = vec![
+            (r#"Access-Control-Allow-Origin\s*:\s*["']?\*["']?"#, "Access-Control-Allow-Origin: * — overly permissive (CWE-942)"),
+            (r#"Allow\s*\(\s*["']\*["']\s*,.*Credentials"#, "Allowing * with credentials"),
+            (r#"w\.Header\(\)\.Set\s*\([^)]*["']Access-Control-Allow-Origin["']\s*,\s*["']\*["']"#, "Setting CORS origin to *"),
+            (r#"ACAO\s*[=:]\s*["']\*["']"#, "ACAO = * shorthand"),
+            (r#"(?i)any\s*\|{2}\s*origin"#, "Allowing any origin dynamically"),
+            (r#"\*\.example\.com"#, "Wildcard subdomain CORS — verify intent"),
+            (r#"Access-Control-Allow-Credentials\s*:\s*true[^}]*Access-Control-Allow-Origin\s*:\s*\*"#, "Credentials true with origin * — dangerous combination"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "CORS misconfiguration: {}. CWE-942: Setting Access-Control-Allow-Origin to * \
+                            with credentials allows any website to read sensitive data.",
+                            desc
+                        ),
+                        fix_hint: "Never use '*' with Access-Control-Allow-Credentials: true. \
+                            Use specific origins: AllowOrigin: func(origin string) bool { return origin == \"https://trusted.com\" }. \
+                            Consider Vary: Origin header for caching.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-046: JWT None Algorithm
+// Severity: critical | CWE-347
+// JWT library using SigningMethodNone allows unsigned tokens
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoJwtNoneAlgorithm;
+
+impl LangRule for GoJwtNoneAlgorithm {
+    fn id(&self) -> &str { "GO-SEC-046" }
+    fn name(&self) -> &str { "JWT 'none' Algorithm Vulnerability" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for JWT imports
+        let jwt_imports = ["github.com/golang-jwt/jwt", "github.com/dgrijalva/jwt-go", "github.com/pascaldekloe/jwt"];
+        let has_jwt = tree.imports.iter().any(|imp| {
+            jwt_imports.iter().any(|j| imp.module.contains(j))
+        });
+
+        if !has_jwt && !code.contains("jwt") {
+            return findings;
+        }
+
+        let dangerous_patterns = vec![
+            (r#"SigningMethodNone"#, "SigningMethodNone — JWT with no signature (CWE-347)"),
+            (r#"\.Method\s*=\s*jwt\.SigningMethodHS256[^}]*\.Valid\s*=\s*false"#, "Weak JWT validation"),
+            (r#"jwt\.WithValidat(or|ion)\s*\([^)]*\)\s*\n[^}]*\.Parse\s*\([^)]*,\s*nil"#, "JWT parsed with nil keyfunc — no verification"),
+            (r#"ParseWithClaims\s*\([^)]*,\s*nil\s*,"#, "ParseWithClaims with nil keyfunc"),
+            (r#"Parse\s*\([^)]*,\s*nil\s*,"#, "JWT Parse with nil key — no signature check"),
+            (r#"jwt\.NewWithClaims\s*\([^)]*\.SigningMethodHMAC"#, "HMAC JWT — verify key strength"),
+            (r#"ECDSA256"#, "ECDSA256 — consider ECDSA384/512 or EdDSA"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "JWT vulnerability: {}. CWE-347: JWT 'none' algorithm allows attackers \
+                            to forge tokens by changing algorithm to 'none' and removing signature.",
+                            desc
+                        ),
+                        fix_hint: "Always specify expected algorithm: parser := jwt.NewParser(jwt.WithValidMethods([]string{\"RS256\"})). \
+                            Never accept 'none' algorithm. Validate algorithm matches expected type. \
+                            Example: if token.Method.(*jwt.SigningMethodRSA).Algorithm != \"RS256\" { return error }".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-047: Basic Auth in URL
+// Severity: high | CWE-598
+// Credentials embedded in URL are logged and exposed
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoBasicAuthInUrl;
+
+impl LangRule for GoBasicAuthInUrl {
+    fn id(&self) -> &str { "GO-SEC-047" }
+    fn name(&self) -> &str { "Basic Authentication in URL" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = vec![
+            (r#"http\.Get\s*\(\s*["'][^"']*:[^"']*@[^"']*["']"#, "HTTP URL with embedded credentials (CWE-598)"),
+            (r#"http\.NewRequest\s*\([^)]*["'][^"']*:[^"']*@[^"']*["']"#, "HTTP request with credentials in URL"),
+            (r#"url\.UserPassword"#, "url.UserPassword in URL — credentials exposed"),
+            (r#"url\.User\s*\([^)]*\).*\.Password\s*\([^)]*\)"#, "URL with User and Password set"),
+            (r#"Parse\s*\([^)]*["'][^"']*:[^"']*@[^"']*["']"#, "URL parsing with embedded credentials"),
+            (r#"proxy\s*[=:]\s*["'][^"']*:[^"']*@[^"']*["']"#, "Proxy URL with credentials"),
+            (r#"http\.BasicAuth\s*\([^)]*\)"#, "BasicAuth call — verify credentials not logged"),
+            (r#"Authorization\s*:\s*Basic[^;]*url\."#, "Authorization header with URL credentials"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Basic auth in URL: {}. CWE-598: Embedding credentials in URLs exposes them \
+                            in logs, browser history, and server access logs.",
+                            desc
+                        ),
+                        fix_hint: "Use Authorization header or SetBasicAuth instead: \
+                            req.SetBasicAuth(\"user\", \"pass\"). \
+                            Use environment variables: os.Getenv(\"API_USER\"), os.Getenv(\"API_PASS\"). \
+                            Never log URLs with credentials.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-048: TLS Weak Cipher Suites
+// Severity: high | CWE-327
+// TLS configuration using weak or deprecated cipher suites
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoTlsWeakCipher;
+
+impl LangRule for GoTlsWeakCipher {
+    fn id(&self) -> &str { "GO-SEC-048" }
+    fn name(&self) -> &str { "TLS Weak Cipher Suites" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let weak_cipher_patterns = vec![
+            (r#"CipherSuites\s*:\s*\[\s*\]\s*uint16\s*\{"#, "Empty CipherSuites array — uses system defaults"),
+            (r#"TLS_RSA_WITH_"#, "RSA cipher suites — lacks forward secrecy (CWE-327)"),
+            (r#"TLS_3DES_"#, "3DES cipher — deprecated (Sweet32 attack)"),
+            (r#"TLS_DHE_"#, "DHE cipher — consider ECDHE instead"),
+            (r#"TLS_ECDHE_"#, "ECDHE — verify specific curve"),
+            (r#"CipherSuites\s*:\s*\[\s* tls\.TLS_"#, "Check cipher suite selection"),
+            (r#"TLS_AES_128_"#, "AES-128 — consider AES-256 for sensitive data"),
+            (r#"RC4"#, "RC4 cipher — broken and deprecated"),
+            (r#"CBC\s*mode"#, "CBC mode — BEAST attack vulnerable"),
+        ];
+
+        for (pattern, desc) in &weak_cipher_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "TLS weak cipher: {}. CWE-327: Weak cipher suites can be broken by attackers, \
+                            compromising encrypted communications.",
+                            desc
+                        ),
+                        fix_hint: "Use strong cipher suites with forward secrecy: \
+                            CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, ...}. \
+                            Prefer AES-256-GCM. Disable 3DES, RC4, and RSA key exchange ciphers.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-049: Weak Diffie-Hellman Group
+// Severity: medium | CWE-326
+// DH parameters less than 2048 bits are cryptographically weak
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoWeakDhGroup;
+
+impl LangRule for GoWeakDhGroup {
+    fn id(&self) -> &str { "GO-SEC-049" }
+    fn name(&self) -> &str { "Weak Diffie-Hellman Parameters" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let weak_dh_patterns = vec![
+            (r#"dh\.GenerateKey\s*\([^)]*1024"#, "DH with 1024-bit key — too weak (CWE-326)"),
+            (r#"dh\.GenerateKey\s*\([^)]*512"#, "DH with 512-bit key — trivially breakable"),
+            (r#"dh\.Params\s*:\s*&dh\.Parameters\s*\{[^}]*P:\s*"#, "DH Parameters — verify P is >= 2048 bits"),
+            (r#"crypto\/dh"#, "DH usage — prefer ECDHE with P-256/P-384"),
+            (r#"tls\.CurvePreferences\s*:\s*\[\s*\]"#, "Empty CurvePreferences — verify default curves"),
+            (r#"CurvePreferences\s*:\s*\[\s*crypto\/tls\.(CurveP256|CurveP384)"#, "Verify curve selection — prefer P-384+"),
+            (r#"tls\.CurveP256"#, "CurveP256 — consider P-384 for sensitive data"),
+        ];
+
+        for (pattern, desc) in &weak_dh_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Weak DH group: {}. CWE-326: Diffie-Hellman parameters < 2048 bits \
+                            can be broken by adversaries with sufficient resources.",
+                            desc
+                        ),
+                        fix_hint: "Use DH parameters >= 2048 bits: dh.Parameters{P: bigInt, G: bigInt}. \
+                            Prefer ECDHE with P-384 or X25519: CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP384}. \
+                            TLS 1.3 uses secure defaults.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-050: HTTP Verb Tampering
+// Severity: medium | CWE-638
+// Route accepting any HTTP method without proper authorization
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoHttpVerbTampering;
+
+impl LangRule for GoHttpVerbTampering {
+    fn id(&self) -> &str { "GO-SEC-050" }
+    fn name(&self) -> &str { "HTTP Verb Tampering" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let web_imports = ["net/http", "github.com/gin-gonic", "github.com/labstack/echo", "github.com/gorilla/mux"];
+        let has_web = tree.imports.iter().any(|imp| {
+            web_imports.iter().any(|w| imp.module.contains(w))
+        });
+
+        if !has_web && !code.contains("http.HandlerFunc") {
+            return findings;
+        }
+
+        let dangerous_patterns = vec![
+            (r#"ANY\s*\(\s*["']\/"#, "ANY() handler accepting all HTTP methods (CWE-638)"),
+            (r#"\.Match\s*\([^)]*r\.Method\s*=\s*["']\*{}"#, "Route matching all methods"),
+            (r#"r\.Method\s*==\s*["']\*{}"#, "Method check allowing any"),
+            (r#"http\.MethodGet\s*\|\s*http\.MethodPost"#, "Multiple methods — verify authorization"),
+            (r#"\.HandleFunc\s*\([^)]*func\s*\([^)]*r\s+\*http\.Request"#, "Generic handler — verify method-specific logic"),
+            (r#"switch\s+r\.Method\s*\{[^}]*case\s+"[^"]+":[^}]*\}"#, "Switch on method — verify all cases"),
+            (r#"r\.RequestURI\s*=="#, "RequestURI comparison — verify path handling"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "HTTP verb tampering: {}. CWE-638: Routes accepting any HTTP method may \
+                            bypass method-specific authorization checks.",
+                            desc
+                        ),
+                        fix_hint: "Use explicit method handlers: router.GET(), router.POST(), etc. \
+                            Implement method-specific authorization. Never rely solely on path-based access control. \
+                            Example: router.GET(\"/resource\", authMiddleware, handler).".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-051: SQLite SQL Injection
+// Severity: critical | CWE-89
+// SQLite exec/query with string concatenation
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoSqliteSqlInjection;
+
+impl LangRule for GoSqliteSqlInjection {
+    fn id(&self) -> &str { "GO-SEC-051" }
+    fn name(&self) -> &str { "SQLite SQL Injection" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let sqlite_imports = ["modernc.org/sqlite", "github.com/mattn/go-sqlite3", "crawshaw.io/sqlite"];
+        let has_sqlite = tree.imports.iter().any(|imp| {
+            sqlite_imports.iter().any(|s| imp.module.contains(s))
+        });
+
+        if !has_sqlite && !code.contains("sqlite") {
+            return findings;
+        }
+
+        let dangerous_patterns = vec![
+            (r#"sqlite3\.Exec\s*\([^)]*\+[^)]*\)"#, "sqlite3.Exec with string concatenation (CWE-89)"),
+            (r#"sqlite3\.Query\s*\([^)]*\+[^)]*\)"#, "sqlite3.Query with string concatenation"),
+            (r#"sqlite3\.QueryRow\s*\([^)]*\+[^)]*\)"#, "sqlite3.QueryRow with string concatenation"),
+            (r#"\.Exec\s*\(\s*fmt\.Sprintf\s*\([^)]*sqlite"#, "Exec with fmt.Sprintf on SQLite"),
+            (r#"\.Query\s*\(\s*`[^`]*\+[^`]*`"#, "Query with backtick and concatenation"),
+            (r#"\.Exec\s*\(\s*`[^`]*SELECT[^`]*\+[^`]*`"#, "Exec with SELECT concatenation"),
+            (r#"db\.Exec\s*\([^)]*\+[^)]*r\.(Form|URL|Body|FormValue)"#, "DB Exec with user input concatenation"),
+            (r#"db\.Query\s*\([^)]*\+[^)]*req\."#, "DB Query with request data concatenation"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "SQLite SQL injection: {}. CWE-89: String concatenation in SQL queries \
+                            allows attackers to inject malicious SQL code.",
+                            desc
+                        ),
+                        fix_hint: "Always use parameterized queries: \
+                            db.Exec(\"INSERT INTO users VALUES(?, ?)\", username, email). \
+                            Never concatenate user input into SQL strings. \
+                            For dynamic identifiers, use a whitelist of allowed values.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GO-SEC-052: Insecure File Permissions
+// Severity: medium | CWE-732
+// os.Chmod with overly permissive modes
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct GoInsecureFilePermission;
+
+impl LangRule for GoInsecureFilePermission {
+    fn id(&self) -> &str { "GO-SEC-052" }
+    fn name(&self) -> &str { "Insecure File Permission" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = vec![
+            (r#"os\.Chmod\s*\([^)]*0[0-7]{3}"#, "os.Chmod with 0777 or similar — world-readable (CWE-732)"),
+            (r#"os\.Chmod\s*\([^)]*0[0-7]{2}[6-7]"#, "os.Chmod adding group/other write — insecure"),
+            (r#"ioutil\.WriteFile\s*\([^)]*0[0-7]{3}"#, "WriteFile with 0777 mode"),
+            (r#"os\.OpenFile\s*\([^)]*0[0-7]{3}"#, "OpenFile with 0777 mode"),
+            (r#"os\.MkdirAll\s*\([^)]*0[0-7]{3}"#, "MkdirAll with 0777 mode"),
+            (r#"os\.Mkdir\s*\([^)]*0[0-7]{3}"#, "Mkdir with 0777 mode"),
+            (r#"0600"#, "0600 — verify this is for secrets, not config"),
+            (r#"0644"#, "0644 — world-readable — verify intent for sensitive files"),
+            (r#"Perm\s*:\s*0[0-7]{3}"#, "File mode with 0777 pattern"),
+            (r#"FileMode\s*\(\s*0[0-7]{3}"#, "FileMode with permissive octal"),
+            (r#"chmod\s*\+\s*rw"#, "chmod adding read/write to group/others"),
+        ];
+
+        for (pattern, desc) in &dangerous_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Insecure file permission: {}. CWE-732: Files with overly permissive modes \
+                            (0777, world-readable) can be accessed by unauthorized users.",
+                            desc
+                        ),
+                        fix_hint: "Use least-privilege permissions: 0600 for secrets, 0640 for config, 0755 for executables. \
+                            Example: os.Chmod(\"secret.key\", 0600). \
+                            On POSIX: umask 027 or stricter. Never use 0777 in production.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1719,12 +2692,25 @@ pub fn go_rules() -> Vec<Box<dyn LangRule>> {
         Box::new(GoInsecureTlsConfig),
         // GO-SEC-034: Insecure Deserialization
         Box::new(GoInsecureDeser),
-        // GO-SEC-035 to GO-SEC-037: Vulnerable Sink Detection (Reverse-Engineered from hackingtool)
-        // GO-SEC-035: GORM Raw Query Injection
+        // GO-SEC-035 to GO-SEC-037: Vulnerable Sink Detection
         Box::new(GoGormRawInjection),
-        // GO-SEC-036: Insecure Direct Object Reference
         Box::new(GoIdor),
-        // GO-SEC-037: Command Injection via os/exec LookPath
         Box::new(GoCommandInjectionLookPath),
+        // GO-SEC-038 to GO-SEC-052: Additional Security Rules
+        Box::new(GoHttpKeepAliveDisabled),      // GO-SEC-038
+        Box::new(GoHttpNoTimeout),               // GO-SEC-039
+        Box::new(GoTemplateInjection),            // GO-SEC-040
+        Box::new(GoHostOfDeath),                 // GO-SEC-041
+        Box::new(GoConstantMathOverflow),        // GO-SEC-042
+        Box::new(GoMultipartBoundary),            // GO-SEC-043
+        Box::new(GoHttpRequestSmuggling),        // GO-SEC-044
+        Box::new(GoCorsMisconfiguration),         // GO-SEC-045
+        Box::new(GoJwtNoneAlgorithm),            // GO-SEC-046
+        Box::new(GoBasicAuthInUrl),              // GO-SEC-047
+        Box::new(GoTlsWeakCipher),               // GO-SEC-048
+        Box::new(GoWeakDhGroup),                  // GO-SEC-049
+        Box::new(GoHttpVerbTampering),           // GO-SEC-050
+        Box::new(GoSqliteSqlInjection),          // GO-SEC-051
+        Box::new(GoInsecureFilePermission),      // GO-SEC-052
     ]
 }

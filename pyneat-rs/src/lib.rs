@@ -245,7 +245,7 @@ fn findings_to_json(findings: Vec<Value>) -> Vec<Value> {
                 "snippet": f["snippet"],
                 "problem": f["problem"],
                 "fix_hint": f["fix_hint"],
-                "auto_fix": f.get("auto_fix"),
+                "auto_fix_available": f.get("auto_fix"),
                 "replacement": f.get("replacement"),
             })
         })
@@ -348,7 +348,7 @@ fn scan_security_internal(
                         "snippet": finding.snippet,
                         "problem": finding.problem,
                         "fix_hint": finding.fix_hint,
-                        "auto_fix": finding.auto_fix_available,
+                        "auto_fix_available": finding.auto_fix_available,
                         "replacement": replacement,
                     })
                 })
@@ -438,14 +438,34 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
 
     let start = finding["start"].as_u64().unwrap_or(0) as usize;
     let end = finding["end"].as_u64().unwrap_or(0) as usize;
-    let replacement = finding["replacement"].as_str().unwrap_or("");
 
     if start > end || end > code.len() {
         return Err(pyo3::exceptions::PyValueError::new_err("Invalid fix range"));
     }
 
+    // Use pre-computed replacement from scan result if available
+    let replacement = finding["replacement"].as_str().unwrap_or("");
+    let replacement = if !replacement.is_empty() {
+        replacement.to_string()
+    } else {
+        // Fallback: compute replacement from known fix patterns
+        let rule_id = finding["rule_id"].as_str().unwrap_or("");
+        let original = &code[start..end];
+        match rule_id {
+            "SEC-014" if original.contains("yaml.load") => {
+                original.replace("yaml.load(", "yaml.safe_load(")
+            }
+            // Add more fix patterns here as they are implemented
+            _ => {
+                return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                    "No auto-fix available for rule: {}", rule_id
+                )));
+            }
+        }
+    };
+
     let mut result = code.to_string();
-    result.replace_range(start..end, replacement);
+    result.replace_range(start..end, &replacement);
 
     Ok(result)
 }
@@ -509,7 +529,8 @@ fn get_rules() -> PyResult<String> {
             "id": rule.id(),
             "name": rule.name(),
             "severity": rule.severity().as_str(),
-            "auto_fix": rule.supports_auto_fix(),
+            "auto_fix_available": rule.supports_auto_fix(),
+            "category": "security",
         }));
     }
 
@@ -536,6 +557,203 @@ fn parse_ln_ast(code: &str, language: &str) -> PyResult<String> {
 #[pyfunction]
 fn detect_language(ext: &str) -> PyResult<Option<String>> {
     Ok(crate::scanner::multilang::detect_language_from_extension(ext))
+}
+
+/// Scan code for any language (JS, TS, Go, Java, Rust, C#, PHP, Ruby).
+/// Dispatches to the appropriate language-specific scanner.
+/// Returns a JSON array of findings.
+#[pyfunction]
+fn scan_multilang(code: &str, language: &str) -> PyResult<String> {
+    use crate::scanner::{
+        JavaScriptScanner, TypeScriptScanner, GoScanner,
+        JavaScanner, CSharpScanner, PhpScanner, RubyScanner,
+        RustScanner as LangRustScanner,
+    };
+
+    let lang = language.to_lowercase();
+    let ast = crate::scanner::multilang::parse_ln_ast(code, &lang);
+    let findings: Vec<serde_json::Value> = match lang.as_str() {
+        "javascript" | "js" | "jsx" | "mjs" | "cjs" => {
+            let scanner = JavaScriptScanner::new();
+            scanner.detect(&ast, code)
+                .into_iter()
+                .map(|f| {
+                    json!({
+                        "rule_id": f.rule_id,
+                        "severity": f.severity,
+                        "line": f.line,
+                        "column": f.column,
+                        "start": f.start_byte,
+                        "end": f.end_byte,
+                        "snippet": f.snippet,
+                        "problem": f.problem,
+                        "fix_hint": f.fix_hint,
+                        "auto_fix_available": f.auto_fix_available,
+                        "replacement": f.replacement,
+                        "language": "javascript",
+                    })
+                })
+                .collect()
+        }
+        "typescript" | "ts" | "tsx" => {
+            let scanner = TypeScriptScanner::new();
+            scanner.detect(&ast, code)
+                .into_iter()
+                .map(|f| {
+                    json!({
+                        "rule_id": f.rule_id,
+                        "severity": f.severity,
+                        "line": f.line,
+                        "column": f.column,
+                        "start": f.start_byte,
+                        "end": f.end_byte,
+                        "snippet": f.snippet,
+                        "problem": f.problem,
+                        "fix_hint": f.fix_hint,
+                        "auto_fix_available": f.auto_fix_available,
+                        "replacement": f.replacement,
+                        "language": "typescript",
+                    })
+                })
+                .collect()
+        }
+        "go" | "golang" => {
+            let scanner = GoScanner::new();
+            scanner.detect(&ast, code)
+                .into_iter()
+                .map(|f| {
+                    json!({
+                        "rule_id": f.rule_id,
+                        "severity": f.severity,
+                        "line": f.line,
+                        "column": f.column,
+                        "start": f.start_byte,
+                        "end": f.end_byte,
+                        "snippet": f.snippet,
+                        "problem": f.problem,
+                        "fix_hint": f.fix_hint,
+                        "auto_fix_available": f.auto_fix_available,
+                        "replacement": f.replacement,
+                        "language": "go",
+                    })
+                })
+                .collect()
+        }
+        "java" => {
+            let scanner = JavaScanner::new();
+            scanner.detect(&ast, code)
+                .into_iter()
+                .map(|f| {
+                    json!({
+                        "rule_id": f.rule_id,
+                        "severity": f.severity,
+                        "line": f.line,
+                        "column": f.column,
+                        "start": f.start_byte,
+                        "end": f.end_byte,
+                        "snippet": f.snippet,
+                        "problem": f.problem,
+                        "fix_hint": f.fix_hint,
+                        "auto_fix_available": f.auto_fix_available,
+                        "replacement": f.replacement,
+                        "language": "java",
+                    })
+                })
+                .collect()
+        }
+        "rust" | "rs" => {
+            let scanner = LangRustScanner::new();
+            scanner.detect(&ast, code)
+                .into_iter()
+                .map(|f| {
+                    json!({
+                        "rule_id": f.rule_id,
+                        "severity": f.severity,
+                        "line": f.line,
+                        "column": f.column,
+                        "start": f.start_byte,
+                        "end": f.end_byte,
+                        "snippet": f.snippet,
+                        "problem": f.problem,
+                        "fix_hint": f.fix_hint,
+                        "auto_fix_available": f.auto_fix_available,
+                        "replacement": f.replacement,
+                        "language": "rust",
+                    })
+                })
+                .collect()
+        }
+        "csharp" | "cs" | "c#" => {
+            let scanner = CSharpScanner::new();
+            scanner.detect(&ast, code)
+                .into_iter()
+                .map(|f| {
+                    json!({
+                        "rule_id": f.rule_id,
+                        "severity": f.severity,
+                        "line": f.line,
+                        "column": f.column,
+                        "start": f.start_byte,
+                        "end": f.end_byte,
+                        "snippet": f.snippet,
+                        "problem": f.problem,
+                        "fix_hint": f.fix_hint,
+                        "auto_fix_available": f.auto_fix_available,
+                        "replacement": f.replacement,
+                        "language": "csharp",
+                    })
+                })
+                .collect()
+        }
+        "php" => {
+            let scanner = PhpScanner::new();
+            scanner.detect(&ast, code)
+                .into_iter()
+                .map(|f| {
+                    json!({
+                        "rule_id": f.rule_id,
+                        "severity": f.severity,
+                        "line": f.line,
+                        "column": f.column,
+                        "start": f.start_byte,
+                        "end": f.end_byte,
+                        "snippet": f.snippet,
+                        "problem": f.problem,
+                        "fix_hint": f.fix_hint,
+                        "auto_fix_available": f.auto_fix_available,
+                        "replacement": f.replacement,
+                        "language": "php",
+                    })
+                })
+                .collect()
+        }
+        "ruby" | "rb" => {
+            let scanner = RubyScanner::new();
+            scanner.detect(&ast, code)
+                .into_iter()
+                .map(|f| {
+                    json!({
+                        "rule_id": f.rule_id,
+                        "severity": f.severity,
+                        "line": f.line,
+                        "column": f.column,
+                        "start": f.start_byte,
+                        "end": f.end_byte,
+                        "snippet": f.snippet,
+                        "problem": f.problem,
+                        "fix_hint": f.fix_hint,
+                        "auto_fix_available": f.auto_fix_available,
+                        "replacement": f.replacement,
+                        "language": "ruby",
+                    })
+                })
+                .collect()
+        }
+        _ => vec![],
+    };
+
+    serde_json::to_string(&findings)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
 }
 
 /// Get list of supported languages.
@@ -1063,7 +1281,7 @@ fn scan_security_with_taint(code: &str, language: &str, enable_taint: bool) -> P
                         "snippet": finding.snippet,
                         "problem": finding.problem,
                         "fix_hint": finding.fix_hint,
-                        "auto_fix": finding.auto_fix_available,
+                        "auto_fix_available": finding.auto_fix_available,
                         "replacement": replacement,
                     })
                 })
@@ -1162,7 +1380,7 @@ fn scan_security_with_ai(code: &str, language: &str, options: ScanOptions) -> Py
                         "snippet": finding.snippet,
                         "problem": finding.problem,
                         "fix_hint": finding.fix_hint,
-                        "auto_fix": finding.auto_fix_available,
+                        "auto_fix_available": finding.auto_fix_available,
                         "replacement": replacement,
                     })
                 })
@@ -1295,7 +1513,7 @@ fn scan_file_with_options(path: &str, options: ScanOptions) -> PyResult<String> 
                         "snippet": finding.snippet,
                         "problem": finding.problem,
                         "fix_hint": finding.fix_hint,
-                        "auto_fix": finding.auto_fix_available,
+                        "auto_fix_available": finding.auto_fix_available,
                         "replacement": replacement,
                     })
                 })
@@ -1340,6 +1558,27 @@ fn scan_file_with_options(path: &str, options: ScanOptions) -> PyResult<String> 
 // ============================================================================
 // AI Security Scanner (Python API)
 // ============================================================================
+
+/// Get all available AI security rules.
+/// Returns a JSON array of AI rule metadata.
+#[pyfunction]
+fn get_ai_rules() -> PyResult<String> {
+    let scanner = AiSecurityScanner::new();
+    let rules: Vec<serde_json::Value> = scanner.rules.iter().map(|rule| {
+        serde_json::json!({
+            "id": rule.id(),
+            "name": rule.name(),
+            "vulnerability_type": rule.vulnerability_type().as_str(),
+            "description": rule.description(),
+            "severity": rule.severity(),
+            "confidence": rule.confidence(),
+            "category": "ai_security",
+        })
+    }).collect();
+
+    serde_json::to_string(&rules)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))
+}
 
 /// Scan code for AI-specific security vulnerabilities including MCP rules.
 #[pyfunction]
@@ -1405,7 +1644,7 @@ fn chrono_lite_now() -> String {
 
 /// Python module definition
 #[pymodule]
-fn pyneat_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn pyneat(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(scan_security, m)?)?;
     m.add_function(wrap_pyfunction!(scan_security_configured, m)?)?;
     m.add_function(wrap_pyfunction!(apply_auto_fix, m)?)?;
@@ -1416,6 +1655,7 @@ fn pyneat_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(parse_ln_ast, m)?)?;
     m.add_function(wrap_pyfunction!(detect_language, m)?)?;
     m.add_function(wrap_pyfunction!(supported_languages, m)?)?;
+    m.add_function(wrap_pyfunction!(scan_multilang, m)?)?;
 
     // Supply chain: CVE / OSV
     m.add_function(wrap_pyfunction!(cve_check_package, m)?)?;
@@ -1446,6 +1686,7 @@ fn pyneat_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(scan_file_with_options, m)?)?;
 
     // AI security
+    m.add_function(wrap_pyfunction!(get_ai_rules, m)?)?;
     m.add_function(wrap_pyfunction!(scan_ai_security, m)?)?;
     m.add_function(wrap_pyfunction!(scan_security_with_ai, m)?)?;
 

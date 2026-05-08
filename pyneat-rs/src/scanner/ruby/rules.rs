@@ -62,6 +62,7 @@ impl LangRule for RubyTodoComments {
                 problem: format!("TODO/FIXME marker: {} - {}", todo.marker, todo.description),
                 fix_hint: "Resolve this TODO item or schedule it.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -101,6 +102,7 @@ impl LangRule for RubyDebugOutput {
                         problem: format!("Debug output: {} - remove before production.", desc),
                         fix_hint: "Remove or comment out debug output before deploying to production.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -146,6 +148,7 @@ impl LangRule for RubyConsoleOutput {
                         problem: format!("Console output: {} - use proper logging framework.", desc),
                         fix_hint: "Use Ruby's Logger or a logging gem like Log4r for production.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -184,6 +187,7 @@ impl LangRule for RubyGlobalVariables {
                     problem: format!("Global variable {} used - consider class/instance variables instead.", var_name),
                     fix_hint: "Use instance variables (@var) or class variables (@@var) or constants (VAR) instead of global variables.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -219,6 +223,7 @@ impl LangRule for RubyStringConcat {
                 problem: "String concatenation (+=) inside a loop is inefficient in Ruby.".to_string(),
                 fix_hint: "Use string array and join(), or use << (append operator) instead of += for better performance.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -255,6 +260,7 @@ impl LangRule for RubyMagicNumbers {
                     problem: format!("Magic number {} detected - consider extracting to a named constant.", num_str),
                     fix_hint: "Define a constant with a descriptive name: MAX_RETRIES = 5".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -290,6 +296,7 @@ impl LangRule for RubyMissingSafeNav {
                 problem: "Consider using safe navigation operator (&.) instead of explicit nil checks.".to_string(),
                 fix_hint: "Use obj&.method instead of: if obj && obj.method".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -332,6 +339,7 @@ impl LangRule for RubyMissingRescue {
                     problem: "begin block without rescue clause - risky operations may fail silently.".to_string(),
                     fix_hint: "Add rescue clause: begin; ...; rescue StandardError => e; ...; end".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }

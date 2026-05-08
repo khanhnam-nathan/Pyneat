@@ -55,6 +55,7 @@ impl Rule for TimingAttackRule {
                             problem: format!("Potential timing attack vulnerability: {}", desc),
                             fix_hint: "Use timing-safe comparison: hmac.compare_digest(a, b) or secrets.compare_digest(a, b).".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }

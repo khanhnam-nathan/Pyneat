@@ -51,6 +51,7 @@ impl Rule for Sec042 {
                         problem: format!("Sensitive data logged: {}", desc),
                         fix_hint: "Use structured logging with field masking. Redact sensitive data before logging.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

@@ -1,0 +1,169 @@
+{
+  "name": "pyneat-vscode",
+  "displayName": "PyNeat - AI Code Cleaner & Security Scanner",
+  "description": "Real-time AI-generated code cleaner and security scanner with auto-fix support for Python, JavaScript, TypeScript, Go, Java, Rust, C#, PHP, and Ruby. Detects 200+ vulnerability patterns including OWASP Top 10, prompt injection, and AI-specific risks.",
+  "version": "1.0.4",
+  "publisher": "pyneat",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "security",
+    "scanner",
+    "lsp",
+    "linter",
+    "saast",
+    "static-analysis",
+    "vulnerability",
+    "owasp",
+    "code-quality",
+    "python",
+    "javascript",
+    "typescript",
+    "golang",
+    "rust",
+    "java",
+    "c-sharp",
+    "php",
+    "ruby",
+    "pyneat",
+    "auto-fix",
+    "prompt-injection",
+    "ai-security",
+    "cleaner"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khanhnam-nathan/Pyneat.git"
+  },
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:go",
+    "onLanguage:java",
+    "onLanguage:rust",
+    "onLanguage:ruby",
+    "onLanguage:php",
+    "onLanguage:csharp"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "python",
+        "extensions": [".py"],
+        "aliases": ["Python"]
+      },
+      {
+        "id": "javascript",
+        "extensions": [".js", ".jsx", ".mjs", ".cjs"],
+        "aliases": ["JavaScript"]
+      },
+      {
+        "id": "typescript",
+        "extensions": [".ts", ".tsx"],
+        "aliases": ["TypeScript"]
+      }
+    ],
+    "configuration": {
+      "title": "PyNeat",
+      "properties": {
+        "pyneat.debounceMs": {
+          "type": "number",
+          "default": 500,
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "Delay in ms before running scan after a keystroke (0 = scan on save only)"
+        },
+        "pyneat.severityThreshold": {
+          "type": "string",
+          "default": "medium",
+          "enum": ["critical", "high", "medium", "low", "info"],
+          "description": "Minimum severity level to display as a diagnostic"
+        },
+        "pyneat.scanOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan when a file is saved"
+        },
+        "pyneat.scanOnType": {
+          "type": "boolean",
+          "default": true,
+          "description": "Scan as you type (uses debounceMs delay)"
+        },
+        "pyneat.binaryPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the pyneat binary (leave empty to auto-detect)"
+        },
+        "pyneat.enabledRules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "List of specific rule IDs to enable (empty = all rules)"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "pyneat.explain",
+        "title": "PyNeat: Explain Rule",
+        "description": "Show detailed explanation for a security rule"
+      },
+      {
+        "command": "pyneat.scanFile",
+        "title": "PyNeat: Scan Active File",
+        "description": "Run PyNeat security scan on the active file"
+      },
+      {
+        "command": "pyneat.disableRule",
+        "title": "PyNeat: Disable Rule for Line",
+        "description": "Add an ignore comment to disable a rule at the current line"
+      },
+      {
+        "command": "pyneat.openSettings",
+        "title": "PyNeat: Open Settings",
+        "description": "Open PyNeat extension settings"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "pyneat.explain",
+          "when": "editor.hasCodeActionsProvider"
+        },
+        {
+          "command": "pyneat.disableRule",
+          "when": "editor.hasCodeActionsProvider"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "node out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.75.0",
+    "@vscode/test-electron": "^2.3.0",
+    "typescript": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  }
+}

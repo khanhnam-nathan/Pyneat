@@ -52,6 +52,7 @@ impl Rule for MissingContentTypeValidationRule {
                         problem: format!("File upload without proper Content-Type validation: {}", desc),
                         fix_hint: "Always validate Content-Type header server-side. Use python-magic for actual file type detection.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

@@ -84,6 +84,7 @@ impl LangRule for CSharpEmptyCatchBlock {
                     problem: "Empty catch block detected.".to_string(),
                     fix_hint: "Either remove the empty catch block or add proper error handling.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -116,6 +117,7 @@ impl LangRule for CSharpEmptyCatchBlock {
                     problem: "Empty catch block detected.".to_string(),
                     fix_hint: "Add error handling: catch (Exception e) { _logger.LogError(e); }".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -187,6 +189,7 @@ impl LangRule for CSharpConsoleUsage {
                             ),
                             fix_hint: "Use proper logging: _logger.LogInformation(), _logger.LogDebug(), etc.".to_string(),
                             auto_fix_available: true,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -261,6 +264,7 @@ impl LangRule for CSharpDeepNesting {
                     ),
                     fix_hint: "Extract deeply nested logic into separate methods to improve readability.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
                 reported_lines.insert(line_idx + 1);
             }
@@ -320,6 +324,7 @@ impl LangRule for CSharpNullableWarning {
                             ),
                             fix_hint: "Remove the pragma and fix the underlying null-safety issues.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -379,6 +384,7 @@ impl LangRule for CSharpMagicNumbers {
                     problem: format!("Magic number '{}' detected. Extract to a named constant.", num_str),
                     fix_hint: "Define a const: private const int MaxRetries = 5;".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -420,6 +426,7 @@ impl LangRule for CSharpTodoComments {
                 problem: format!("Unresolved {} marker: {}", todo.marker, todo.description),
                 fix_hint: "Resolve this TODO item or schedule it.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -443,6 +450,7 @@ impl LangRule for CSharpTodoComments {
                         problem: "TODO/FIXME marker detected.".to_string(),
                         fix_hint: "Resolve this TODO item or schedule it.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

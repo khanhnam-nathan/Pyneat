@@ -108,6 +108,7 @@ impl LangRule for JavaDeserializationRCE {
                             ObjectInputFilter with explicit class whitelist. Never deserialize \
                             untrusted input with ObjectInputStream.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -137,6 +138,7 @@ impl LangRule for JavaDeserializationRCE {
                         Gson.fromJson). If ObjectInputStream is required, wrap with \
                         ObjectInputFilter and whitelist allowed classes.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -211,6 +213,7 @@ impl LangRule for JavaSqlInjection {
                             methods. Example: PreparedStatement ps = conn.prepareStatement( \
                             \"SELECT * FROM users WHERE id = ?\"); ps.setInt(1, userId);".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -274,6 +277,7 @@ impl LangRule for JavaXXE {
                             factory.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);"
                             .to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -318,6 +322,7 @@ impl LangRule for JavaXXE {
                                 javax.json.stream or Jackson dataformat-xml with secure defaults."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -382,6 +387,7 @@ impl LangRule for JavaJndiInjection {
                             System.setProperty(\"com.sun.jndi.ldap.object.trustURLCodebase\", \"false\");"
                             .to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 } else {
                     let has_import = tree.imports.iter().any(|i| {
@@ -410,6 +416,7 @@ impl LangRule for JavaJndiInjection {
                                 -Dcom.sun.jndi.ldap.object.trustURLCodebase=false"
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -448,6 +455,7 @@ impl LangRule for JavaJndiInjection {
                             -Dcom.sun.jndi.ldap.object.trustURLCodebase=false"
                             .to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -525,6 +533,7 @@ impl LangRule for JavaSSRF {
                             Example: WhitelistValidator.validate(url) before making the request."
                             .to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -600,6 +609,7 @@ impl LangRule for JavaSpELInjection {
                             TemplateParserContext with #{} syntax and validate variable names."
                             .to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
 
                     if is_user_controlled && findings.last().map(|f| f.line == call.start_line).unwrap_or(false) {
@@ -675,6 +685,7 @@ impl LangRule for JavaHardcodedSecrets {
                                     Use getProperty(\"DB_PASSWORD\") and set via environment."
                                     .to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -733,6 +744,7 @@ impl LangRule for JavaWeakCrypto {
                             Example: Cipher.getInstance(\"AES/GCM/NoPadding\") with GCMParameterSpec."
                             .to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -767,6 +779,7 @@ impl LangRule for JavaWeakCrypto {
                             ),
                             fix_hint: fix.to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -827,6 +840,7 @@ impl LangRule for JavaCommandInjection {
                             Example: new ProcessBuilder(\"ls\", \"-la\", userInput) — note NO shell=True."
                             .to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 } else if !call.arguments.is_empty() {
                     let arg = &call.arguments[0];
@@ -851,6 +865,7 @@ impl LangRule for JavaCommandInjection {
                                 over Runtime.exec() and pass arguments as separate array elements."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -934,6 +949,7 @@ impl LangRule for JavaPathTraversal {
                                 Prefer Path.of() over File constructor (more predictable)."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1018,6 +1034,7 @@ impl LangRule for JavaSpringSecurityMisconfig {
                                 with explicit role checks over global permitAll()."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1097,6 +1114,7 @@ impl LangRule for JavaLogInjection {
                                 logger.info(username). Never log passwords, tokens, or PII."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1137,6 +1155,7 @@ impl LangRule for JavaLogInjection {
                                 to automatically mask sensitive patterns."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1211,6 +1230,7 @@ impl LangRule for JavaLdapInjection {
                                 search-based lookup when possible."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1287,6 +1307,7 @@ impl LangRule for JavaUnsafeReflection {
                                 (Java SecurityManager or newer sandboxing mechanisms)."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     } else {
                         let has_validation = tree.calls.iter().any(|c| {
@@ -1314,6 +1335,7 @@ impl LangRule for JavaUnsafeReflection {
                                     if (!ALLOWED_CLASSES.contains(className)) throw SecurityException."
                                     .to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -1394,6 +1416,7 @@ impl LangRule for JavaMassAssignment {
                                 objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1473,6 +1496,7 @@ impl LangRule for JavaTemplateInjection {
                                 new SecurityFM3RestrictedClassResolver());"
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1543,6 +1567,7 @@ impl LangRule for JavaXMLDecoder {
                             a custom SecurityManager class is still viable)."
                             .to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
 
                     if is_user_input && findings.last().map(|f| f.line == call.start_line).unwrap_or(false) {
@@ -1618,6 +1643,7 @@ impl LangRule for JavaTypeConfusion {
                                 instead of separate instanceof + cast blocks."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1660,6 +1686,7 @@ impl LangRule for JavaTypeConfusion {
                                 if (obj instanceof MyClass c) { /* use c */ }"
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1748,6 +1775,7 @@ impl LangRule for JavaInsecureCookie {
                                 Or use SameSite attribute in cookie constructor."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1827,6 +1855,7 @@ impl LangRule for JavaYamlDeserialization {
                                 Or limit to primitive types: SafeConstructor only."
                                 .to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1870,6 +1899,7 @@ impl LangRule for JavaSlopsquatting {
                         problem: format!("Slopsquatting Risk: The package '{}' appears to be a hallucinated name.", imp.module),
                         fix_hint: "Verify this package exists on Maven Central before using.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1916,6 +1946,7 @@ impl LangRule for JavaVerboseError {
                         problem: desc.to_string(),
                         fix_hint: "Log error details server-side, return generic message to client.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1961,6 +1992,7 @@ impl LangRule for JavaMissingInputValidation {
                         problem: desc.to_string(),
                         fix_hint: "Validate all user input using Bean Validation (@NotNull, @Size) or custom validators.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2006,6 +2038,7 @@ impl LangRule for JavaAiGenComment {
                             problem: "AI-Generated Code Detected".to_string(),
                             fix_hint: "Review AI-generated code carefully before production use.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2066,6 +2099,7 @@ impl LangRule for JavaXss {
                         problem: "Cross-Site Scripting (XSS): user-controlled data is written directly to HTTP response without encoding.".to_string(),
                         fix_hint: "Encode user output with ESAPI.encoder().encodeForHTML() or use a template engine with auto-escaping (Thymeleaf, Mustache). Never reflect raw user input in HTML responses.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2090,6 +2124,7 @@ impl LangRule for JavaXss {
                             problem: problem.to_string(),
                             fix_hint: "Encode output with OWASP ESAPI or framework-provided encoding. Use Thymeleaf templates with th:text instead of th:utext.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2149,6 +2184,7 @@ impl LangRule for JavaMissingAuth {
                             problem: format!("REST endpoint ({}) without any authentication or authorization annotation detected. This endpoint may be accessible to unauthenticated users.", label),
                             fix_hint: "Add @PreAuthorize('isAuthenticated()') or @Secured({'ROLE_USER'}) annotation. Consider using Spring Security to protect this endpoint.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2213,6 +2249,7 @@ impl LangRule for JavaCsrfMissing {
                             problem: "State-changing endpoint (@PostMapping, @PutMapping, etc.) without explicit CSRF protection. This can enable Cross-Site Request Forgery attacks.".to_string(),
                             fix_hint: "Enable CSRF in Spring Security: http.csrf(). Enable for stateless APIs: http.csrf().ignoringAntMatchers('/api/**'). Or use token-based CSRF via @CsrfToken.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2269,6 +2306,7 @@ impl LangRule for JavaIdor {
                         problem: "IDOR risk: @PathVariable used to access a resource without explicit ownership validation. An attacker can enumerate resource IDs to access other users' data.".to_string(),
                         fix_hint: "Always validate resource ownership: if (!resource.getOwner().equals(currentUser)) throw new AccessDeniedException(). Use @PreAuthorize('hasAccess(#id)') with custom security expressions.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2295,6 +2333,7 @@ impl LangRule for JavaIdor {
                         problem: "Potential IDOR: resource ID from URL path used directly in database query without ownership check.".to_string(),
                         fix_hint: "Add ownership validation: verify the returned resource belongs to the authenticated user before returning it.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2335,6 +2374,7 @@ impl LangRule for JavaXxeExternalEntity {
                     problem: "XML parser without XXE protection. External entities can be resolved.".to_string(),
                     fix_hint: "Disable DTD and external entities in XML parsers.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2374,6 +2414,7 @@ impl LangRule for JavaJpaSqlInjection {
                         problem: "SQL query built with string concatenation. SQL injection risk.".to_string(),
                         fix_hint: "Use parameterized queries.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2414,6 +2455,7 @@ impl LangRule for JavaPathTraversalExternal {
                         problem: "File operation with user-controlled path.".to_string(),
                         fix_hint: "Validate and sanitize path input. Use Path.normalize() and resolve against a base directory.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2454,6 +2496,7 @@ impl LangRule for JavaLdapInjectionExternal {
                         problem: "JNDI/LDAP lookup with user-controlled input.".to_string(),
                         fix_hint: "Validate and escape LDAP special characters.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2492,6 +2535,7 @@ impl LangRule for JavaJndiInjectionLog4Shell {
                     problem: "JNDI lookup detected. Vulnerable to Log4Shell-style attacks.".to_string(),
                     fix_hint: "Upgrade Log4j to 2.17+. Disable JNDI lookups.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2530,6 +2574,7 @@ impl LangRule for JavaWeakCryptoExternal {
                     problem: "Weak cryptographic algorithm (DES/MD5/SHA1/RC4) detected.".to_string(),
                     fix_hint: "Use AES-256-GCM for encryption, SHA-256 for hashing.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2569,6 +2614,7 @@ impl LangRule for JavaHardcodedCredentials {
                         problem: "Hardcoded credentials in source code.".to_string(),
                         fix_hint: "Use environment variables: System.getenv(\"DB_PASSWORD\").".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2607,6 +2653,7 @@ impl LangRule for JavaSerializationGadget {
                     problem: "Deserialization of untrusted data can lead to RCE.".to_string(),
                     fix_hint: "Use JSON serializers (Jackson, Gson) instead of Java serialization.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2644,6 +2691,7 @@ impl LangRule for JavaXmlBomb {
                     problem: "XML parser without entity expansion limits. Vulnerable to billion laughs.".to_string(),
                     fix_hint: "Limit entity expansion in XML parsers.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2682,6 +2730,7 @@ impl LangRule for JavaSsrfInternal {
                     problem: "HTTP request to internal cloud metadata. SSRF vulnerability.".to_string(),
                     fix_hint: "Block access to internal IP ranges and cloud metadata endpoints.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2718,6 +2767,7 @@ impl LangRule for JavaInsecureRandom {
                     problem: "java.util.Random is predictable and not suitable for security purposes.".to_string(),
                     fix_hint: "Use java.security.SecureRandom for security-sensitive randomness.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2761,6 +2811,7 @@ impl LangRule for JavaAiHardcodedCredentials {
                         problem: format!("AI-generated code contains hardcoded {}: credentials exposed.", desc),
                         fix_hint: "Move to environment variables or a secrets manager.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2802,6 +2853,7 @@ impl LangRule for JavaAiSqlInjection {
                         problem: "AI-generated SQL query with string concatenation.".to_string(),
                         fix_hint: "Use parameterized queries with PreparedStatement.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2842,6 +2894,7 @@ impl LangRule for JavaAiCommandInjection {
                         problem: "AI-generated command execution with user-controlled input.".to_string(),
                         fix_hint: "Avoid Runtime.exec() with user input. Validate against allowlist.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2880,6 +2933,7 @@ impl LangRule for JavaAiXxe {
                     problem: "AI-generated XML parser without XXE protection.".to_string(),
                     fix_hint: "Disable XXE: factory.setFeature(XMLConstants.ACCESS_EXTERNAL_DTD, \"\");".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -3001,6 +3055,7 @@ impl LangRule for JavaSsrfDeep {
                     problem,
                     fix_hint,
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -3074,6 +3129,7 @@ impl LangRule for JavaSlopsquattingTypo {
                         problem: format!("Slopsquatting Risk: {}", desc),
                         fix_hint: "Verify this package exists in Maven Central or official repositories before using.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -3103,6 +3159,7 @@ impl LangRule for JavaSlopsquattingTypo {
                         problem: format!("Slopsquatting Risk: {} in import statement", desc),
                         fix_hint: "Verify this package exists in Maven Central or official repositories before using.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -3158,6 +3215,7 @@ impl LangRule for JavaWeakJwt {
                         problem: format!("Weak JWT verification: {}. Tokens can be forged without proper signature verification.", problem),
                         fix_hint: "Use a strong, secret key (minimum 256 bits for HS256). Retrieve the key securely (e.g., from environment variable or secrets manager). Always verify the signing key is present and valid.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -3267,6 +3325,7 @@ impl LangRule for JavaInsecureCrypto {
                             "Use strong algorithms and key sizes (AES-256, RSA-2048+).".to_string()
                         },
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -3339,6 +3398,7 @@ impl LangRule for JavaJpaNativeSqlInjection {
                         ),
                         fix_hint: "Use parameterized queries: entityManager.createNativeQuery(\n                            \"SELECT * FROM users WHERE id = ?\", User.class).setParameter(1, userId);\n                            In Spring Data JPA @Query: @Query(\"SELECT u FROM User u WHERE u.name = :name\")\n                            User findByName(@Param(\"name\") String name);".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -3407,6 +3467,7 @@ impl LangRule for JavaDeserializationGadgetChain {
                             use ObjectInputFilter with a whitelist: \
                             ObjectInputFilter filter = ObjectInputFilter.Config.createFilter(\"mypackage.*\");".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -3479,6 +3540,7 @@ impl LangRule for JavaLdapInjectionDeep {
                             sc.setFilterExpr(\"(&(uid={0})(objectClass=person))\"); \
                             ctx.search(base, sc.getFilter(), new Object[]{username}, sc);".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -3550,11 +3612,1574 @@ impl LangRule for JavaPathTraversalSpring {
                             Path file = baseDir.resolve(filename).normalize(); \
                             if (!file.startsWith(baseDir)) throw new SecurityException();".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
         }
 
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Find Security Bugs (FSB) Rules — JAVA-SEC-042 to JAVA-SEC-056
+// These rules implement common patterns from Find Security Bugs.
+// FSB covers: crypto, injection, SSL, serialization, XXE, and more.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// JAVA-SEC-042: FSB HRS — HTTP Response Splitting via CRLF injection
+// Severity: high | CWE-93
+// Adding unvalidated user input to HTTP response headers enables response splitting
+pub struct FsbHttpResponseSplitting;
+
+impl LangRule for FsbHttpResponseSplitting {
+    fn id(&self) -> &str { "JAVA-SEC-042" }
+    fn name(&self) -> &str { "FSB: HTTP Response Splitting (CRLF Injection)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)response\.setHeader\s*\([^,)]+\s*\+\s*(?:request|params|body)"##,
+             "setHeader with concatenation of request data — CRLF injection"),
+            (r##"(?i)response\.addHeader\s*\([^,)]+\s*\+\s*(?:request|params|body)"##,
+             "addHeader with concatenation — CRLF injection"),
+            (r##"(?i)httpServletResponse\.(?:setHeader|addHeader)\s*\([^)]+\+[^)]*(?:request|param)"##,
+             "HttpServletResponse header with user input — CRLF injection"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB HTTP Response Splitting (CWE-93): {}. \
+                            CRLF characters (%0D%0A) in user input can inject headers or split responses.", problem),
+                        fix_hint: "Always validate and sanitize header values. Remove or encode CR (%0D) and LF (%0A) characters. \
+                            Use a whitelist of allowed characters.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-043: FSB PT — Path Traversal via RequestDispatcher
+// Severity: high | CWE-22
+// RequestDispatcher with user-controlled path enables path traversal
+pub struct FsbRequestDispatcherTraversal;
+
+impl LangRule for FsbRequestDispatcherTraversal {
+    fn id(&self) -> &str { "JAVA-SEC-043" }
+    fn name(&self) -> &str { "FSB: RequestDispatcher Path Traversal" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)request\.getRequestDispatcher\s*\([^)]*\+[^)]*(?:request|param|body)"##,
+             "getRequestDispatcher with concatenation — path traversal"),
+            (r##"(?i)getServletContext\(\)\.getRequestDispatcher\s*\([^)]*\+[^)]*(?:request|param)"##,
+             "ServletContext.getRequestDispatcher with user input — path traversal"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB RequestDispatcher Traversal (CWE-22): {}. \
+                            RequestDispatcher path from user input can include '../' for path traversal.", problem),
+                        fix_hint: "Validate and whitelist the dispatcher path. Check that resolved path is within expected directory. \
+                            Avoid passing user input directly to RequestDispatcher.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-044: FSB STRUTS — Struts file upload without validation
+// Severity: high | CWE-434
+pub struct FsbStrutsFileUpload;
+
+impl LangRule for FsbStrutsFileUpload {
+    fn id(&self) -> &str { "JAVA-SEC-044" }
+    fn name(&self) -> &str { "FSB: Struts Unrestricted File Upload" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let has_struts = code.contains("struts") || code.contains("ActionForm");
+        if !has_struts { return findings; }
+
+        let patterns = [
+            (r##"(?i)FileUploadBase\.(?:isValidContentType|isPermittedContentType)\s*\(\s*false\s*\)"##,
+             "FileUploadBase with validation disabled — unrestricted upload"),
+            (r##"(?i)\.getFileName\s*\(\s*\)\s*\.(?:write|createNewFile)"##,
+             "File written with name from upload — verify extension validation"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB Struts File Upload (CWE-434): {}. \
+                            File upload without content-type or extension validation allows malicious file uploads.", problem),
+                        fix_hint: "Validate content type against whitelist. Check file magic bytes not just extension. \
+                            Rename uploaded files to random UUIDs. Store files outside web root.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-045: FSB TAPESTRY — Tapestry file upload path traversal
+// Severity: high | CWE-22
+pub struct FsbTapestryFileUpload;
+
+impl LangRule for FsbTapestryFileUpload {
+    fn id(&self) -> &str { "JAVA-SEC-045" }
+    fn name(&self) -> &str { "FSB: Tapestry File Upload Path Traversal" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let has_tapestry = code.contains("Tapestry") || code.contains("UploadedFile");
+        if !has_tapestry { return findings; }
+
+        let patterns = [
+            (r##"(?i)uploadedFile\.write\s*\(\s*uploadedFile\.getFileName\s*\(\s*\)\s*\)"##,
+             "Tapestry upload writes with original filename — path traversal risk"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB Tapestry Upload (CWE-22): {}. \
+                            Tapestry file upload using original filename enables path traversal attacks.", problem),
+                        fix_hint: "Use a generated filename (UUID) instead of the uploaded filename. \
+                            Validate the file extension against a whitelist. Store files outside web root.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-046: FSB ECB — ECB mode encryption is deterministic
+// Severity: high | CWE-327
+pub struct FsbEcbMode;
+
+impl LangRule for FsbEcbMode {
+    fn id(&self) -> &str { "JAVA-SEC-046" }
+    fn name(&self) -> &str { "FSB: ECB Mode Encryption (CWE-327)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)Cipher\.getInstance\s*\(\s*["\'][^"\']*(?:ECB|ecb)[^"\']*["\']"##,
+             "Cipher.getInstance with ECB mode — deterministic encryption leaks patterns"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB ECB Mode (CWE-327): {}. \
+                            ECB mode produces identical ciphertext blocks for identical plaintext, revealing patterns.", problem),
+                        fix_hint: "Use AES in GCM mode (authenticated encryption): \
+                            Cipher.getInstance(\"AES/GCM/NoPadding\"). \
+                            GCM provides both confidentiality and integrity.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-047: FSB STATIC_IV — Hardcoded IV in cryptographic operations
+// Severity: medium | CWE-329
+pub struct FsbStaticIv;
+
+impl LangRule for FsbStaticIv {
+    fn id(&self) -> &str { "JAVA-SEC-047" }
+    fn name(&self) -> &str { "FSB: Static Initialization Vector (CWE-329)" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)IvParameterSpec\s*\(\s*(?:new\s+)?(?:byte|Byte)\[\s*\d+\s*\]\s*\{[^}]{1,50}\}"##,
+             "IvParameterSpec with hardcoded byte array — static IV"),
+            (r##"(?i)IvParameterSpec\s*\(\s*["\'][A-Za-z0-9+/=]{16,}["\']"##,
+             "IvParameterSpec with string-based IV — static IV"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB Static IV (CWE-329): {}. \
+                            Hardcoded IV makes encryption predictable.", problem),
+                        fix_hint: "Generate a random IV for each encryption operation: \
+                            byte[] iv = new byte[16]; new SecureRandom().nextBytes(iv); \
+                            IvParameterSpec ivSpec = new IvParameterSpec(iv).".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-048: FSB RSA_NO_PADDING — RSA without OAEP padding
+// Severity: high | CWE-780
+pub struct FsbRsaNoPadding;
+
+impl LangRule for FsbRsaNoPadding {
+    fn id(&self) -> &str { "JAVA-SEC-048" }
+    fn name(&self) -> &str { "FSB: RSA Without OAEP Padding (CWE-780)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)Cipher\.getInstance\s*\(\s*["\']RSA(?:/None|/ECB|NoPadding)?["\']"##,
+             "RSA without padding — vulnerable to chosen ciphertext attacks"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB RSA No Padding (CWE-780): {}. \
+                            RSA without padding is deterministic and malleable.", problem),
+                        fix_hint: "Use RSA with OAEP padding: \
+                            Cipher.getInstance(\"RSA/ECB/OAEPWithSHA-256AndMGF1Padding\").".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-049: FSB NULL_CIPHER — Using NullCipher exposes plaintext
+// Severity: medium | CWE-327
+pub struct FsbNullCipher;
+
+impl LangRule for FsbNullCipher {
+    fn id(&self) -> &str { "JAVA-SEC-049" }
+    fn name(&self) -> &str { "FSB: NullCipher Usage (CWE-327)" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        if let Ok(re) = Regex::new(r"(?i)new\s+NullCipher\s*\(\s*\)") {
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: "FSB NullCipher: NullCipher provides no encryption. Data encrypted with NullCipher is identical to plaintext.".to_string(),
+                    fix_hint: "Do not use NullCipher for security purposes. Use a proper cipher: \
+                        Cipher.getInstance(\"AES/GCM/NoPadding\") with a secure key.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-050: FSB WEAK_FILENAMEUTILS — Predictable filenames
+// Severity: low | CWE-377
+pub struct FsbWeakFileNameUtils;
+
+impl LangRule for FsbWeakFileNameUtils {
+    fn id(&self) -> &str { "JAVA-SEC-050" }
+    fn name(&self) -> &str { "FSB: Predictable File Name (CWE-377)" }
+    fn severity(&self) -> &'static str { "low" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)UUID\.randomUUID\s*\(\s*\)\.toString\s*\(\s*\)\s*\+[^;]+\.(?:jsp|html|php|asp)"##,
+             "UUID + extension as filename — verify this is for temporary files only"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB Predictable Filename: {}. Predictable filenames for security-critical files can enable race conditions.", problem),
+                        fix_hint: "Ensure UUID-based filenames are only used for temporary files. \
+                            For security-critical files, use cryptographic random generators.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-051: FSB SOCKET_TIMEOUT — Socket without read timeout
+// Severity: medium | CWE-400
+pub struct FsbSocketTimeout;
+
+impl LangRule for FsbSocketTimeout {
+    fn id(&self) -> &str { "JAVA-SEC-051" }
+    fn name(&self) -> &str { "FSB: Socket Without Timeout (CWE-400)" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)new\s+Socket\s*\([^)]*\)\s*(?:;|\n)(?!.*setSoTimeout)"##,
+             "Socket created without setSoTimeout — connection can hang indefinitely"),
+            (r##"(?i)new\s+SSLSocket\s*\([^)]*\)\s*(?:;|\n)(?!.*setSoTimeout)"##,
+             "SSLSocket without timeout — indefinite hang risk"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB Socket Timeout: {}. Sockets without timeout can cause indefinite blocking.", problem),
+                        fix_hint: "Always set a socket timeout: socket.setSoTimeout(10000) // 10 seconds.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-052: FSB PREDICTABLE — Using java.util.Random for security
+// Severity: high | CWE-330
+pub struct FsbPredictableRandom;
+
+impl LangRule for FsbPredictableRandom {
+    fn id(&self) -> &str { "JAVA-SEC-052" }
+    fn name(&self) -> &str { "FSB: Predictable Random (CWE-330)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)new\s+Random\s*\(\s*\)\.(?:next(?:Int|Long|Double|Float|Boolean))"##,
+             "java.util.Random used — predictable for security purposes"),
+            (r##"(?i)Random\s*\(\s*\)\.setSeed\s*\(\s*(?:System\.currentTimeMillis|Long\.MIN_VALUE|System\.nanoTime)"##,
+             "Random seeded with predictable value — trivial to predict"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB Predictable Random (CWE-330): {}. java.util.Random is seeded from current time.", problem),
+                        fix_hint: "Use java.security.SecureRandom: SecureRandom sr = new SecureRandom(); byte[] bytes = new byte[32]; sr.nextBytes(bytes).".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-053: FSB EXP — Potential Exposure of internal information
+// Severity: medium | CWE-200
+pub struct FsbInternalExposure;
+
+impl LangRule for FsbInternalExposure {
+    fn id(&self) -> &str { "JAVA-SEC-053" }
+    fn name(&self) -> &str { "FSB: Internal Exposure (CWE-200)" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)LOGGER\.(?:debug|trace|info)\s*\([^)]*(?:password|secret|token|key)\.toString"##,
+             "Logging sensitive field .toString() — credential exposure in logs"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB Internal Exposure (CWE-200): {}. toString() may expose sensitive object internals in logs.", problem),
+                        fix_hint: "Override toString() to exclude sensitive fields. Configure logger to mask sensitive patterns.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-054: FSB SAXPARSER — SAXParser without XXE protection
+// Severity: high | CWE-611
+pub struct FsbSaxParserXxe;
+
+impl LangRule for FsbSaxParserXxe {
+    fn id(&self) -> &str { "JAVA-SEC-054" }
+    fn name(&self) -> &str { "FSB: SAXParser XXE Vulnerability (CWE-611)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)SAXParserFactory\.newInstance\s*\(\s*\)\.newSAXParser\s*\(\s*\)"##,
+             "SAXParserFactory with default settings — XXE risk"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB SAXParser XXE (CWE-611): {}. Default SAXParser allows external entity expansion.", problem),
+                        fix_hint: "Disable DTD and external entities: factory.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-055: FSB DMI — DB password as constant in code
+// Severity: critical | CWE-259
+pub struct FsbHardcodedDbPassword;
+
+impl LangRule for FsbHardcodedDbPassword {
+    fn id(&self) -> &str { "JAVA-SEC-055" }
+    fn name(&self) -> &str { "FSB: Hardcoded DB Password (CWE-259)" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)(?:db[_-]?password|dbpass|db\.password|connection\.password)\s*[=:]\s*['\"][^'\"]{3,}['\"]"##,
+             "Hardcoded database password in code"),
+            (r##"(?i)jdbc:.*password=['\"][^'\"]+"##,
+             "JDBC URL with password — hardcoded credentials"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB Hardcoded DB Password (CWE-259): {}. Hardcoded credentials visible in source and binaries.", problem),
+                        fix_hint: "Never store passwords in source code. Use environment variables: System.getenv(\"DB_PASSWORD\").".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JAVA-SEC-056: FSB HTTPRESPONSE — Unvalidated redirect enables phishing
+// Severity: medium | CWE-601
+pub struct FsbUnvalidatedRedirect;
+
+impl LangRule for FsbUnvalidatedRedirect {
+    fn id(&self) -> &str { "JAVA-SEC-056" }
+    fn name(&self) -> &str { "FSB: Unvalidated Redirect (CWE-601)" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)(?:sendRedirect|redirect|forward)\s*\([^)]*\+[^)]*(?:request|param|query)"##,
+             "Redirect with concatenation of request data — unvalidated redirect"),
+            (r##"(?i)(?:sendRedirect|redirect)\s*\(\s*request\.(?:getParameter|getHeader)"##,
+             "sendRedirect with request parameter — unvalidated redirect"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("FSB Unvalidated Redirect (CWE-601): {}. Redirecting to user-controlled URLs enables phishing.", problem),
+                        fix_hint: "Always validate redirect URLs against a whitelist. Verify URL starts with expected domain.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-057: SPEL Injection (CWE-94)
+// Severity: critical | CWE-94
+// SpEL expressions in @Value("#{...}") or SpELExpressionParser with user input
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct SpelInjection;
+
+impl LangRule for SpelInjection {
+    fn id(&self) -> &str { "JAVA-SEC-057" }
+    fn name(&self) -> &str { "SPEL Injection (CWE-94)" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)@Value\s*\(\s*["\']#\{[^}]+\}["\']"##,
+             "@Value with SpEL expression — potential injection if user input flows in"),
+            (r##"(?i)SpelExpressionParser\s*\("##,
+             "SpelExpressionParser instantiated — evaluate expressions safely"),
+            (r##"(?i)ExpressionParser.*\.parseExpression\s*\([^)]*\+[^)]*(?:request|param|input|user)"##,
+             "parseExpression with concatenated user input — SpEL injection risk"),
+            (r##"(?i)TemplateParserContext"##,
+             "Template SpEL context — ensure user input is not in expression"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("SPEL Injection (CWE-94): {}. SpEL expressions can execute arbitrary code when user input is included.", problem),
+                        fix_hint: "Never concatenate user input into SpEL expressions. Use #{} syntax only with validated, safe values.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-058: OGNL Injection (CWE-94)
+// Severity: critical | CWE-94
+// Struts OGNL expressions with request parameters — leads to RCE
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct OgnlInjection;
+
+impl LangRule for OgnlInjection {
+    fn id(&self) -> &str { "JAVA-SEC-058" }
+    fn name(&self) -> &str { "OGNL Injection (CWE-94)" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)Ognl\.getValue\s*\([^)]*\+[^)]*(?:request|param|params)"##,
+             "Ognl.getValue with concatenated request parameter — OGNL injection"),
+            (r##"(?i)Ognl\.setValue\s*\([^)]*\+[^)]*(?:request|param|params)"##,
+             "Ognl.setValue with concatenated parameter — OGNL injection"),
+            (r##"(?i)TextParseUtil\.evaluate\s*\([^)]*\+[^)]*(?:request|param)"##,
+             "TextParseUtil.evaluate with user input — potential OGNL injection"),
+            (r##"(?i)XWorkConverter\.getInstance"##,
+             "XWorkConverter usage — ensure parameters are not passed directly to OGNL"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("OGNL Injection (CWE-94): {}. OGNL expressions in Struts can execute arbitrary Java code via #{{}} or @{{}} syntax.", problem),
+                        fix_hint: "Never pass raw request parameters to OGNL evaluation methods. Always validate and sanitize input.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-059: JNDI Injection (CWE-287)
+// Severity: critical | CWE-287
+// InitialContext.doLookup() or new InitialContext() with user-controlled name
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct JndiInjectionDeep;
+
+impl LangRule for JndiInjectionDeep {
+    fn id(&self) -> &str { "JAVA-SEC-059" }
+    fn name(&self) -> &str { "JNDI Injection (CWE-287)" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)InitialContext\s*\(\s*\)\.(?:doLookup|lookup)\s*\([^)]*\+[^)]*(?:request|param|user|input|remote)"##,
+             "InitialContext.lookup with concatenated user input — JNDI injection"),
+            (r##"(?i)new\s+InitialContext\s*\([^)]*\+[^)]*(?:request|param|user|input|remote)"##,
+             "InitialContext constructed with user input — JNDI injection"),
+            (r##"(?i)ctx\.doLookup\s*\([^)]*\+[^)]*(?:request|param|user|input)"##,
+             "ctx.doLookup with user-controlled argument — JNDI injection"),
+            (r##"(?i)doLookup\s*\(\s*request\.(?:getParameter|getHeader)"##,
+             "doLookup with direct request parameter — JNDI injection"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("JNDI Injection (CWE-287): {}. JNDI lookup with attacker-controlled names enables remote code execution via LDAP/RMI references.", problem),
+                        fix_hint: "Never pass unsanitized user input to JNDI lookup. Validate names against a whitelist of allowed values.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-060: JEXL Injection (CWE-94)
+// Severity: high | CWE-94
+// Apache JEXL expression engine with user-controlled expressions
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct JexlInjection;
+
+impl LangRule for JexlInjection {
+    fn id(&self) -> &str { "JAVA-SEC-060" }
+    fn name(&self) -> &str { "JEXL Injection (CWE-94)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)JexlEngine\s*\("##,
+             "JexlEngine instantiated — ensure expressions are not user-controlled"),
+            (r##"(?i)JexlBuilder\s*\("##,
+             "JexlBuilder used — ensure created engine does not allow sandbox escape"),
+            (r##"(?i)\.createExpression\s*\([^)]*\+[^)]*(?:request|param|user|input)"##,
+             "createExpression with user input concatenation — JEXL injection"),
+            (r##"(?i)\.getValue\s*\([^)]*\+[^)]*(?:request|param|user|input)"##,
+             "getValue with user input in JEXL expression — injection risk"),
+            (r##"(?i)UberspectJexlIndex"##,
+             "JEXL with index-based property access — potential injection vector"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("JEXL Injection (CWE-94): {}. JEXL expressions with unsanitized user input can execute arbitrary code.", problem),
+                        fix_hint: "Never concatenate user input into JEXL expressions. Use allow-all classes or sandbox JEXL with strict Uberspect.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-061: XMLStreamReader XXE (CWE-611)
+// Severity: high | CWE-611
+// XMLStreamReader without disabling external entities
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct XmlStreamReaderXxe;
+
+impl LangRule for XmlStreamReaderXxe {
+    fn id(&self) -> &str { "JAVA-SEC-061" }
+    fn name(&self) -> &str { "XMLStreamReader XXE (CWE-611)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        // Detect XMLStreamReader creation without property configuration
+        let xml_stream_reader_pattern = Regex::new(r##"(?i)XMLInputFactory\.newInstance\s*\(\s*\)"##).unwrap();
+        // Check if IS_SUPPORTING_EXTERNAL_ENTITIES is set to false after
+        for m in xml_stream_reader_pattern.find_iter(code) {
+            let line = code[..m.start()].matches('\n').count() + 1;
+            let after = &code[m.end()..].lines().take(5).collect::<Vec<_>>().join("\n");
+            // If no property setting found within next few lines, flag it
+            let has_protection = after.contains("SUPPORTING_EXTERNAL_ENTITIES")
+                || after.contains("setProperty");
+            if !has_protection {
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: "XMLStreamReader XXE (CWE-611): XMLStreamReader created without disabling external entities. XXE attacks can read local files or trigger SSRF.".to_string(),
+                    fix_hint: "Set XMLInputFactory.PROPERTY: factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE); or use XMLStreamReaderFactory with restricted configuration.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+        // Also detect direct XMLStreamReader construction
+        let direct_pattern = Regex::new(r##"(?i)XMLStreamReader\s*\(\s*[^)]*(?:new\s+)?FileInputStream|new\s+XMLStreamReader\s*\("##).unwrap();
+        for m in direct_pattern.find_iter(code) {
+            let line = code[..m.start()].matches('\n').count() + 1;
+            let (start, end) = get_line_offsets(code, line);
+            let line_text = get_line_text(code, line).unwrap_or_default();
+            // Check if preceded by property configuration
+            let before_start = if line > 3 { line - 3 } else { 1 };
+            let before = code.lines().skip(before_start - 1).take(line - before_start).collect::<Vec<_>>().join("\n");
+            let has_protection = before.contains("SUPPORTING_EXTERNAL_ENTITIES")
+                || before.contains("IS_SUPPORTING_EXTERNAL_ENTITIES");
+            if !has_protection {
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: "XMLStreamReader XXE (CWE-611): XMLStreamReader instantiated without XXE protection.".to_string(),
+                    fix_hint: "Configure XMLInputFactory with IS_SUPPORTING_EXTERNAL_ENTITIES set to Boolean.FALSE before creating the reader.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-062: TransformerFactory XXE (CWE-611)
+// Severity: high | CWE-611
+// TransformerFactory.newInstance() without security configuration
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct TransformerFactoryXxe;
+
+impl LangRule for TransformerFactoryXxe {
+    fn id(&self) -> &str { "JAVA-SEC-062" }
+    fn name(&self) -> &str { "TransformerFactory XXE (CWE-611)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)TransformerFactory\.newInstance\s*\("##,
+             "TransformerFactory.newInstance without security properties"),
+            (r##"(?i)SAXTransformerFactory\.newInstance\s*\("##,
+             "SAXTransformerFactory.newInstance without security properties"),
+            (r##"(?i)TransformerFactory\.newInstance\s*\(\s*\)"##,
+             "TransformerFactory created with no security hardening"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    // Check surrounding context for security properties
+                    let before = if line > 2 {
+                        code.lines().skip(line - 2.min(line)).take(line.min(2)).collect::<Vec<_>>().join("\n")
+                    } else { String::new() };
+                    let after = code.lines().skip(line).take(3).collect::<Vec<_>>().join("\n");
+                    let has_protection =
+                        before.contains("setAttribute") && (before.contains("XMLConstants") || before.contains("ACCESS_EXTERNAL"))
+                        || after.contains("setAttribute") && (after.contains("XMLConstants") || after.contains("ACCESS_EXTERNAL"));
+                    if !has_protection {
+                        let (start, end) = get_line_offsets(code, line);
+                        let line_text = get_line_text(code, line).unwrap_or_default();
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line,
+                            column: 0,
+                            start_byte: start,
+                            end_byte: end,
+                            snippet: line_text.trim().to_string(),
+                            problem: format!("TransformerFactory XXE (CWE-611): {}. TransformerFactory is susceptible to XXE attacks.", problem),
+                            fix_hint: "Set security attributes: tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, \"\"); tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, \"\");".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-063: XSLT Scripting (CWE-611)
+// Severity: high | CWE-611
+// TransformerFactory with XSLT scripting enabled (enableExtensionFunctions)
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct XsltScripting;
+
+impl LangRule for XsltScripting {
+    fn id(&self) -> &str { "JAVA-SEC-063" }
+    fn name(&self) -> &str { "XSLT Scripting Attack (CWE-611)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)setFeature\s*\(\s*["\']http://(?:apache\.org/|www\.oracle\.com/)xml/features/xalan)"##,
+             "Xalan extension feature enabled — XSLT scripting possible"),
+            (r##"(?i)setFeature\s*\(\s*["\']http://xml\.org/sax/features/external-general-entities"##,
+             "External general entities enabled — XXE in XSLT context"),
+            (r##"(?i)setFeature\s*\(\s*["\']http://xml\.org/sax/features/external-parameter-entities"##,
+             "External parameter entities enabled — XXE in XSLT context"),
+            (r##"(?i)setAttribute.*XMLConstants\.ACCESS_EXTERNAL_STYLESHEET.*["\']""##,
+             "External stylesheet access not restricted — XSLT injection possible"),
+            (r##"(?i)TransformerFactory\.newInstance.*(?:newInstance|newTransformer).*\+[^)]*(?:request|param)"##,
+             "Transformer created with user-controlled stylesheet — XSLT injection"),
+            (r##"(?i)Templates\.newInstance\s*\([^)]*\+[^)]*(?:request|param)"##,
+             "Templates from user input — XSLT injection risk"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("XSLT Scripting (CWE-611): {}. XSLT scripting can execute arbitrary code or read files on the server.", problem),
+                        fix_hint: "Disable external access: tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, \"\"); tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, \"\"); Never load stylesheets from user input.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-064: SAML Injection (CWE-91)
+// Severity: high | CWE-91
+// SAML assertion parsing with user-controlled content
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct SamlInjection;
+
+impl LangRule for SamlInjection {
+    fn id(&self) -> &str { "JAVA-SEC-064" }
+    fn name(&self) -> &str { "SAML Injection (CWE-91)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)Unmarshaller.*\.unmarshal\s*\([^)]*\+[^)]*(?:request|SAML|samlResponse| SAMLResponse)"##,
+             "SAML unmarshalling with user input — SAML injection"),
+            (r##"(?i)OpenSAML|org\.opensaml\.xml\.unmarshall"##,
+             "OpenSAML unmarshalling — ensure input is validated before parsing"),
+            (r##"(?i)WSSecurity(?:API|Java)\.(?:SOAPMessage|SAML)"##,
+             "WSSecurity SAML handling — validate SAML assertions before processing"),
+            (r##"(?i)SAMLAssertion|AssertionConsumerService.*request\.getParameter"##,
+             "SAML response extracted from request parameter — ensure it is validated"),
+            (r##"(?i)validateSignature\s*\(\s*[^)]*(?:request|samlResponse)"##,
+             "SAML signature validation with user-controlled data — injection risk"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("SAML Injection (CWE-91): {}. SAML assertions from untrusted sources can inject XML entities or bypass signature validation.", problem),
+                        fix_hint: "Always validate SAML assertions server-side, verify signatures against IdP certificates, and reject assertions with future NotBefore dates.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-065: JAX-WS Handler Injection (CWE-91)
+// Severity: medium | CWE-91
+// SOAP handler with user input that may not be properly sanitized
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct JaxWsHandlerInjection;
+
+impl LangRule for JaxWsHandlerInjection {
+    fn id(&self) -> &str { "JAVA-SEC-065" }
+    fn name(&self) -> &str { "JAX-WS Handler Injection (CWE-91)" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)@HandlerChain"##,
+             "@HandlerChain annotation found — review SOAPHandlers for injection"),
+            (r##"(?i)SOAPHandler\s*<.*>\s*\{?"##,
+             "SOAPHandler subclass defined — ensure handleMessage properly validates SOAPMessage"),
+            (r##"(?i)handleMessage\s*\([^)]*(?:getParameter|getHeader|getBody)"##,
+             "SOAPHandler reads from request without validation — potential injection"),
+            (r##"(?i)SOAPMessageContext.*getMessage\s*\(\s*\)\.getSOAPBody\s*\(\s*\)\.extractContentAsDocument"##,
+             "SOAP body content extracted and processed — validate XML structure"),
+            (r##"(?i)LogicalMessageContext.*getMessage\s*\(\s*\)"##,
+             "LogicalMessageContext used — ensure message content is validated"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("JAX-WS Handler Injection (CWE-91): {}. SOAP handlers that process unvalidated XML/SOAP content may be vulnerable to injection attacks.", problem),
+                        fix_hint: "Validate all SOAP message content in handlers. Use schema validation and XML parsing with security settings (disable XXE).".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-066: Predictable Random — Math.random() (CWE-338)
+// Severity: high | CWE-338
+// Math.random() used for security tokens, passwords, or secrets
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct PredictableRandomMath;
+
+impl LangRule for PredictableRandomMath {
+    fn id(&self) -> &str { "JAVA-SEC-066" }
+    fn name(&self) -> &str { "Predictable Random: Math.random() (CWE-338)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)Math\.random\s*\(\s*\)(?:\s*\.\s*(?:next(?:Int|Long|Double)))?\s*\(\s*\)"##,
+             "Math.random() used — predictable PRNG, unsuitable for security"),
+            (r##"(?i)(?:password|token|secret|key|captcha|session).*=.*Math\.random"##,
+             "Math.random() used for security-sensitive value — predictable"),
+            (r##"(?i)(?:UUID\.randomUUID\s*\(\s*\)\.toString\s*\(\s*\)\.substring|new\s+Random\s*\(\s*\))"##,
+             "Random or Math.random used for token generation — predictable"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("Predictable Random (CWE-338): {}. Math.random() uses java.util.Random internally which is seeded from current time.", problem),
+                        fix_hint: "Use java.security.SecureRandom: SecureRandom sr = new SecureRandom(); byte[] bytes = new byte[32]; sr.nextBytes(bytes);".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-067: URLConnection SSRF (CWE-918)
+// Severity: high | CWE-918
+// HttpURLConnection.openConnection() or URL.openConnection() with user input
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct UrlConnectionSsrf;
+
+impl LangRule for UrlConnectionSsrf {
+    fn id(&self) -> &str { "JAVA-SEC-067" }
+    fn name(&self) -> &str { "URLConnection SSRF (CWE-918)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)(?:HttpURLConnection|URLConnection)\.openConnection\s*\([^)]*\+[^)]*(?:request|param|user|input|url|dest)"##,
+             "URLConnection opened with user-controlled URL — SSRF"),
+            (r##"(?i)new\s+URL\s*\([^)]*\+[^)]*(?:request|param|user|input)\s*\)\.openConnection"##,
+             "URL constructed from user input and opened — SSRF"),
+            (r##"(?i)new\s+URL\s*\(\s*request\.(?:getParameter|getHeader|getQuery)"##,
+             "URL built from request parameter and opened — SSRF"),
+            (r##"(?i)\.openConnection\s*\(\s*\)(?:\s*\.\s*get(?:Input|Output)Stream\s*\(\s*\))?\s*;[^}]*(?:request|param|user|input)"##,
+             "openConnection followed by request data — SSRF"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("URLConnection SSRF (CWE-918): {}. SSRF allows attackers to access internal services, scan ports, or exfiltrate data.", problem),
+                        fix_hint: "Validate all URL input against a whitelist of allowed domains/IPs. Use URL resolution checks to prevent redirect-based SSRF.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-068: Struts Dev Mode (CWE-489)
+// Severity: medium | CWE-489
+// struts.devMode=true or struts.configuration.xml.reload=true in production
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct StrutsDevMode;
+
+impl LangRule for StrutsDevMode {
+    fn id(&self) -> &str { "JAVA-SEC-068" }
+    fn name(&self) -> &str { "Struts Development Mode (CWE-489)" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)struts\.devMode\s*=\s*(?:true|True|TRUE)"##,
+             "struts.devMode=true — development mode exposes internals in production"),
+            (r##"(?i)struts\.configuration\.xml\.reload\s*=\s*(?:true|True|TRUE)"##,
+             "struts.configuration.xml.reload=true — XML reloading enabled in production"),
+            (r##"(?i)struts\.objectFactory\.spring\.devMode\s*=\s*(?:true|True|TRUE)"##,
+             "Struts-Spring dev mode — unnecessary in production"),
+            (r##"(?i)struts\.freemarker\.templates\.cache\.updatesInterval\s*=\s*0"##,
+             "Freemarker template cache disabled — performance and security issue"),
+            (r##"(?i)struts\.i18n\.reload\s*=\s*(?:true|True|TRUE)"##,
+             "i18n reload enabled — unnecessary performance/security risk in production"),
+            (r##"(?i)<constant\s+name\s*=\s*["\']struts\.devMode["\']\s+value\s*=\s*["\']true["\']"##,
+             "struts.devMode=true in struts.xml — should be false in production"),
+            (r##"(?i)<constant\s+name\s*=\s*["\']struts\.configuration\.xml\.reload["\']\s+value\s*=\s*["\']true["\']"##,
+             "struts.configuration.xml.reload=true in struts.xml — security risk"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("Struts Dev Mode (CWE-489): {}. Development mode settings leak internal information, enable debugging, and reduce security in production.", problem),
+                        fix_hint: "Set struts.devMode=false in production. Disable XML reloading (struts.configuration.xml.reload=false).".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-069: Hardcoded IV (CWE-321)
+// Severity: high | CWE-321
+// IvParameterSpec with hardcoded byte array instead of dynamically generated IV
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct HardcodedIv;
+
+impl LangRule for HardcodedIv {
+    fn id(&self) -> &str { "JAVA-SEC-069" }
+    fn name(&self) -> &str { "Hardcoded IV (CWE-321)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)IvParameterSpec\s*\(\s*(?:new\s+)?byte\s*\[\]\s*\{[^}]+\}\s*\)"##,
+             "IvParameterSpec with hardcoded byte array — IV is not random"),
+            (r##"(?i)IvParameterSpec\s*\(\s*new\s+byte\s*\[\s*16\s*\]\s*\{[^}]+\}"##,
+             "IvParameterSpec with static 16-byte initialization vector"),
+            (r##"(?i)IvParameterSpec\s*\(\s*(?:new\s+)?(?:byte|int)\s*\[\]\s*\{\s*0(?:,\s*0)+\s*\}"##,
+             "IvParameterSpec with all-zero byte array — IV is predictable"),
+            (r##"(?i)IvParameterSpec\s*\(\s*["\']staticBytes["\']\.getBytes\(\)"##,
+             "IvParameterSpec from static string — predictable IV"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("Hardcoded IV (CWE-321): {}. Hardcoded IVs reduce cryptographic strength and can be recovered by attackers.", problem),
+                        fix_hint: "Generate IV dynamically using SecureRandom: byte[] iv = new byte[16]; new SecureRandom().nextBytes(iv); IvParameterSpec ivSpec = new IvParameterSpec(iv);".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-070: ECB Mode (CWE-327)
+// Severity: high | CWE-327
+// Cipher.getInstance("AES/ECB") or similar without padding
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct EcbModeEncryption;
+
+impl LangRule for EcbModeEncryption {
+    fn id(&self) -> &str { "JAVA-SEC-070" }
+    fn name(&self) -> &str { "ECB Mode Encryption (CWE-327)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)Cipher\.getInstance\s*\(\s*["\'][^"\']*(?:ECB|ecb)[^"\']*["\']"##,
+             "Cipher.getInstance with ECB mode — deterministic encryption"),
+            (r##"(?i)Cipher\.getInstance\s*\(\s*["\']AES/ECB[^"\']*["\']"##,
+             "AES/ECB mode used — identical blocks produce identical ciphertext"),
+            (r##"(?i)Cipher\.getInstance\s*\(\s*["\']DES/ECB[^"\']*["\']"##,
+             "DES/ECB mode used — weak and deterministic"),
+            (r##"(?i)Cipher\.getInstance\s*\(\s*["\'][A-Za-z]+/ECB[^"\']*["\']\s*\)"##,
+             "ECB mode cipher instantiation — should use authenticated encryption"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("ECB Mode Encryption (CWE-327): {}. ECB mode produces identical ciphertext for identical plaintext blocks, leaking patterns.", problem),
+                        fix_hint: "Use AES in GCM mode (AES/GCM/NoPadding) for authenticated encryption, or CBC with random IV if GCM is unavailable.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JAVA-SEC-071: NoSuchAlgorithm (CWE-327)
+// Severity: high | CWE-327
+// Non-standard or unknown algorithm names in Cipher.getInstance
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+pub struct NoSuchAlgorithm;
+
+impl LangRule for NoSuchAlgorithm {
+    fn id(&self) -> &str { "JAVA-SEC-071" }
+    fn name(&self) -> &str { "Non-Standard Algorithm Name (CWE-327)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let patterns = [
+            (r##"(?i)Cipher\.getInstance\s*\(\s*["\'][^"\']*(?:AES|CBC|GCM|DES|RSA|EC)[^"\']*(?:with|no)[^"\']*["\']"##,
+             "Cipher with non-standard algorithm naming convention"),
+            (r##"(?i)Cipher\.getInstance\s*\(\s*["\'][^"\']*(?:aes256|AES256|aes-256|AES_256)[^"\']*["\']"##,
+             "Non-standard AES256 algorithm name — may not be recognized"),
+            (r##"(?i)Cipher\.getInstance\s*\(\s*["\']DESede/ECB[^"\']*["\']"##,
+             "DESede (3DES) with ECB — weak algorithm with known vulnerabilities"),
+            (r##"(?i)MessageDigest\.getInstance\s*\(\s*["\'][^"\']*(?:MD5|SHA-1|SHA1|SHA_1)[^"\']*["\']"##,
+             "Weak hash algorithm (MD5/SHA-1) used — cryptographically broken"),
+            (r##"(?i)KeyGenerator\.getInstance\s*\(\s*["\'][^"\']*(?:DES|RC2|RC4|Blowfish)[^"\']*["\']"##,
+             "Weak key generation algorithm used"),
+            (r##"(?i)Signature\.getInstance\s*\(\s*["\'][^"\']*(?:MD5withRSA|MD2|SHA1withRSA|SHA1withDSA)[^"\']*["\']"##,
+             "Weak signature algorithm — MD5/SHA-1 with RSA is insecure"),
+        ];
+        for (pat, problem) in patterns {
+            if let Ok(re) = Regex::new(pat) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("NoSuchAlgorithm (CWE-327): {}. Non-standard algorithm names may fail silently or fall back to insecure defaults.", problem),
+                        fix_hint: "Use standard Java algorithm names: AES/GCM/NoPadding, SHA-256, SHA256withRSA. Avoid deprecated algorithms like MD5 and SHA-1.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
         findings.sort_by_key(|f| f.line);
         findings
     }
@@ -3632,6 +5257,68 @@ pub fn java_security_rules() -> Vec<Box<dyn LangRule>> {
         Box::new(JavaLdapInjectionDeep),
         // JAVA-SEC-041: Path Traversal Deep (Spring @PathVariable)
         Box::new(JavaPathTraversalSpring),
+        // Find Security Bugs (FSB) rules: JAVA-SEC-042 to JAVA-SEC-056
+        // JAVA-SEC-042: FSB HRS — HTTP Response Splitting via CRLF injection
+        Box::new(FsbHttpResponseSplitting),
+        // JAVA-SEC-043: FSB PT — Path Traversal via RequestDispatcher
+        Box::new(FsbRequestDispatcherTraversal),
+        // JAVA-SEC-044: FSB STRUTS — Struts file upload without validation
+        Box::new(FsbStrutsFileUpload),
+        // JAVA-SEC-045: FSB TAPESTRY — Tapestry file upload path traversal
+        Box::new(FsbTapestryFileUpload),
+        // JAVA-SEC-046: FSB ECB — ECB mode encryption is deterministic
+        Box::new(FsbEcbMode),
+        // JAVA-SEC-047: FSB STATIC_IV — Hardcoded IV in cryptographic operations
+        Box::new(FsbStaticIv),
+        // JAVA-SEC-048: FSB RSA_NO_PADDING — RSA without OAEP padding
+        Box::new(FsbRsaNoPadding),
+        // JAVA-SEC-049: FSB NULL_CIPHER — Using NullCipher with plaintext
+        Box::new(FsbNullCipher),
+        // JAVA-SEC-050: FSB WEAK_FILENAMEUTILS — Predictable filenames via random UUID
+        Box::new(FsbWeakFileNameUtils),
+        // JAVA-SEC-051: FSB SOCKET_TIMEOUT — Socket without read timeout
+        Box::new(FsbSocketTimeout),
+        // JAVA-SEC-052: FSB PREDICTABLE — Using java.util.Random for security
+        Box::new(FsbPredictableRandom),
+        // JAVA-SEC-053: FSB EXP — Potential Exposure of internal information via toString
+        Box::new(FsbInternalExposure),
+        // JAVA-SEC-054: FSB SAXPARSER — SAXParser without XXE protection
+        Box::new(FsbSaxParserXxe),
+        // JAVA-SEC-055: FSB DMI — DB password as constant in code
+        Box::new(FsbHardcodedDbPassword),
+        // JAVA-SEC-056: FSB HTTPRESPONSE — XXS via unvalidated redirect
+        Box::new(FsbUnvalidatedRedirect),
+        // JAVA-SEC-057 to JAVA-SEC-071: Additional Security Rules
+        // JAVA-SEC-057: SPEL Injection
+        Box::new(SpelInjection),
+        // JAVA-SEC-058: OGNL Injection
+        Box::new(OgnlInjection),
+        // JAVA-SEC-059: JNDI Injection Deep
+        Box::new(JndiInjectionDeep),
+        // JAVA-SEC-060: JEXL Injection
+        Box::new(JexlInjection),
+        // JAVA-SEC-061: XMLStreamReader XXE
+        Box::new(XmlStreamReaderXxe),
+        // JAVA-SEC-062: TransformerFactory XXE
+        Box::new(TransformerFactoryXxe),
+        // JAVA-SEC-063: XSLT Scripting
+        Box::new(XsltScripting),
+        // JAVA-SEC-064: SAML Injection
+        Box::new(SamlInjection),
+        // JAVA-SEC-065: JAX-WS Handler Injection
+        Box::new(JaxWsHandlerInjection),
+        // JAVA-SEC-066: Predictable Random Math.random()
+        Box::new(PredictableRandomMath),
+        // JAVA-SEC-067: URLConnection SSRF
+        Box::new(UrlConnectionSsrf),
+        // JAVA-SEC-068: Struts Dev Mode
+        Box::new(StrutsDevMode),
+        // JAVA-SEC-069: Hardcoded IV
+        Box::new(HardcodedIv),
+        // JAVA-SEC-070: ECB Mode Encryption
+        Box::new(EcbModeEncryption),
+        // JAVA-SEC-071: NoSuchAlgorithm
+        Box::new(NoSuchAlgorithm),
     ]
 }
 

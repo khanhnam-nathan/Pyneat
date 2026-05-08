@@ -87,6 +87,7 @@ impl LangRule for JavaSystemOut {
                     ),
                     fix_hint: "Use a proper logging library (e.g., SLF4J, Log4j) for production.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -150,6 +151,7 @@ impl LangRule for JavaTodoComments {
                 problem: format!("Unresolved {} marker: {}", todo.marker, todo.description),
                 fix_hint: "Address the TODO or provide a timeline for resolution.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 

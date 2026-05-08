@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-05-08T08:16:28.657898",
+  "pyneat_version": "pyneat-rs v3.0.1",
+  "python_version": "3.12.3 (tags/v3.12.3:f6650f9, Apr  9 2024, 14:05:25) [MSC v.1938 64 bit (AMD64)]",
+  "platform": "win32",
+  "summary": {
+    "pass": 10,
+    "fail": 3,
+    "warn": 2
+  },
+  "tests": [
+    {
+      "id": "A01",
+      "title": "Entry point module 'pyneat.cli' exists",
+      "status": "FAIL",
+      "detail": "entry_points.txt declares 'pyneat=pyneat.cli:cli' but module 'pyneat' is not installed",
+      "expected": "Module 'pyneat' present in site-packages",
+      "actual": "Only 'pyneat_rs' exists. Running 'pyneat' CLI raises ModuleNotFoundError"
+    },
+    {
+      "id": "B01",
+      "title": "scan_security() handles ASCII-only code",
+      "status": "PASS",
+      "detail": "",
+      "expected": "",
+      "actual": ""
+    },
+    {
+      "id": "B02",
+      "title": "scan_security() handles non-ASCII (Unicode) source code",
+      "status": "PASS",
+      "detail": "",
+      "expected": "",
+      "actual": ""
+    },
+    {
+      "id": "B03",
+      "title": "scan_security() handles empty string input",
+      "status": "PASS",
+      "detail": "",
+      "expected": "",
+      "actual": ""
+    },
+    {
+      "id": "B04",
+      "title": "scan_security() always returns valid JSON",
+      "status": "PASS",
+      "detail": "",
+      "expected": "",
+      "actual": ""
+    },
+    {
+      "id": "B05",
+      "title": "scan_security() result items contain all documented fields",
+      "status": "WARN",
+      "detail": "Fields advertised in README/get_rules() ('['id', 'name']') not present in scan results. Actual keys: ['auto_fix_available', 'cvss_score', 'cwe_id', 'end', 'fix_hint', 'owasp_id', 'problem', 'rule_id', 'severity', 'snippet', 'start']",
+      "expected": "'id' and 'name' fields matching get_rules() output",
+      "actual": "scan_security uses 'rule_id' and 'problem' — inconsistent with get_rules() schema"
+    },
+    {
+      "id": "C01",
+      "title": "apply_auto_fix() signature documented correctly",
+      "status": "PASS",
+      "detail": "Actual signature: apply_auto_fix(code, finding_json)",
+      "expected": "",
+      "actual": ""
+    },
+    {
+      "id": "C02",
+      "title": "apply_auto_fix() actually fixes auto_fix_available=True issues",
+      "status": "FAIL",
+      "detail": "2 issue(s) marked auto_fix_available=True but code unchanged after apply_auto_fix()",
+      "expected": "yaml.load(f) replaced with yaml.safe_load(f)",
+      "actual": "Code returned unchanged — auto-fix appears non-functional"
+    },
+    {
+      "id": "D01",
+      "title": "get_rules() and scan_security() use consistent field names",
+      "status": "WARN",
+      "detail": "Field names differ between get_rules() and scan_security() responses",
+      "expected": "Shared keys between both responses",
+      "actual": "Only in get_rules: ['auto_fix', 'id', 'name'] | Only in scan_security: ['auto_fix_available', 'cvss_score', 'cwe_id', 'end', 'fix_hint', 'owasp_id', 'problem', 'rule_id', 'snippet', 'start']"
+    },
+    {
+      "id": "E01",
+      "title": "parse_ln_ast() returns valid LN-AST for Python",
+      "status": "PASS",
+      "detail": "",
+      "expected": "",
+      "actual": ""
+    },
+    {
+      "id": "E02",
+      "title": "parse_ln_ast() handles Unicode source code",
+      "status": "PASS",
+      "detail": "",
+      "expected": "",
+      "actual": ""
+    },
+    {
+      "id": "E03",
+      "title": "parse_ln_ast() gracefully handles unsupported language",
+      "status": "FAIL",
+      "detail": "Crashes instead of returning empty AST or error message",
+      "expected": "Empty AST JSON or informative error JSON",
+      "actual": "Language error: cobol"
+    },
+    {
+      "id": "F01",
+      "title": "scan_security() avoids duplicate findings for same code",
+      "status": "PASS",
+      "detail": "",
+      "expected": "",
+      "actual": ""
+    },
+    {
+      "id": "G01",
+      "title": "version() returns a valid version string",
+      "status": "PASS",
+      "detail": "version=pyneat-rs v3.0.1",
+      "expected": "",
+      "actual": ""
+    },
+    {
+      "id": "G02",
+      "title": "scan_security() output encodable in Windows cp1252 console",
+      "status": "PASS",
+      "detail": "",
+      "expected": "",
+      "actual": ""
+    }
+  ]
+}

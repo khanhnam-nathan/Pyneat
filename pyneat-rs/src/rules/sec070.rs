@@ -66,6 +66,7 @@ impl Rule for DockerVulnerabilityRule {
                     problem: "Docker configuration without vulnerability scanning".to_string(),
                     fix_hint: "Add vulnerability scanning to Docker workflow: 'docker scan IMAGE' or use Trivy/Grype in CI/CD.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }

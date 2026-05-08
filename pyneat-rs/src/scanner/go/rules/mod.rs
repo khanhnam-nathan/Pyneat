@@ -17,4 +17,6 @@
 
 
 mod rules;
+mod gosec_rules;
 pub use rules::go_rules;
+pub use gosec_rules::gosec_rules;

@@ -49,6 +49,7 @@ impl Rule for Sec043 {
                         problem: format!("Security headers may be missing: {}", desc),
                         fix_hint: "Add security headers: X-Frame-Options, X-Content-Type-Options, CSP, HSTS, Referrer-Policy.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

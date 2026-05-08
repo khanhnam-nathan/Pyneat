@@ -91,6 +91,7 @@ impl LangRule for RustDebugMacroUsage {
                     fix_hint: "Use a proper logging crate (tracing, log, env_logger) or \
                         a structured logging framework. Remove println!/dbg! before production.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -147,6 +148,7 @@ impl LangRule for RustUnwrapExpectUsage {
                         document why it's safe. Consider: if let Some(v) = opt { ... } \
                         or match opt { Some(v) => ..., None => ... }.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -210,6 +212,7 @@ impl LangRule for RustDeadCode {
                     fix_hint: "Either use the function, remove it, or prefix with '_' \
                         if it's intentionally public for external use.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -255,6 +258,7 @@ impl LangRule for RustDeadCode {
                     fix_hint: "Remove the unused variable assignment or prefix it with '_' \
                         to indicate intentionally unused.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -341,6 +345,7 @@ impl LangRule for RustCloneOnCopyTypes {
                             fix_hint: "Remove .clone() since the type implements Copy. \
                                 Cloning Copy types is redundant and wastes memory.".to_string(),
                             auto_fix_available: true,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -438,6 +443,7 @@ impl LangRule for RustRedundantImport {
                     fix_hint: "Remove the unused import statement to clean up the code. \
                         Unused imports increase compilation time slightly.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -524,6 +530,7 @@ impl LangRule for RustUnsafeBlockAudit {
                             // SAFETY: pointer is valid and aligned for 'T'. \
                             unsafe { ... }".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -589,6 +596,7 @@ impl LangRule for RustPanicInProduction {
                         Return Result<T, E> or Option<T> and handle the error case. \
                         Only use panic! in truly unrecoverable situations.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
 
@@ -610,6 +618,7 @@ impl LangRule for RustPanicInProduction {
                     fix_hint: "Replace abort! with proper error handling. \
                         Return an error to the caller instead of killing the process.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -671,6 +680,7 @@ impl LangRule for RustMutableRefSharing {
                             Consider restructuring or using interior mutability (Cell, RefCell) \
                             if you need shared mutation.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -724,6 +734,7 @@ impl LangRule for RustAiUnwrapPanic {
                         problem: format!("AI pattern detected: {}(), which panics on None/Err. AI often generates unwrap() in production code, causing unexpected crashes.", method),
                         fix_hint: "Replace with proper error handling: unwrap_or(), unwrap_or_else(), or ? operator. Return Result/Option and let the caller handle errors. For truly impossible cases, use unreachable!() or debug_assert!().".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                     break;
                 }
@@ -772,6 +783,7 @@ impl LangRule for RustAiUnsafeNoDocs {
                         problem: "AI-generated unsafe block without safety documentation. AI often skips the # Safety: comment that Rust conventions require.".to_string(),
                         fix_hint: "Add a # Safety: comment before or inside the unsafe block explaining: 1) Invariants the caller must uphold, 2) Why this unsafe block is necessary, 3) What undefined behavior could occur if violated.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -836,6 +848,7 @@ impl LangRule for RustAiWrongSyncPrimitive {
                     problem: format!("AI pattern: Rc<RefCell<T>> in {} code. Rc is not Send/Sync, so it can't be shared across threads. RefCell provides runtime borrow checking which is not thread-safe.", arc_line),
                     fix_hint: arc_hint,
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
 
@@ -852,6 +865,7 @@ impl LangRule for RustAiWrongSyncPrimitive {
                     problem: "Cell<T> used in async/threaded context. Cell is not thread-safe. Use AtomicPtr, Mutex, or RwLock instead.".to_string(),
                     fix_hint: "Use std::sync::Mutex<T> or std::sync::RwLock<T> for shared state across threads.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
 
@@ -868,6 +882,7 @@ impl LangRule for RustAiWrongSyncPrimitive {
                     problem: "UnsafeCell<T> used directly. UnsafeCell is the building block for interior mutability but requires careful unsafe handling.".to_string(),
                     fix_hint: "Prefer safe wrappers like Mutex, RwLock, or OnceCell. Only use UnsafeCell when absolutely necessary and always document safety invariants.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -928,6 +943,7 @@ impl LangRule for RustUnusedMut {
                     problem: format!("Variable '{}' is declared with 'mut' but never reassigned. The 'mut' keyword is unnecessary.", var),
                     fix_hint: "Remove 'mut' if the variable is not reassigned: change 'let mut x' to 'let x'.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -977,6 +993,7 @@ impl LangRule for RustCloneInLoop {
                     problem: ".clone() called inside a loop. This creates a new allocation on every iteration which is expensive.".to_string(),
                     fix_hint: "Consider using a reference ('&') or borrowing instead of cloning. If cloning is necessary, move the object outside the loop.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1025,6 +1042,7 @@ impl LangRule for RustUnnecessaryBox {
                         problem: format!("Unnecessary Box<T> allocation: {}. Box is for heap allocation of large data or trait objects.", desc),
                         fix_hint: "Use the value directly without Box::new(). Only use Box<T> for: large structs on the stack, trait objects (dyn Trait), recursive types, or when ownership transfer is needed.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1075,6 +1093,7 @@ impl LangRule for RustTodoComments {
                         problem: format!("{}: Unresolved marker found in code.", label),
                         fix_hint: "Resolve the TODO/FIXME or add a tracking issue.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1127,6 +1146,7 @@ impl LangRule for RustDeadCodeAfterReturn {
                     problem: "Code after return statement is unreachable (dead code).".to_string(),
                     fix_hint: "Remove unreachable code or restructure the control flow.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
             if !trimmed.is_empty() && !trimmed.starts_with('}') {
@@ -1188,6 +1208,7 @@ impl LangRule for RustMissingDebugDerive {
                         problem: format!("Error type '{}' implements std::error::Error but is missing derive(Debug). This prevents proper error formatting.", type_name),
                         fix_hint: "Add Debug to derive: #[derive(Debug)] or #[derive(Debug, Display)].".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1232,6 +1253,7 @@ impl LangRule for RustEmptyMatchArm {
                 problem: "Empty match arm '_ => {}' found. The wildcard arm does nothing.".to_string(),
                 fix_hint: "Handle the case explicitly or use debug_assert! to catch unexpected values. Consider logging or returning a Result.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -1251,6 +1273,7 @@ impl LangRule for RustEmptyMatchArm {
                     problem: "Empty match arm '_ => ,' found. The wildcard arm silently ignores the value.".to_string(),
                     fix_hint: "Handle the case explicitly or add debug_assert! to catch unexpected values.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1301,6 +1324,7 @@ impl LangRule for RustAiHardcodedSecrets {
                         problem: format!("AI-generated code contains hardcoded {}: may expose credentials in source code.", desc),
                         fix_hint: "Move secrets to environment variables: let key = env::var(\"API_KEY\").expect(\"API_KEY must be set\"); or use a secrets manager.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1355,6 +1379,7 @@ impl LangRule for RustAiIntegerOverflow {
                         problem: format!("AI-generated arithmetic '{}' may overflow in production. Default Rust integer arithmetic panics on overflow in debug mode.", m.as_str()),
                         fix_hint: "Use checked arithmetic (checked_add, checked_sub, checked_mul) or wrapping arithmetic (wrapping_add, etc.) depending on your needs. For user-facing code, prefer checked arithmetic with proper error handling.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1423,6 +1448,7 @@ impl LangRule for RustAiPanicInLibrary {
                     problem: format!("Public library function '{}' uses {:?} which can panic. This creates a denial-of-service risk for callers.", func_name, panic_matches),
                     fix_hint: "Return a Result or Option instead of panicking. If panicking is acceptable, add #[track_caller] for better stack traces. Consider using unwrap_or, unwrap_or_else, or ? operator.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1468,6 +1494,7 @@ impl LangRule for RustAiLifetimeIssues {
                 problem: "Single lifetime 'a used in return type but function doesn't borrow any references with that lifetime. The lifetime annotation may be unnecessary.".to_string(),
                 fix_hint: "Remove the unnecessary lifetime annotation: fn foo(x: &str) -> &str instead of fn foo<'a>(x: &'a str) -> &'a str.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -1486,6 +1513,7 @@ impl LangRule for RustAiLifetimeIssues {
                 problem: "Lifetime 'a is used for both input and output references but doesn't constrain the output. The lifetime may be unnecessary or incorrectly inferred.".to_string(),
                 fix_hint: "Remove the lifetime if it's only used once: fn foo(x: &str) -> &str. Or ensure the lifetime properly connects input and output references.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -1505,6 +1533,7 @@ impl LangRule for RustAiLifetimeIssues {
                     problem: "'static lifetime annotation may be too restrictive. The data may not actually live for the entire program duration.".to_string(),
                     fix_hint: "Only use 'static when the data truly lives for the entire program (e.g., string literals). For owned data, avoid 'static and let the compiler infer lifetimes.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }

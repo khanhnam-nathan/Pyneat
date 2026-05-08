@@ -52,6 +52,7 @@ impl Rule for InsecureLogoutRule {
                         problem: format!("Insecure logout pattern: {}", desc),
                         fix_hint: "Properly destroy session server-side: session.flush(), session.delete(), or session.invalidate().".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

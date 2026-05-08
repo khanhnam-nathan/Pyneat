@@ -44,6 +44,7 @@ impl Rule for SocialEngineeringRule {
                         problem: problem.to_string(),
                         fix_hint: "Review for social engineering intent. Remove hardcoded credentials. Phishing tools only for authorized pentesting.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -89,6 +90,7 @@ impl Rule for RogueAccessPointRule {
                         problem: problem.to_string(),
                         fix_hint: "Rogue AP tools create fake WiFi networks. Only for authorized red team engagements.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -136,6 +138,7 @@ impl Rule for InsecureInstallPipelineRule {
                         problem: problem.to_string(),
                         fix_hint: "Download scripts to file first and inspect. Use venv for pip. Verify checksums. Prefer package managers.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -183,6 +186,7 @@ impl Rule for SurveillanceToolRule {
                         problem: problem.to_string(),
                         fix_hint: "Surveillance tools without consent are illegal. Requires immediate security review.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -229,6 +233,7 @@ impl Rule for C2FrameworkRule {
                         problem: problem.to_string(),
                         fix_hint: "C2/RAT patterns indicate compromise. Investigate source. Check persistence. Never in production code.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -277,6 +282,7 @@ impl Rule for BackdoorRootkitRule {
                         problem: problem.to_string(),
                         fix_hint: "Backdoor/rootkit patterns indicate severe compromise. Isolate affected systems immediately.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -323,6 +329,7 @@ impl Rule for CredentialAttackRule {
                         problem: problem.to_string(),
                         fix_hint: "Tools for cracking passwords. Legitimate for authorized auditing. Ensure rate limiting, lockout, MFA in production.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -368,6 +375,7 @@ impl Rule for NetworkSniffingRule {
                         problem: problem.to_string(),
                         fix_hint: "Network sniffing tools. Legitimate for authorized testing. Enforce HTTPS and HSTS to prevent MITM.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -418,6 +426,7 @@ impl Rule for SqlInjectionAttackRule {
                         problem: problem.to_string(),
                         fix_hint: "SQL injection tools indicate database attack attempts. Use parameterized queries, ORM, and input validation.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -472,6 +481,7 @@ impl Rule for WebVulnScannerRule {
                         problem: problem.to_string(),
                         fix_hint: "Web vulnerability scanner tools detected. Ensure these are used in authorized security testing only.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -521,6 +531,7 @@ impl Rule for ForensicsAnalysisRule {
                         problem: problem.to_string(),
                         fix_hint: "Digital forensics tools detected. Ensure authorized use only for incident response or legitimate investigations.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -570,6 +581,7 @@ impl Rule for SteganographyRule {
                         problem: problem.to_string(),
                         fix_hint: "Steganography tools detected. Review for data exfiltration or hidden malware payloads.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -622,6 +634,7 @@ impl Rule for CloudADAttackRule {
                         problem: problem.to_string(),
                         fix_hint: "AD/cloud attack tools detected. Indicates potential lateral movement, privilege escalation, or credential theft.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -672,6 +685,7 @@ impl Rule for MobileSecurityRule {
                         problem: problem.to_string(),
                         fix_hint: "Mobile security testing tools detected. Ensure authorized testing on devices you own or have permission to test.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -720,6 +734,7 @@ impl Rule for DDOSAttackRule {
                         problem: problem.to_string(),
                         fix_hint: "DDoS/DoS tools detected. Ensure rate limiting, CDN protection, and WAF in production. Only authorized testing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -769,6 +784,7 @@ impl Rule for ExploitFrameworkRule {
                         problem: problem.to_string(),
                         fix_hint: "Exploit framework tools detected. Ensure only used in authorized penetration testing with proper scoping.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -819,6 +835,7 @@ impl Rule for CloudSecurityScanRule {
                         problem: problem.to_string(),
                         fix_hint: "Cloud security scanning tools detected. Verify proper IAM, least-privilege, and cloud-native security tooling in production.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -868,6 +885,7 @@ impl Rule for WirelessAttackRule {
                         problem: problem.to_string(),
                         fix_hint: "Wireless attack tools detected. Ensure WPA3/WPA2-Enterprise with strong passwords. Use certificate-based auth.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

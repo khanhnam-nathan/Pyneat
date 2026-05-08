@@ -96,6 +96,7 @@ impl LangRule for RubyDebugOutput {
                             ),
                             fix_hint: "Remove debug statements or use proper logging (Rails.logger, Logger).".to_string(),
                             auto_fix_available: true,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -158,6 +159,7 @@ impl LangRule for RubyGlobalVariables {
                     problem: "Global variable detected. Global variables reduce code maintainability.".to_string(),
                     fix_hint: "Use instance variables (@), class variables (@@), or constants (CONST) instead.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -203,6 +205,7 @@ impl LangRule for RubyStringConcatenation {
                     problem: "String concatenation detected. Use string interpolation for better performance.".to_string(),
                     fix_hint: "Use string interpolation: \"hello #{variable}\" instead of \"hello \" + variable.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -260,6 +263,7 @@ impl LangRule for RubyMagicNumbers {
                     problem: format!("Magic number '{}' detected. Extract to a named constant.", num_str),
                     fix_hint: "Define a constant with descriptive name: MAX_RETRIES = 5".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -307,6 +311,7 @@ impl LangRule for RubyMissingSafeNavigation {
                     problem: "Nil check with && detected. Use safe navigation operator (&.) instead.".to_string(),
                     fix_hint: "Replace 'obj && obj.method' with 'obj&.method' for cleaner code.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -355,6 +360,7 @@ impl LangRule for RubyEmptyRescue {
                     problem: "Empty rescue block detected.".to_string(),
                     fix_hint: "Either remove the rescue block or add proper error handling.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -391,6 +397,7 @@ impl LangRule for RubyEmptyRescue {
                         problem: "Empty rescue block detected.".to_string(),
                         fix_hint: "Add error logging or handling: rescue => e; logger.error(e.message)".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -432,6 +439,7 @@ impl LangRule for RubyForLoop {
                 problem: "for...in loop detected. Ruby idiom prefers .each.".to_string(),
                 fix_hint: "Use .each: array.each { |item| ... }".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -469,6 +477,7 @@ impl LangRule for RubyGlobalVariableUsage {
                 problem: format!("Global variable '${}' detected.", m.as_str().trim_start_matches('$')),
                 fix_hint: "Use instance variables (@var), class variables (@@var), or constants (CONST) instead.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings.sort_by_key(|f| f.line);
@@ -508,6 +517,7 @@ impl LangRule for RubyMissingNilCheck {
                         problem: "Query result may be nil but is not checked before use.".to_string(),
                         fix_hint: "Add nil check: result = Model.find(...); return unless result.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -547,6 +557,7 @@ impl LangRule for RubyEmptyRescueBlock {
                 problem: "Rescue block assigned to variable but empty.".to_string(),
                 fix_hint: "Handle the exception: rescue => e; logger.error(e.message).".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -594,6 +605,7 @@ impl LangRule for RubyMagicNumber {
                     problem: format!("Magic number '{}' found.", m.as_str()),
                     fix_hint: "Define as a constant: MAX_RETRIES = 500.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -639,6 +651,7 @@ impl LangRule for RubyTodoComments {
                         problem: format!("{} found.", label),
                         fix_hint: "Resolve or add tracking issue.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

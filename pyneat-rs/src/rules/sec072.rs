@@ -57,6 +57,7 @@ impl Rule for MissingCspNonceRule {
                     problem: "Inline script with CSP but without nonce protection".to_string(),
                     fix_hint: "Add nonce to CSP: Content-Security-Policy: script-src 'nonce-{RANDOM}'.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }

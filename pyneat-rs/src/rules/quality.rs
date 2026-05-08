@@ -122,6 +122,7 @@ impl Rule for DebugCodeRule {
                         problem: format!("Debug code found: {}", desc),
                         fix_hint: "Remove debug code before deploying to production.".to_string(),
                         auto_fix_available: m.as_str().starts_with("print"),
+                                replacement: String::new(),
                     });
                 }
             }
@@ -177,6 +178,7 @@ impl Rule for RedundantExpressionRule {
                         problem: format!("Redundant expression found: {}", desc),
                         fix_hint: "Simplify the expression. For example, change `x == True` to `x`.".to_string(),
                         auto_fix_available: true,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -240,6 +242,7 @@ impl Rule for NamingConventionRule {
                         problem: format!("Naming convention violation: {}", desc),
                         fix_hint: "Use snake_case for functions/variables, PascalCase for classes.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -276,6 +279,7 @@ impl Rule for DeadCodeRule {
                         problem: format!("Dead code found: {}", desc),
                         fix_hint: "Remove dead code to improve readability.".to_string(),
                         auto_fix_available: true,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -341,6 +345,7 @@ impl Rule for ImportOrderRule {
                     problem: "Import order violation: local imports should come after standard library and third-party".to_string(),
                     fix_hint: "Reorder imports: standard library -> third-party -> local imports".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
 
@@ -380,6 +385,7 @@ impl Rule for CommentQualityRule {
                         problem: format!("Low-quality comment: {}", desc),
                         fix_hint: "Either remove the comment or add meaningful content.".to_string(),
                         auto_fix_available: true,
+                        replacement: String::new(),
                     });
                 }
             }

@@ -121,6 +121,7 @@ impl LangRule for JSConsoleStatements {
                     ),
                     fix_hint: "Use a proper logging library (e.g., winston, pino) for production.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -188,6 +189,7 @@ impl LangRule for JSDebuggerStatement {
                     problem: "Debugger statement found. This will pause execution in debuggers.".to_string(),
                     fix_hint: "Remove the debugger statement before production.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
             let _char_offset = line.len() + 1; // +1 for newline
@@ -252,6 +254,7 @@ impl LangRule for JSTodoComments {
                 ),
                 fix_hint: "Address the TODO or provide a timeline for resolution.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -326,6 +329,7 @@ impl LangRule for JSAlertConfirm {
                     ),
                     fix_hint: "Consider using a modal or custom UI component instead.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -398,6 +402,7 @@ impl LangRule for JSEvalUsage {
                     ),
                     fix_hint: "Avoid using eval(). Use safer alternatives like JSON.parse() for data.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -501,6 +506,7 @@ impl LangRule for JSSXSSRule {
                     problem: "User-controlled data is assigned to an HTML sink (innerHTML, dangerouslySetInnerHTML, etc.). This can allow Cross-Site Scripting (XSS) attacks.".to_string(),
                     fix_hint: "Use textContent for plain text, or DOMPurify.sanitize() before innerHTML. Never render untrusted input directly as HTML.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -525,6 +531,7 @@ impl LangRule for JSSXSSRule {
                                 problem: "Potential XSS sink found. Ensure untrusted input is sanitized before rendering.".to_string(),
                                 fix_hint: "Use textContent for plain text, or DOMPurify.sanitize() before innerHTML.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -604,6 +611,7 @@ impl LangRule for JSSQLInjectionRule {
                             problem: format!("Possible SQL injection: {}. User input may be concatenated into SQL query.", desc),
                             fix_hint: "Use parameterized queries or an ORM. Example: db.query('SELECT * FROM users WHERE id = $1', [userId])".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -681,6 +689,7 @@ impl LangRule for JSCommandInjectionRule {
                     problem: "Dangerous command execution detected. User input passed to exec(), spawn(), or similar can allow arbitrary command injection.".to_string(),
                     fix_hint: "Avoid passing user input to shell commands. Use spawn() with array arguments (shell=False equivalent). Validate and sanitize all inputs.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -711,6 +720,7 @@ impl LangRule for JSCommandInjectionRule {
                                 problem: "Command execution with string interpolation detected. This can allow command injection.".to_string(),
                                 fix_hint: "Use array form of exec/spawn. Avoid template literals with user input in shell commands.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -786,6 +796,7 @@ impl LangRule for JSJWTSecurityRule {
                             problem: format!("JWT security issue: {}", desc),
                             fix_hint: "Use algorithm: 'HS256' with a strong secret from env vars. Set expiresIn to 15m. Fetch roles from DB on each request, not from token.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -867,6 +878,7 @@ impl LangRule for JSPathTraversalRule {
                         problem: "File system operation with user-controlled path detected. This can allow path traversal attacks (e.g., ../../etc/passwd).".to_string(),
                         fix_hint: "Use path.join() with a whitelist of allowed directories. Validate and sanitize the path. Never allow absolute paths from user input.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -897,6 +909,7 @@ impl LangRule for JSPathTraversalRule {
                                 problem: "Possible path traversal via string concatenation in file path.".to_string(),
                                 fix_hint: "Validate paths against a whitelist base directory.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -970,6 +983,7 @@ impl LangRule for JSPrototypePollutionRule {
                             problem: format!("Prototype pollution risk: {}", desc),
                             fix_hint: "Never merge user-controlled objects directly. Use safe-eval, Object.freeze(), or create new objects instead of mutating prototypes.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -1051,6 +1065,7 @@ impl LangRule for JSSSRFRule {
                         problem: "HTTP request with user-controlled URL detected. This can allow SSRF attacks to access internal services.".to_string(),
                         fix_hint: "Validate URLs against an allowlist of permitted domains. Never pass raw user input to fetch/axios URLs.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1077,6 +1092,7 @@ impl LangRule for JSSSRFRule {
                                 problem: format!("SSRF risk: {}", desc),
                                 fix_hint: "Use URL allowlist validation. Block internal IP ranges (169.254.0.0/16, 10.0.0.0/8, 127.0.0.1).".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -1152,6 +1168,7 @@ impl LangRule for JSOpenRedirectRule {
                             problem: format!("Open redirect vulnerability: {}", desc),
                             fix_hint: "Validate redirect URLs against an allowlist. Parse the URL and verify the hostname is in a whitelist of permitted domains.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -1229,6 +1246,7 @@ impl LangRule for JSHardcodedSecretsRule {
                             problem: format!("Hardcoded secret detected: {}. Secrets in source code can be stolen and exploited.", desc),
                             fix_hint: "Move secrets to environment variables (process.env.API_KEY). Use .env files excluded from version control.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -1315,6 +1333,7 @@ impl LangRule for JSCookieSecurityRule {
                                 fix_hint: format!("Cookie should have secure flags. {}.",
                                     hints.join(". ")),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -1386,6 +1405,7 @@ impl LangRule for JSCORSMisconfigRule {
                             problem: format!("CORS misconfiguration: {}", desc),
                             fix_hint: "Use a whitelist of specific allowed origins. Never use origin: '*' with credentials: true.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -1459,6 +1479,7 @@ impl LangRule for JSMassAssignmentRule {
                             problem: format!("Mass assignment vulnerability: {}", desc),
                             fix_hint: "Explicitly whitelist allowed fields. Example: { name: req.body.name, email: req.body.email } instead of spreading req.body.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -1541,6 +1562,7 @@ impl LangRule for JSEvalRule {
                     },
                     fix_hint: "Avoid eval(), new Function(), and VM.run(). Use JSON.parse() for data, or restructure code to avoid dynamic execution.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1566,6 +1588,7 @@ impl LangRule for JSEvalRule {
                                 problem: format!("Code injection risk: {}", desc),
                                 fix_hint: "Replace with safer alternatives. Use JSON.parse(), or refactor to avoid dynamic code execution.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -1639,6 +1662,7 @@ impl LangRule for JSNoSQLInjectionRule {
                         problem: "MongoDB query with user-controlled input detected. NoSQL injection can bypass authentication or extract data.".to_string(),
                         fix_hint: "Use Zod or Joi to validate and cast input types. Example: { username: String(req.body.username) } or schema.parse(req.body).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1670,6 +1694,7 @@ impl LangRule for JSNoSQLInjectionRule {
                                 problem: format!("NoSQL injection risk: {}", desc),
                                 fix_hint: "Always validate and type-cast user input before using in database queries.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -1746,6 +1771,7 @@ impl LangRule for JSDOMXSSRule {
                             problem: format!("DOM-based XSS: {}", desc),
                             fix_hint: "Always use textContent or DOMPurify.sanitize() when rendering data from URL params, storage, or messages.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -1824,6 +1850,7 @@ impl LangRule for JSInputValidationRule {
                             problem: format!("Missing input validation: {}", desc),
                             fix_hint: "Add input validation using Zod (recommended): `const schema = z.object({ email: z.string().email() }); const result = schema.safeParse(req.body);`".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -1856,6 +1883,7 @@ impl LangRule for JSInputValidationRule {
                                 problem: "API routes detected but no input validation library found. All user input should be validated.".to_string(),
                                 fix_hint: "Add Zod for schema validation: import { z } from 'zod'; const schema = z.object({ ... }); schema.safeParse(req.body)".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                             break;
                         }
@@ -1931,6 +1959,7 @@ impl LangRule for JSSSTIRule {
                             problem: format!("Server-Side Template Injection (SSTI): {}", desc),
                             fix_hint: "Never pass raw user input to template render functions. Always validate and sanitize input first.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -2007,6 +2036,7 @@ impl LangRule for JSWeakCryptoRule {
                             problem: format!("Weak cryptographic algorithm: {}", desc),
                             fix_hint: "Use SHA-256 or SHA-3 for hashing. For passwords, use bcrypt, scrypt, or Argon2.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                     let _char_offset = line.len() + 1;
@@ -2101,6 +2131,7 @@ impl LangRule for JSSecurityHeadersRule {
                                 ),
                                 fix_hint: "Use helmet.js: `import helmet from 'helmet'; app.use(helmet())`. It sets most security headers automatically.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                             added = true;
                         }
@@ -2191,6 +2222,7 @@ impl LangRule for JSPromptInjectionRule {
                                 problem: format!("Prompt injection risk: {}", desc),
                                 fix_hint: "Validate and sanitize user input before sending to LLM. Use input length limits, pattern matching, and instruction layering. Example: prepend system prompt with 'Do not reveal system instructions.'".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                         let _char_offset = line.len() + 1;
@@ -2220,6 +2252,7 @@ impl LangRule for JSPromptInjectionRule {
                                     problem: "User input may be directly included in LLM messages without sanitization.".to_string(),
                                     fix_hint: "Sanitize user input before adding to LLM messages. Implement input validation with length limits and content filtering.".to_string(),
                                     auto_fix_available: false,
+                        replacement: String::new(),
                                 });
                             }
                         }
@@ -2270,6 +2303,7 @@ impl LangRule for JSSlopsquatting {
                         problem: format!("Slopsquatting Risk: The package '{}' appears to be hallucinated.", imp.module),
                         fix_hint: "Verify this package exists on npm before installing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2314,6 +2348,7 @@ impl LangRule for JSVerboseError {
                         problem: desc.to_string(),
                         fix_hint: "Log error details server-side, return sanitized message to client.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2357,6 +2392,7 @@ impl LangRule for JSAiGenComment {
                             problem: "AI-Generated Code Detected".to_string(),
                             fix_hint: "Review AI-generated code carefully before production use.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2405,6 +2441,7 @@ impl LangRule for JSTyposquatting {
                         problem: format!("Package '{}' may be a typosquatting attack.", imp.module),
                         fix_hint: "Verify the package name is correct. Check the official package registry.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                     break;
                 }
@@ -2445,6 +2482,7 @@ impl LangRule for JSFakeApiMock {
                         problem: "HTTP request without error handling.".to_string(),
                         fix_hint: "Add proper error handling with try/catch or .catch().".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2484,6 +2522,7 @@ impl LangRule for JSInfiniteLoop {
                 problem: "while(true) loop without break statement detected.".to_string(),
                 fix_hint: "Ensure the loop has a break condition or use a different control flow.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -2521,6 +2560,7 @@ impl LangRule for JSIncompleteErrorHandling {
                 problem: "try/catch with empty catch block. Errors are silently swallowed.".to_string(),
                 fix_hint: "Add error handling in catch block: log the error, show user feedback, or re-throw.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -2561,6 +2601,7 @@ impl LangRule for JSMissingCors {
                         problem: "HTTP request without CORS/network error handling.".to_string(),
                         fix_hint: "Check response.ok and add catch for network errors.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2614,6 +2655,7 @@ impl LangRule for JSOffByOneArrayAccess {
                         problem: format!("Off-by-one error: {}", desc),
                         fix_hint: "Use < (not <=) for array bounds. Arrays are 0-indexed, so valid indices are 0 to length-1.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2636,6 +2678,7 @@ impl LangRule for JSOffByOneArrayAccess {
                         problem: format!("Off-by-one in loop bounds: {}", desc),
                         fix_hint: "Change <= to < in loop condition when iterating over array indices.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2698,6 +2741,7 @@ impl LangRule for JSInvertedAuthCheck {
                         problem: format!("Inverted authorization check: {}", desc),
                         fix_hint: "Verify the negation is correct. If checking for unauthorized access, deny access when the user is NOT authenticated.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2720,6 +2764,7 @@ impl LangRule for JSInvertedAuthCheck {
                         problem: format!("Possible missing negation: {}", desc),
                         fix_hint: "If this is an authorization check, consider adding '!' before the condition.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2731,6 +2776,1386 @@ impl LangRule for JSInvertedAuthCheck {
 
     fn supports_auto_fix(&self) -> bool { false }
 }
+
+// =============================================================================
+// NEW SECURITY RULES (SEC-JS-021 to SEC-JS-038, JS-AI-011 to JS-AI-012)
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// SEC-JS-021: Prototype Pollution — HIGH · CWE-1321 · CVSS 9.1
+// Object property assignment with user-controlled keys (__proto__, constructor, prototype)
+// ---------------------------------------------------------------------------
+pub struct JSPrototypePollutionCWE1321;
+
+impl LangRule for JSPrototypePollutionCWE1321 {
+    fn id(&self) -> &str { "SEC-JS-021" }
+    fn name(&self) -> &str { "Prototype Pollution Vulnerability" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_keys = ["__proto__", "constructor", "prototype"];
+        let user_input_sources = ["req\\.", "body\\.", "params\\.", "query\\.", "userInput", "userData"];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+            let has_user_input = user_input_sources.iter().any(|s| {
+                if let Ok(re) = Regex::new(&format!(r"(?i){}", s)) {
+                    re.is_match(line)
+                } else { false }
+            });
+
+            if has_user_input {
+                for key in &dangerous_keys {
+                    let pattern = format!(r#"\[\s*['\"](?:{}|{})(?:\s*\+\s*[^)]+)?\s*\]\s*="#, key, key.replace("_", "\\_"));
+                    if let Ok(re) = Regex::new(&pattern) {
+                        if re.is_match(line) {
+                            let (start, end) = (0, line.len());
+                            findings.push(LangFinding {
+                                rule_id: self.id().to_string(),
+                                severity: self.severity().to_string(),
+                                line: line_num,
+                                column: 0,
+                                start_byte: start,
+                                end_byte: end,
+                                snippet: line.trim().to_string(),
+                                problem: format!("Prototype pollution: object key derived from user input matches dangerous property '{}'.", key),
+                                fix_hint: "Validate and whitelist allowed keys before object property assignment. Use Object.freeze() on sensitive prototypes.".to_string(),
+                                auto_fix_available: false,
+                        replacement: String::new(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-022: Regex Injection / ReDoS — HIGH · CWE-1333 · CVSS 7.5
+// Dynamic regex constructed from user input with catastrophic backtracking
+// ---------------------------------------------------------------------------
+pub struct JSRegexInjectionCWE1333;
+
+impl LangRule for JSRegexInjectionCWE1333 {
+    fn id(&self) -> &str { "SEC-JS-022" }
+    fn name(&self) -> &str { "Regex Injection / ReDoS Vulnerability" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let patterns = [
+            (r#"new\s+RegExp\s*\(\s*(?:req|body|params|query|user)"#, "RegExp constructed from user input"),
+            (r#"new\s+RegExp\s*\(\s*(?:input|data|str)"#, "RegExp from untrusted variable"),
+            (r#"RegExp\s*\(\s*[^)]*(?:\+|\+=)[^)]*\)"#, "RegExp with string concatenation"),
+            (r#"\.match\s*\(\s*/[^/]*(?:\|{2,}|[*+]{2,})[^/]*/[gimsuy]*\s*\)"#, "Regex with dangerous quantifiers from dynamic pattern"),
+            (r#"\.replace\s*\(\s*/[^/]*[*+][^/]*/"#, "replace with regex having greedy quantifier"),
+        ];
+
+        let catastrophic_patterns = [
+            r".*[|*+]{2,}.*",
+            r".*\(.*\)\s*[*+]{2,}.*",
+            r".*\(.*\|.*\)\s*[*+].*",
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+            for (pattern, desc) in &patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        let has_catastrophic = catastrophic_patterns.iter().any(|cp| {
+                            if let Ok(cpre) = Regex::new(cp) { cpre.is_match(line) } else { false }
+                        });
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: if has_catastrophic { "critical".to_string() } else { self.severity().to_string() },
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("Regex injection (ReDoS): {}", desc),
+                            fix_hint: "Validate and sanitize user input before using in regex. Avoid building regex from user strings; use allowlist patterns instead.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-023: Eval with User Input — CRITICAL · CWE-94 · CVSS 10.0
+// Dangerous code execution functions with any user-controlled input
+// ---------------------------------------------------------------------------
+pub struct JSEvalWithUserInputCWE94;
+
+impl LangRule for JSEvalWithUserInputCWE94 {
+    fn id(&self) -> &str { "SEC-JS-023" }
+    fn name(&self) -> &str { "Code Injection via eval() with User Input" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_funcs = ["eval\\(", "Function\\(", "setTimeout\\(", "setInterval\\(", "vm\\.runIn", "new\\s+Function\\("];
+        let user_input_vars = ["req\\.", "body\\.", "params\\.", "query\\.", "userInput", "userData", "input", "data"];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+            let has_dangerous = dangerous_funcs.iter().any(|f| {
+                if let Ok(re) = Regex::new(f) { re.is_match(line) } else { false }
+            });
+
+            if has_dangerous {
+                let has_user_input = user_input_vars.iter().any(|v| {
+                    if let Ok(re) = Regex::new(v) { re.is_match(line) } else { false }
+                });
+
+                if has_user_input {
+                    let (start, end) = (0, line.len());
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: line_num,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line.trim().to_string(),
+                        problem: "Code injection: user input passed to eval() or similar dynamic code execution function.".to_string(),
+                        fix_hint: "NEVER pass user input to eval(), Function(), setTimeout(), or setInterval(). Use safe alternatives like JSON.parse() for data, or implement a safe sandbox.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-024: Command Injection in child_process — CRITICAL · CWE-78 · CVSS 9.8
+// OS command execution with user-supplied input
+// ---------------------------------------------------------------------------
+pub struct JSCommandInjectionCWE78;
+
+impl LangRule for JSCommandInjectionCWE78 {
+    fn id(&self) -> &str { "SEC-JS-024" }
+    fn name(&self) -> &str { "OS Command Injection Vulnerability" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = [
+            (r#"child_process\.(?:exec|execSync|execFile|execFileSync)\s*\([^)]*(?:req|body|params|query|user)"#, "child_process.exec with user input"),
+            (r#"child_process\.(?:spawn|spawnSync|fork)\s*\([^)]*(?:req|body|params|query|user)"#, "child_process.spawn with user input"),
+            (r#"(?:exec|execSync|execFile)\s*\([^)]*(?:req|body|params|query|user)"#, "exec() with user input"),
+            (r#"`[^`]*\$\{[^}]*(?:req|body|params|query|user)"#, "Template literal with user input in command"),
+            (r#"spawn\s*\([^)]*(?:req|body|params|query|user)"#, "spawn() with user input"),
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+            for (pattern, desc) in &dangerous_patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("OS command injection: {}", desc),
+                            fix_hint: "Use parameterized commands with an allowlist of safe arguments. Never concatenate user input into shell commands. Consider libraries like execa with proper escaping.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-025: Path Traversal in fs — HIGH · CWE-22 · CVSS 8.6
+// File system access with user-controlled paths containing ../ sequences
+// ---------------------------------------------------------------------------
+pub struct JSPathTraversalCWE22;
+
+impl LangRule for JSPathTraversalCWE22 {
+    fn id(&self) -> &str { "SEC-JS-025" }
+    fn name(&self) -> &str { "Path Traversal Vulnerability" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = [
+            (r#"fs\.(?:readFile|readFileSync|writeFile|writeFileSync|readdir|readdirSync|stat|statSync|createReadStream)\s*\([^)]*(?:req|body|params|query|user)"#, "fs function with user input path"),
+            (r#"fs\.(?:readFile|readFileSync|writeFile|writeFileSync)\s*\(\s*path\.join\s*\([^)]*\.\.\/"#, "path.join with potential traversal in fs call"),
+            (r#"path\.join\s*\([^)]*(?:req|body|params|query|user)"#, "path.join with user input"),
+            (r#"path\.resolve\s*\([^)]*(?:req|body|params|query|user)"#, "path.resolve with user input"),
+            (r#"readFile\s*\([^)]*\.\.\/"#, "readFile with path traversal pattern"),
+            (r#"readFileSync\s*\([^)]*\.\.\/"#, "readFileSync with path traversal pattern"),
+        ];
+
+        let traversal_pattern = r"\.\.\/|\.\.\\|%2e%2e";
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+            for (pattern, desc) in &dangerous_patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        let has_traversal = if let Ok(tp) = Regex::new(traversal_pattern) {
+                            tp.is_match(line)
+                        } else { false };
+
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: if has_traversal { "critical".to_string() } else { self.severity().to_string() },
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("Path traversal: {}", desc),
+                            fix_hint: "Validate and sanitize file paths. Use path.join() with a base directory and verify the resolved path is within it. Implement allowlist for permitted files.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-026: Hardcoded Credentials — HIGH · CWE-798 · CVSS 7.5
+// Passwords, API keys, and secrets hardcoded in source code
+// ---------------------------------------------------------------------------
+pub struct JSHardcodedCredsCWE798;
+
+impl LangRule for JSHardcodedCredsCWE798 {
+    fn id(&self) -> &str { "SEC-JS-026" }
+    fn name(&self) -> &str { "Hardcoded Credentials Detected" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let credential_patterns = [
+            (r#"(?i)(?:password|passwd|pwd)\s*[=:]\s*['\"][^'\"]{4,}['\"]"#, "Hardcoded password"),
+            (r#"(?i)(?:api[_-]?key|apikey)\s*[=:]\s*['\"][A-Za-z0-9_\-]{16,}['\"]"#, "Hardcoded API key"),
+            (r#"(?i)(?:secret|token)\s*[=:]\s*['\"][A-Za-z0-9_\-]{16,}['\"]"#, "Hardcoded secret/token"),
+            (r#"(?i)(?:aws[_-]?(?:access[_-]?key[_-]?id|secret[_-]?key))\s*[=:]\s*['\"][^'\"]{10,}['\"]"#, "Hardcoded AWS credentials"),
+            (r#"(?i)(?:private[_-]?key)\s*[=:]\s*['\"]-----BEGIN"#, "Hardcoded private key"),
+            (r#"['\"][A-Za-z0-9_\-]{32,}==['\"]"#, "Potential base64-encoded secret"),
+            (r#"sk-[A-Za-z0-9]{32,}"#, "Hardcoded OpenAI/API secret key"),
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            // Skip comments and test files
+            if line.trim().starts_with("//") || line.trim().starts_with("/*") {
+                continue;
+            }
+
+            for (pattern, desc) in &credential_patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("Hardcoded credential: {}", desc),
+                            fix_hint: "Use environment variables or a secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault). Load secrets at runtime from secure storage.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-027: CORS Wildcard with Credentials — MEDIUM · CWE-346 · CVSS 6.5
+// Access-Control-Allow-Origin: * combined with Allow-Credentials: true
+// ---------------------------------------------------------------------------
+pub struct JSCORSWildcardCredsCWE346;
+
+impl LangRule for JSCORSWildcardCredsCWE346 {
+    fn id(&self) -> &str { "SEC-JS-027" }
+    fn name(&self) -> &str { "CORS Wildcard with Credentials" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let mut has_wildcard_origin = false;
+        let mut has_credentials = false;
+        let mut wildcard_line = 0;
+        let mut creds_line = 0;
+        let mut wildcard_snippet = String::new();
+        let mut creds_snippet = String::new();
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            if let Ok(re) = Regex::new(r#"(?i)access-control-allow-origin\s*[:=]\s*['\"]?\*['\"]?"#) {
+                if re.is_match(line) {
+                    has_wildcard_origin = true;
+                    wildcard_line = line_num;
+                    wildcard_snippet = line.trim().to_string();
+                }
+            }
+
+            if let Ok(re) = Regex::new(r#"(?i)access-control-allow-credentials\s*[:=]\s*['\"]?true['\"]?"#) {
+                if re.is_match(line) {
+                    has_credentials = true;
+                    creds_line = line_num;
+                    creds_snippet = line.trim().to_string();
+                }
+            }
+        }
+
+        if has_wildcard_origin && has_credentials {
+            findings.push(LangFinding {
+                rule_id: self.id().to_string(),
+                severity: self.severity().to_string(),
+                line: if wildcard_line > 0 { wildcard_line } else { 1 },
+                column: 0,
+                start_byte: 0,
+                end_byte: 0,
+                snippet: format!("{} | {}", wildcard_snippet, creds_snippet),
+                problem: "CORS misconfiguration: 'Access-Control-Allow-Origin: *' cannot be used with 'Access-Control-Allow-Credentials: true'. This allows any origin to access credentials.".to_string(),
+                fix_hint: "Replace wildcard '*' with a specific list of allowed origins. Validate the Origin header against an allowlist instead of using '*'.".to_string(),
+                auto_fix_available: false,
+                        replacement: String::new(),
+            });
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-028: XXE in XML Parsing — HIGH · CWE-611 · CVSS 8.1
+// XML parsing without disabling external entities
+// ---------------------------------------------------------------------------
+pub struct JSXXECWE611;
+
+impl LangRule for JSXXECWE611 {
+    fn id(&self) -> &str { "SEC-JS-028" }
+    fn name(&self) -> &str { "XML External Entity (XXE) Vulnerability" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = [
+            (r#"xml2js\.parseString\s*\([^)]*(?:req|body|params|query)"#, "xml2js parseString with user input"),
+            (r#"xml2js\.Parser\s*\([^)]*\)"#, "xml2js.Parser instantiation"),
+            (r#"new\s+xml2js\.Parser\s*\([^)]*\)(?![\s\S]*?dtdProcessing\s*:)", "xml2js Parser without safe settings"),
+            (r#"xmldom\s*\.parse\s*\([^)]*(?:req|body|params|query)"#, "xmldom parse with user input"),
+            (r#"fast-xml-parser\s*\([^)]*(?:req|body|params|query)"#, "fast-xml-parser with user input"),
+            (r#"libxmljs\.parse\s*\([^)]*(?:req|body|params|query)"#, "libxmljs with user input"),
+        ];
+
+        let safe_settings = [
+            r#"dtdProcessing\s*:\s*false"#,
+            r#"expandEntities\s*:\s*false"#,
+            r#"externalEntities\s*:\s*false"#,
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            for (pattern, desc) in &dangerous_patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        let has_safe_settings = safe_settings.iter().any(|s| {
+                            if let Ok(sre) = Regex::new(s) { sre.is_match(line) } else { false }
+                        });
+
+                        if !has_safe_settings {
+                            findings.push(LangFinding {
+                                rule_id: self.id().to_string(),
+                                severity: self.severity().to_string(),
+                                line: line_num,
+                                column: 0,
+                                start_byte: 0,
+                                end_byte: line.len(),
+                                snippet: line.trim().to_string(),
+                                problem: format!("XXE vulnerability: {}", desc),
+                                fix_hint: "Disable external entity processing in XML parsers. For xml2js: set dtdProcessing: false. For libxmljs: parse with no外部 entities.".to_string(),
+                                auto_fix_available: false,
+                        replacement: String::new(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-029: Insecure Crypto MD5/SHA1 — MEDIUM · CWE-327 · CVSS 5.9
+// Using deprecated cryptographic hash functions
+// ---------------------------------------------------------------------------
+pub struct JSInsecureCryptoCWE327;
+
+impl LangRule for JSInsecureCryptoCWE327 {
+    fn id(&self) -> &str { "SEC-JS-029" }
+    fn name(&self) -> &str { "Use of Weak Cryptographic Hash" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let insecure_patterns = [
+            (r#"crypto\.createHash\s*\(\s*['\"]md5['\"]"#, "MD5 hash function"),
+            (r#"crypto\.createHash\s*\(\s*['\"]sha1['\"]"#, "SHA-1 hash function"),
+            (r#"createHash\s*\(\s*['\"]md5['\"]"#, "MD5 hash function"),
+            (r#"createHash\s*\(\s*['\"]sha1['\"]"#, "SHA-1 hash function"),
+            (r#"crypto\.createHmac\s*\(\s*['\"]md5['\"]"#, "HMAC-MD5"),
+            (r#"crypto\.createHmac\s*\(\s*['\"]sha1['\"]"#, "HMAC-SHA1"),
+            (r#"md5\s*\("#, "Direct MD5 function call"),
+            (r#"sha1\s*\("#, "Direct SHA-1 function call"),
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            for (pattern, desc) in &insecure_patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("Weak cryptographic hash: {} is deprecated and insecure for security purposes.", desc),
+                            fix_hint: "Use SHA-256 or stronger hash functions. For passwords, use bcrypt, scrypt, or Argon2 with appropriate work factors.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-030: Cookie Missing Security Flags — MEDIUM · CWE-1004 · CVSS 6.5
+// Cookie set without httpOnly or secure flags
+// ---------------------------------------------------------------------------
+pub struct JSCookieMissingFlagsCWE1004;
+
+impl LangRule for JSCookieMissingFlagsCWE1004 {
+    fn id(&self) -> &str { "SEC-JS-030" }
+    fn name(&self) -> &str { "Cookie Missing Security Flags" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let cookie_patterns = [
+            (r#"res\.cookie\s*\([^)]*\)(?![\s\S]*?httpOnly\s*:\s*true)"#, "res.cookie() without httpOnly"),
+            (r#"res\.cookie\s*\([^)]*\)(?![\s\S]*?secure\s*:\s*true)"#, "res.cookie() without secure"),
+            (r#"res\.setHeader\s*\(\s*['\"]Set-Cookie['\"]"#, "Set-Cookie header without flags"),
+            (r#"cookie\.serialize\s*\([^)]*\)(?![\s\S]*?httpOnly\s*:\s*true)"#, "cookie.serialize without httpOnly"),
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            for (pattern, desc) in &cookie_patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        let missing_flags = if line.contains("httpOnly") {
+                            vec!["secure"]
+                        } else if line.contains("secure") {
+                            vec!["httpOnly"]
+                        } else {
+                            vec!["httpOnly", "secure", "sameSite"]
+                        };
+
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("Cookie security: missing flags {}.", missing_flags.join(", ")),
+                            fix_hint: "Always set httpOnly: true, secure: true (in production), and sameSite: 'strict'|'lax' on cookie options.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-031: Session Fixation — MEDIUM · CWE-384 · CVSS 6.8
+// Session ID not regenerated after authentication
+// ---------------------------------------------------------------------------
+pub struct JSSessionFixationCWE384;
+
+impl LangRule for JSSessionFixationCWE384 {
+    fn id(&self) -> &str { "SEC-JS-031" }
+    fn name(&self) -> &str { "Session Fixation Vulnerability" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_session = code.contains("express-session") || code.contains("cookie-session")
+            || code.contains("session(") || code.contains("req.session");
+
+        if has_session {
+            let has_login = code.contains("login") || code.contains("signin") || code.contains("authenticate");
+            let has_regenerate = code.contains("session.regenerate") || code.contains("req.session.regenerate");
+
+            if has_login && !has_regenerate {
+                let login_lines: Vec<usize> = code.lines().enumerate()
+                    .filter(|(_, l)| {
+                        let lower = l.to_lowercase();
+                        lower.contains("login") || lower.contains("signin") || lower.contains("authenticate")
+                    })
+                    .map(|(i, _)| i + 1)
+                    .collect();
+
+                for line in login_lines {
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: 0,
+                        end_byte: 0,
+                        snippet: code.lines().nth(line - 1).unwrap_or("").trim().to_string(),
+                        problem: "Session fixation: session ID is not regenerated after user authentication.".to_string(),
+                        fix_hint: "Call req.session.regenerate((err) => { /* continue */ }) immediately after successful authentication to prevent session fixation attacks.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-032: No Rate Limiting — MEDIUM · CWE-799 · CVSS 5.3
+// Express route without rate limiter middleware
+// ---------------------------------------------------------------------------
+pub struct JSNoRateLimitingCWE799;
+
+impl LangRule for JSNoRateLimitingCWE799 {
+    fn id(&self) -> &str { "SEC-JS-032" }
+    fn name(&self) -> &str { "Missing Rate Limiting" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_rate_limiter = code.contains("express-rate-limit") || code.contains("rate-limit")
+            || code.contains("rateLimit") || code.contains("ratelimit")
+            || code.contains("app.use(rateLimiter)") || code.contains("app.use('/api', rateLimiter");
+
+        let sensitive_routes = [
+            (r#"app\.(?:post|put|patch)\s*\(\s*['\"]\/login['\"]"#, "Login endpoint"),
+            (r#"app\.(?:post|put|patch)\s*\(\s*['\"]\/signin['\"]"#, "Signin endpoint"),
+            (r#"app\.(?:post|put|patch)\s*\(\s*['\"]\/auth['\"]"#, "Auth endpoint"),
+            (r#"app\.(?:post|put|patch)\s*\(\s*['\"]\/register['\"]"#, "Register endpoint"),
+            (r#"app\.(?:post|put|patch)\s*\(\s*['\"]\/api\/"#, "API endpoint"),
+            (r#"router\.(?:post|put|patch|delete)\s*\([^)]*\)"#, "Router method"),
+            (r#"app\.\w+\s*\(\s*['\"]\/['\"]"#, "Root route handler"),
+        ];
+
+        if !has_rate_limiter {
+            for (line_num, line) in code.lines().enumerate() {
+                let line_num = line_num + 1;
+
+                for (pattern, desc) in &sensitive_routes {
+                    if let Ok(re) = Regex::new(pattern) {
+                        if re.is_match(line) {
+                            findings.push(LangFinding {
+                                rule_id: self.id().to_string(),
+                                severity: self.severity().to_string(),
+                                line: line_num,
+                                column: 0,
+                                start_byte: 0,
+                                end_byte: line.len(),
+                                snippet: line.trim().to_string(),
+                                problem: format!("No rate limiting on {}: may allow brute-force attacks.", desc),
+                                fix_hint: "Add rate limiting middleware: `import rateLimit from 'express-rate-limit'; const limiter = rateLimit({ windowMs: 15*60*1000, max: 100 }); app.use('/api', limiter);`. Adjust limits based on endpoint sensitivity.".to_string(),
+                                auto_fix_available: false,
+                        replacement: String::new(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-033: SSRF — HIGH · CWE-918 · CVSS 8.6
+// Server-Side Request Forgery via user-controlled URLs
+// ---------------------------------------------------------------------------
+pub struct JSSSRFCWE918;
+
+impl LangRule for JSSSRFCWE918 {
+    fn id(&self) -> &str { "SEC-JS-033" }
+    fn name(&self) -> &str { "Server-Side Request Forgery (SSRF)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let ssrf_patterns = [
+            (r#"axios\.(?:get|post|put|patch|delete|request)\s*\([^)]*(?:req|body|params|query|user|url|uri)"#, "axios with user URL"),
+            (r#"fetch\s*\([^)]*(?:req|body|params|query|user|url|uri)"#, "fetch with user URL"),
+            (r#"node-fetch\s*\([^)]*(?:req|body|params|query|user|url|uri)"#, "node-fetch with user URL"),
+            (r#"superagent\.(?:get|post|put|patch|delete)\s*\([^)]*(?:req|body|params|query|user|url)"#, "superagent with user URL"),
+            (r#"got\s*\([^)]*(?:req|body|params|query|user|url)"#, "got library with user URL"),
+            (r#"http\.(?:get|request)\s*\([^)]*(?:req|body|params|query|user|url)"#, "http module with user URL"),
+            (r#"https\.(?:get|request)\s*\([^)]*(?:req|body|params|query|user|url)"#, "https module with user URL"),
+            (r#"request\s*\([^)]*(?:req|body|params|query|user|url|uri)"#, "request library with user URL"),
+            (r#"new\s+URL\s*\([^)]*(?:req|body|params|query|user|url)"#, "new URL() with user input"),
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            for (pattern, desc) in &ssrf_patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("SSRF vulnerability: {}", desc),
+                            fix_hint: "Validate URLs against an allowlist of permitted domains/IPs. Block internal IP ranges (10.x, 192.168.x, 172.16-31.x, 127.x, localhost). Use URL parsing to extract and validate hostname before making requests.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-034: Template Injection — CRITICAL · CWE-1336 · CVSS 9.3
+// User input in template engines (EJS, Handlebars, etc.)
+// ---------------------------------------------------------------------------
+pub struct JSTemplateInjectionCWE1336;
+
+impl LangRule for JSTemplateInjectionCWE1336 {
+    fn id(&self) -> &str { "SEC-JS-034" }
+    fn name(&self) -> &str { "Server-Side Template Injection (SSTI)" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let template_patterns = [
+            (r#"ejs\.render\s*\([^)]*,\s*\{[^}]*(?:req|body|params|query|user)"#, "EJS render with user data"),
+            (r#"handlebars\.compile\s*\([^)]*(?:req|body|params|query|user)"#, "Handlebars compile with user input"),
+            (r#"nunjucks\.render\s*\([^)]*(?:req|body|params|query|user)"#, "Nunjucks render with user input"),
+            (r#"(?:ejs|handlebars|nunjucks|handlebars)\(['\"`][^'\"]*\$\{[^}]*(?:req|body|params|query|user)"#, "Template literal with user interpolation"),
+            (r#"pug\.render\s*\([^)]*(?:req|body|params|query|user)"#, "Pug render with user input"),
+            (r#"(?:req|body|params|query)\.[\w]+\s*\|\s*safe"#,
+             "Marked as safe - potential template injection bypass"),
+            (r#"template\s*=\s*['\"`][^'\"]*\$\{[^}]*(?:req|body|params|query)"#, "Template variable with user input"),
+        ];
+
+        let has_template_engine = code.contains("ejs") || code.contains("handlebars")
+            || code.contains("nunjucks") || code.contains("pug") || code.contains("jade")
+            || code.contains("pug.render") || code.contains("ejs.render");
+
+        if has_template_engine {
+            for (line_num, line) in code.lines().enumerate() {
+                let line_num = line_num + 1;
+
+                for (pattern, desc) in &template_patterns {
+                    if let Ok(re) = Regex::new(pattern) {
+                        if re.is_match(line) {
+                            findings.push(LangFinding {
+                                rule_id: self.id().to_string(),
+                                severity: self.severity().to_string(),
+                                line: line_num,
+                                column: 0,
+                                start_byte: 0,
+                                end_byte: line.len(),
+                                snippet: line.trim().to_string(),
+                                problem: format!("Server-side template injection: {}", desc),
+                                fix_hint: "Never pass raw user input to template rendering functions. Sanitize and validate all template variables. Use sandboxed template engines or consider pre-compilation with strict variable allowlists.".to_string(),
+                                auto_fix_available: false,
+                        replacement: String::new(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-035: WebSocket No Auth — MEDIUM · CWE-345 · CVSS 6.5
+// WebSocket server without authentication during handshake
+// ---------------------------------------------------------------------------
+pub struct JSWebSocketNoAuthCWE345;
+
+impl LangRule for JSWebSocketNoAuthCWE345 {
+    fn id(&self) -> &str { "SEC-JS-035" }
+    fn name(&self) -> &str { "WebSocket Without Authentication" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_websocket = code.contains("ws") || code.contains("socket.io")
+            || code.contains("WebSocket") || code.contains("websocket")
+            || code.contains("new Server") && code.contains("upgrade");
+
+        if has_websocket {
+            let auth_patterns = [
+                r#"on\s*\(\s*['\"]connection['\"]"#,     // socket.io connection event
+                r#"verifyClient"#,                       // ws verifyClient
+                r#"verify-request"#,                     // uWebSocket.js
+                r#"authenticate"#,                       // custom auth
+                r#"checkAuth"#,                           // custom auth
+                r#"validateSession"#,                    // session validation
+            ];
+
+            let has_auth = auth_patterns.iter().any(|p| {
+                if let Ok(re) = Regex::new(p) { re.is_match(code) } else { false }
+            });
+
+            if !has_auth {
+                let ws_init_lines: Vec<usize> = code.lines().enumerate()
+                    .filter(|(_, l)| {
+                        l.contains("new WebSocketServer") || l.contains("new ws.Server")
+                            || l.contains("const wss =") || l.contains("io.on")
+                            || l.contains("Server.createServer")
+                    })
+                    .map(|(i, _)| i + 1)
+                    .collect();
+
+                for line in ws_init_lines {
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: 0,
+                        end_byte: 0,
+                        snippet: code.lines().nth(line - 1).unwrap_or("").trim().to_string(),
+                        problem: "WebSocket server created without authentication/authorization mechanism.".to_string(),
+                        fix_hint: "Implement WebSocket authentication: pass JWT/session token via query params or first message, validate before allowing connection. Use verifyClient callback in ws library to authenticate during handshake.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-036: JWT Weak Secret — HIGH · CWE-347 · CVSS 7.5
+// JWT signed with weak secret or algorithm confusion
+// ---------------------------------------------------------------------------
+pub struct JSJWTWeakSecretCWE347;
+
+impl LangRule for JSJWTWeakSecretCWE347 {
+    fn id(&self) -> &str { "SEC-JS-036" }
+    fn name(&self) -> &str { "JWT Signed with Weak or No Secret" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let weak_patterns = [
+            (r#"jwt\.sign\s*\([^)]*,\s*['\"][^'\"]{0,15}['\"]"#, "JWT with short secret (<16 chars)"),
+            (r#"jwt\.sign\s*\([^)]*,\s*['\"](?:secret|password|passwd|test|dev|foo|bar|secret123|changeme)['\"]"#, "JWT with common weak secret"),
+            (r#"jwt\.sign\s*\([^)]*,\s*(?:null|undefined)\s*"#, "JWT with null/undefined secret"),
+            (r#"algorithm\s*:\s*['\"]none['\"]"#, "JWT with 'none' algorithm"),
+            (r#"jwt\.verify\s*\([^)]*,\s*['\"][^'\"]{0,15}['\"]"#, "JWT verify with short secret"),
+            (r#"jwt\.verify\s*\([^)]*,\s*(?:null|undefined)\s*"#, "JWT verify without secret"),
+        ];
+
+        let algorithm_confusion = [
+            (r#"jwt\.sign\s*\([^)]*,\s*[^,]+\s*,\s*\{[^}]*algorithm\s*:\s*['\"]RS"#, "RSA signature requested"),
+            (r#"jwt\.sign\s*\([^)]*,\s*\{[^}]*algorithm\s*:\s*['\"](?:HS|RS|ES)['\"]"#, "Algorithm specified in options"),
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            for (pattern, desc) in &weak_patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("Weak JWT configuration: {}", desc),
+                            fix_hint: "Use cryptographically strong secrets (256+ bits). For asymmetric algorithms, keep private keys secure. Explicitly specify and validate the expected algorithm. Use RS256 instead of HS256 when sharing secrets is not feasible.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+
+            for (pattern, desc) in &algorithm_confusion {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) && !line.contains("algorithm") {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: "high".to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("JWT algorithm confusion risk: {}", desc),
+                            fix_hint: "Always specify and validate the expected algorithm. Attackers may force algorithm switch (HS256 -> RS256) if not validated.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-037: dotenv in Git — LOW · CWE-552 · CVSS 5.3
+// Environment files with secrets committed or .env.example with real values
+// ---------------------------------------------------------------------------
+pub struct JSDotenvInGitCWE552;
+
+impl LangRule for JSDotenvInGitCWE552 {
+    fn id(&self) -> &str { "SEC-JS-037" }
+    fn name(&self) -> &str { ".env File Tracked in Source or Example Contains Secrets" }
+    fn severity(&self) -> &'static str { "low" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let patterns = [
+            (r#"\.env(?:\.example)?(?:\s*\|\s*path\.join.*)?\s*[^;]*\.(?:push|add|write)"#, ".env tracked or written"),
+            (r#"fs\.writeFileSync\s*\([^)]*['\"]\.env"#, "Writing to .env file"),
+            (r#"fs\.appendFileSync\s*\([^)]*['\"]\.env"#, "Appending to .env file"),
+            (r#"dotenv\.config\s*\(\s*\{[^}]*path\s*:\s*['\"]\.env\.example['\"]"#, "Loading .env.example instead of .env"),
+        ];
+
+        let secret_in_example = [
+            (r#"\.env\.example[^=]*=\s*['\"][A-Za-z0-9_\-]{16,}['\"]"#, "Possible secret value in .env.example"),
+            (r#"DATABASE_URL\s*=\s*['\"]postgres://[^@]+@"#, "Database URL with credentials in example"),
+            (r#"AWS_[A-Z_]+\s*=\s*['\"][A-Za-z0-9]{20,}['\"]"#, "AWS credential pattern in example"),
+            (r#"STRIPE_[A-Z_]+\s*=\s*['\"][A-Za-z0-9_\-]{20,}['\"]"#, "API key pattern in example"),
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            for (pattern, desc) in &patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("dotenv misconfiguration: {}", desc),
+                            fix_hint: "Ensure .env files are in .gitignore. Use .env.example with placeholder values like 'your-secret-key-here'. Never commit actual secrets to version control.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+
+            for (pattern, desc) in &secret_in_example {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: "medium".to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("Potential secret in .env.example: {}", desc),
+                            fix_hint: "Replace actual values in .env.example with placeholder strings. Never commit real credentials even to example files.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// SEC-JS-038: Mass Assignment — MEDIUM · CWE-915 · CVSS 6.5
+// Object.assign or similar with req.body without whitelist
+// ---------------------------------------------------------------------------
+pub struct JSMassAssignmentCWE915;
+
+impl LangRule for JSMassAssignmentCWE915 {
+    fn id(&self) -> &str { "SEC-JS-038" }
+    fn name(&self) -> &str { "Mass Assignment Vulnerability" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let dangerous_patterns = [
+            (r#"Object\.assign\s*\(\s*\w+\s*,\s*(?:req|body|params|query)"#, "Object.assign with user input"),
+            (r#"Object\.assign\s*\(\s*\{\}\s*,\s*(?:req|body|params|query)"#, "Object.assign({}, userInput)"),
+            (r#"(?:Object\.spread|spread\s*operator)\s*\(\s*(?:req|body|params|query)"#, "Spread operator with user input"),
+            (r#"new\s+\w+\s*\(\s*(?:req|body|params|query)\s*\)"#, "Constructor with user input object"),
+            (r#"(?:User|Model|Entity)\.create\s*\(\s*(?:req|body|params|query)"#, "Model.create with direct body"),
+            (r#"\.findOneAndUpdate\s*\([^)]*,\s*\{[^}]*\.\.\.(?:req|body|params|query)"#, "Mongoose update with spread body"),
+            (r#"\.update\s*\([^)]*,\s*\{[^}]*\.\.\.(?:req|body|params|query)"#, "update with spread body"),
+        ];
+
+        let has_whitelist = code.contains("pick(") || code.contains("pick(")
+            || code.contains("whitelist") || code.contains("allowedFields")
+            || code.contains("permit") || code.contains("sanitize");
+
+        if !has_whitelist {
+            for (line_num, line) in code.lines().enumerate() {
+                let line_num = line_num + 1;
+
+                for (pattern, desc) in &dangerous_patterns {
+                    if let Ok(re) = Regex::new(pattern) {
+                        if re.is_match(line) {
+                            findings.push(LangFinding {
+                                rule_id: self.id().to_string(),
+                                severity: self.severity().to_string(),
+                                line: line_num,
+                                column: 0,
+                                start_byte: 0,
+                                end_byte: line.len(),
+                                snippet: line.trim().to_string(),
+                                problem: format!("Mass assignment vulnerability: {}", desc),
+                                fix_hint: "Use field whitelisting: `Model.create(pick(req.body, ['allowed', 'fields']))` or `schema.pre('save', ...)` to restrict which fields can be set. Never pass raw request body directly to database operations.".to_string(),
+                                auto_fix_available: false,
+                        replacement: String::new(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// =============================================================================
+// AI DETECTION RULES (JS-AI-011 to JS-AI-012)
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// JS-AI-011: AI Hallucinated File Paths
+// Detects fake/AI-generated file paths in code
+// ---------------------------------------------------------------------------
+pub struct JSAIHallucinatedPaths;
+
+impl JSAIHallucinatedPaths {
+    fn get_line_offsets(&self, code: &str, line: usize) -> (usize, usize) {
+        let mut current_line = 1;
+        let mut line_start = 0;
+        for (i, c) in code.char_indices() {
+            if current_line == line { line_start = i; break; }
+            if c == '\n' { current_line += 1; }
+        }
+        let mut line_end = line_start;
+        for (i, c) in code[line_start..].char_indices() {
+            if c == '\n' { line_end = line_start + i + 1; break; }
+        }
+        if line_end == line_start { line_end = code.len(); }
+        (line_start, line_end)
+    }
+}
+
+impl LangRule for JSAIHallucinatedPaths {
+    fn id(&self) -> &str { "JS-AI-011" }
+    fn name(&self) -> &str { "AI Hallucinated File Path" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let hallucinated_patterns = [
+            (r#"from\s+['\"][^'\"]*faker[_-]?lib['\"]"#, "faker-lib hallucinated package"),
+            (r#"from\s+['\"][^'\"]*jsonwebtoken[_-]?fake['\"]"#, "jsonwebtoken-fake hallucinated"),
+            (r#"require\s*\(['\"][^'\"]*test[_-]?package[_-]?xyz['\"]"#, "test-package-xyz hallucinated"),
+            (r#"import\s+.*\s+from\s+['\"][^'\"]*lodash[_-]?hacked['\"]"#, "lodash-hacked hallucinated"),
+        ];
+
+        let suspicious_paths = [
+            r"(?i)/fake/path/to/",
+            r"(?i)/mock/data/",
+            r"(?i)/not/real/",
+            r"(?i)/tmp/fake/",
+            r"(?i)C:\\fake\\",
+            r"(?i)/tmp/shouldnt/exist/",
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            for (pattern, desc) in &hallucinated_patterns {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        let (start, end) = self.get_line_offsets(code, line_num);
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: start,
+                            end_byte: end,
+                            snippet: line.trim().to_string(),
+                            problem: format!("AI hallucination: {}", desc),
+                            fix_hint: "Verify this path/package exists and is accessible. AI-generated code often contains non-existent paths or packages.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+
+            for pattern in &suspicious_paths {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        let (start, end) = self.get_line_offsets(code, line_num);
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: "low".to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: start,
+                            end_byte: end,
+                            snippet: line.trim().to_string(),
+                            problem: "Suspicious file path that may be hallucinated by AI.".to_string(),
+                            fix_hint: "Verify this path exists and is correct. AI may generate non-existent file paths.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ---------------------------------------------------------------------------
+// JS-AI-012: AI-Generated Suspicious Comment Patterns
+// Detects comments that suggest AI hallucination or confusion
+// ---------------------------------------------------------------------------
+pub struct JSAISuspiciousComments;
+
+impl LangRule for JSAISuspiciousComments {
+    fn id(&self) -> &str { "JS-AI-012" }
+    fn name(&self) -> &str { "AI Suspicious Comment Pattern" }
+    fn severity(&self) -> &'static str { "low" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let suspicious_comments = [
+            (r#"(?i)//.*this should work.*"#, "Uncertain comment suggests AI generated"),
+            (r#"(?i)//.*(?:magic|hack|temp|workaround|fixme|todo|xxx).*(?:later|eventually|somehow)"#, "Vague future action comment"),
+            (r#"(?i)//.*(?:import|require).*(?:lib|module).*(?:not sure|maybe|probably)"#, "Uncertain import statement"),
+            (r#"(?i)//.*replaced with.*fake.*mock.*"#, "Fake/mock placeholder comment"),
+            (r#"(?i)//.*(?:should|ought to|might).*(?:work|exist|be)"#, "Hedging language about functionality"),
+            (r#"(?i)//.*not (?:real|actual|fake|test)"#, "Explicit disclaimer about fake content"),
+            (r#"(?i)/\*[\s\S]*?(?:fake|mock|magic)[\s\S]*?\*/"#, "Block comment mentioning fake content"),
+        ];
+
+        for (line_num, line) in code.lines().enumerate() {
+            let line_num = line_num + 1;
+
+            for (pattern, desc) in &suspicious_comments {
+                if let Ok(re) = Regex::new(pattern) {
+                    if re.is_match(line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: line_num,
+                            column: 0,
+                            start_byte: 0,
+                            end_byte: line.len(),
+                            snippet: line.trim().to_string(),
+                            problem: format!("AI suspicious pattern: {}", desc),
+                            fix_hint: "Review this comment and the surrounding code. AI-generated code often contains hedging language or placeholder comments.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// =============================================================================
+// NEW RULES: JS-006 to JS-010 (from Issue #5 feature request)
+// =============================================================================
+
+// JS-006: Empty catch block
+pub struct JSEmptyCatchRule;
+
+impl LangRule for JSEmptyCatchRule {
+    fn id(&self) -> &str { "JS-006" }
+    fn name(&self) -> &str { "Empty Catch Block" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        for cb in &tree.catch_blocks {
+            if cb.is_empty {
+                let snippet = get_line_text(code, cb.start_line)
+                    .unwrap_or_default();
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line: cb.start_line,
+                    column: 0,
+                    start_byte: 0,
+                    end_byte: 0,
+                    snippet: snippet.trim().to_string(),
+                    problem: "Empty catch block silently swallows errors. This can hide bugs and make debugging difficult.".to_string(),
+                    fix_hint: "Add error handling logic or logging to the catch block. At minimum, log the error.".to_string(),
+                    auto_fix_available: false,
+                    replacement: String::new(),
+                });
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JS-007: fetch() without timeout
+pub struct JSFetchWithoutTimeoutRule;
+
+impl LangRule for JSFetchWithoutTimeoutRule {
+    fn id(&self) -> &str { "JS-007" }
+    fn name(&self) -> &str { "Fetch Without Timeout" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        for call in &tree.calls {
+            if call.callee == "fetch" || call.callee.ends_with(".fetch") {
+                // Check if AbortController or signal/timeout options are present
+                let has_timeout = call.arguments.iter().any(|arg| {
+                    arg.contains("signal") || arg.contains("timeout") || arg.contains("AbortController")
+                });
+                if !has_timeout {
+                    let snippet = get_line_text(code, call.start_line)
+                        .unwrap_or_default();
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: 0,
+                        end_byte: 0,
+                        snippet: snippet.trim().to_string(),
+                        problem: "fetch() call without timeout. Unresponsive servers can cause the application to hang indefinitely.".to_string(),
+                        fix_hint: "Add an AbortController with a timeout: const controller = new AbortController(); setTimeout(() => controller.abort(), 5000); fetch(url, { signal: controller.signal })".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// JS-008: Math.random() for security tokens
+pub struct JSMathRandomTokenRule;
+
+impl LangRule for JSMathRandomTokenRule {
+    fn id(&self) -> &str { "JS-008" }
+    fn name(&self) -> &str { "Math.random() for Security Token" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let security_keywords = ["token", "id", "key", "secret", "password", "session", "auth", "nonce", "uuid", "unique", "random", "hash"];
+        for call in &tree.calls {
+            if call.callee == "Math.random" {
+                let snippet = get_line_text(code, call.start_line)
+                    .unwrap_or_default();
+                let snippet_lower = snippet.to_lowercase();
+                let is_security_context = security_keywords.iter()
+                    .any(|kw| snippet_lower.contains(kw));
+                if is_security_context {
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: 0,
+                        end_byte: 0,
+                        snippet: snippet.trim().to_string(),
+                        problem: "Math.random() is not cryptographically secure. Using it for security tokens can allow prediction attacks.".to_string(),
+                        fix_hint: "Use crypto.randomUUID() (browser) or crypto.getRandomValues() (Node.js) for secure random values.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+        findings
+    }
+
+    fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// =============================================================================
+// END OF NEW RULES
+// =============================================================================
 
 // =============================================================================
 // END OF SECURITY RULES
@@ -2745,6 +4170,10 @@ pub fn js_rules() -> Vec<Box<dyn LangRule>> {
         Box::new(JSTodoComments),
         Box::new(JSAlertConfirm),
         Box::new(JSEvalUsage),
+        // New rules (Issue #5)
+        Box::new(JSEmptyCatchRule),
+        Box::new(JSFetchWithoutTimeoutRule),
+        Box::new(JSMathRandomTokenRule),
         // Security rules
         Box::new(JSSXSSRule),
         Box::new(JSSQLInjectionRule),
@@ -2777,5 +4206,27 @@ pub fn js_rules() -> Vec<Box<dyn LangRule>> {
         // AI logic bug rules
         Box::new(JSOffByOneArrayAccess),
         Box::new(JSInvertedAuthCheck),
+        // New Security Rules (SEC-JS-021 to SEC-JS-038)
+        Box::new(JSPrototypePollutionCWE1321),
+        Box::new(JSRegexInjectionCWE1333),
+        Box::new(JSEvalWithUserInputCWE94),
+        Box::new(JSCommandInjectionCWE78),
+        Box::new(JSPathTraversalCWE22),
+        Box::new(JSHardcodedCredsCWE798),
+        Box::new(JSCORSWildcardCredsCWE346),
+        Box::new(JSXXECWE611),
+        Box::new(JSInsecureCryptoCWE327),
+        Box::new(JSCookieMissingFlagsCWE1004),
+        Box::new(JSSessionFixationCWE384),
+        Box::new(JSNoRateLimitingCWE799),
+        Box::new(JSSSRFCWE918),
+        Box::new(JSTemplateInjectionCWE1336),
+        Box::new(JSWebSocketNoAuthCWE345),
+        Box::new(JSJWTWeakSecretCWE347),
+        Box::new(JSDotenvInGitCWE552),
+        Box::new(JSMassAssignmentCWE915),
+        // New AI Rules (JS-AI-011 to JS-AI-012)
+        Box::new(JSAIHallucinatedPaths),
+        Box::new(JSAISuspiciousComments),
     ]
 }

@@ -66,6 +66,8 @@ pub struct Finding {
     pub fix_hint: String,
     /// Whether auto-fix is available
     pub auto_fix_available: bool,
+    /// Pre-computed replacement text for auto-fix
+    pub replacement: String,
 }
 
 /// A fix represents a suggested change to fix a finding.

@@ -8,10 +8,18 @@
 //! - Hallucination guard violations
 //! - Model extraction vulnerabilities
 //! - AI-specific security misconfigurations
+//!
+//! Two modes:
+//! - `scan()`: Legacy regex-based scanning on raw code (backward compatible)
+//! - `scan_with_ast()`: AST-aware scanning using LnAst (lower false positives, taint-aware)
 
+mod ast_ai_security;
 mod rules;
 
 pub use rules::{AiSecurityRule, AiFinding, AiSecurityConfig, AiVulnerabilityType};
+pub use ast_ai_security::{
+    AstAwareAiSecurityRule, AstAiFinding, all_ast_aware_rules,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -21,8 +29,8 @@ use serde::{Deserialize, Serialize};
 
 /// Main AI Security Scanner.
 pub struct AiSecurityScanner {
-    config: AiSecurityConfig,
-    rules: Vec<Box<dyn AiSecurityRule>>,
+    pub(crate) config: AiSecurityConfig,
+    pub(crate) rules: Vec<Box<dyn AiSecurityRule>>,
 }
 
 impl AiSecurityScanner {
@@ -71,10 +79,17 @@ impl AiSecurityScanner {
         rules.push(Box::new(rules::ContextWindowRule::new()));
         rules.push(Box::new(rules::HallucinatedApiRule::new()));
 
+        // MCP-specific security rules
+        rules.push(Box::new(rules::McpToolSchemaInjectionRule::new()));
+        rules.push(Box::new(rules::McpSecretExfiltrationRule::new()));
+        rules.push(Box::new(rules::McpServerImpersonationRule::new()));
+        rules.push(Box::new(rules::McpToolPoisoningRule::new()));
+        rules.push(Box::new(rules::McpPromptInjectionRule::new()));
+
         rules
     }
 
-    /// Scan code for AI-specific vulnerabilities.
+    /// Scan code for AI-specific vulnerabilities (legacy regex-based, backward compatible).
     pub fn scan(&self, code: &str, language: &str) -> Vec<AiFinding> {
         let mut findings = Vec::new();
 
@@ -88,6 +103,44 @@ impl AiSecurityScanner {
         }
 
         // Sort by severity and line number
+        findings.sort_by(|a, b| {
+            let sev_order = |s: &str| match s {
+                "critical" => 5,
+                "high" => 4,
+                "medium" => 3,
+                "low" => 2,
+                _ => 1,
+            };
+            sev_order(&a.severity)
+                .cmp(&sev_order(&b.severity))
+                .then(a.line.cmp(&b.line))
+        });
+
+        findings
+    }
+
+    /// Scan using an already-parsed LnAst for AST-aware AI security analysis.
+    ///
+    /// This reuses the AST that was already parsed by the scanner (no redundant parsing).
+    /// AST-aware rules know function boundaries, call context, and data flow relationships,
+    /// which dramatically reduces false positives compared to regex-on-raw-code scanning.
+    ///
+    /// This method also introduces taint labels into `AstAiFinding` so that findings
+    /// can be merged with the taint analysis layer (user_input -> llm.generate chain).
+    pub fn scan_with_ast(&self, ast: &crate::scanner::ln_ast::LnAst, code: &str) -> Vec<AstAiFinding> {
+        let ast_rules = ast_ai_security::all_ast_aware_rules();
+        let mut findings = Vec::new();
+
+        for rule in &ast_rules {
+            let rule_findings = rule.detect_ast(ast, code);
+            for f in rule_findings {
+                if f.confidence >= self.config.confidence_threshold {
+                    findings.push(f);
+                }
+            }
+        }
+
+        // Sort by severity then line
         findings.sort_by(|a, b| {
             let sev_order = |s: &str| match s {
                 "critical" => 5,

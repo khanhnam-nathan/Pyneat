@@ -46,6 +46,7 @@ impl crate::scanner::base::LanguageScanner for EnterpriseScanner {
         all_rules.extend(tenant_isolation_rules());
         all_rules.extend(data_exfil_rules());
         all_rules.extend(supply_chain_lock_rules());
+        all_rules.extend(infrastructure_security_rules());
         all_rules
     }
 

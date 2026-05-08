@@ -50,6 +50,7 @@ impl Rule for Sec025 {
                         problem: format!("Potential TOCTOU vulnerability: {}", desc),
                         fix_hint: "Use atomic operations. Check and use in the same operation. Use file locking.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

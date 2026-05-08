@@ -71,6 +71,7 @@ impl Rule for CommandInjectionRule {
                         },
                         fix_hint: "Use subprocess.run with shell=False and pass command as a list of arguments instead of a string.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -92,6 +93,7 @@ impl Rule for CommandInjectionRule {
                     problem: "subprocess.run with shell=True allows shell metacharacter injection. This can allow command injection attacks.".to_string(),
                     fix_hint: "Use subprocess.run with shell=False and pass command as a list of arguments.".to_string(),
                     auto_fix_available: false,
+                            replacement: String::new(),
                 });
             }
         }
@@ -112,6 +114,7 @@ impl Rule for CommandInjectionRule {
                     problem: "os.popen() executes a command via shell — equivalent to shell=True with no argument sanitization.".to_string(),
                     fix_hint: "Use subprocess.run([...], shell=False) or the subprocess module's higher-level functions.".to_string(),
                     auto_fix_available: false,
+                            replacement: String::new(),
                 });
             }
         }
@@ -192,6 +195,7 @@ impl Rule for SqlInjectionRule {
                         problem: "SQL query is constructed using string concatenation, which can allow SQL injection attacks.".to_string(),
                         fix_hint: "Use parameterized queries (placeholders) instead of string concatenation: cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -271,6 +275,7 @@ impl Rule for EvalExecRule {
                         problem: "Use of eval() or exec() can execute arbitrary code. User input in these functions can lead to remote code execution.".to_string(),
                         fix_hint: "Avoid eval() and exec(). Use ast.literal_eval() for safe evaluation of literals, or restructure code to avoid dynamic execution.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -351,6 +356,7 @@ impl Rule for DeserializationRceRule {
                             "For pickle: only unpickle data from trusted sources, consider json or msgpack as safer alternatives.".to_string()
                         },
                         auto_fix_available: auto_fix,
+                                replacement: String::new(),
                     });
                 }
             }
@@ -417,6 +423,7 @@ impl Rule for PathTraversalRule {
                     problem: "File path constructed from user input without proper validation may allow path traversal attacks (e.g., ../../etc/passwd).".to_string(),
                     fix_hint: "Validate and sanitize user input. Use os.path.basename() to extract just the filename. Consider using pathlib.Path and strict validation.".to_string(),
                     auto_fix_available: false,
+                            replacement: String::new(),
                 });
             }
         }
@@ -537,6 +544,7 @@ impl Rule for HardcodedSecretsRule {
                         problem: format!("Potential hardcoded secret detected: {}", desc),
                         fix_hint: "Store secrets in environment variables or a secure secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault). Use os.environ.get('SECRET_NAME') or a secrets library.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -620,6 +628,7 @@ impl Rule for WeakCryptoRule {
                         problem: format!("Weak cryptography detected: {}", desc),
                         fix_hint: "Use cryptographic hash functions like SHA-256 or SHA-3. For SSL/TLS, use TLS 1.2 or higher. For random numbers in security contexts, use the secrets module.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -677,6 +686,7 @@ impl Rule for InsecureSslRule {
                         problem: format!("Insecure SSL/TLS configuration: {}", desc),
                         fix_hint: "Use TLS 1.2 or higher. Enable certificate verification. Enable hostname checking.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -734,6 +744,7 @@ impl Rule for XxeRule {
                             problem: format!("Potential XXE vulnerability: {}", desc),
                             fix_hint: "Use defusedxml library for parsing untrusted XML. Disable DTD and external entities.".to_string(),
                             auto_fix_available: false,
+                                    replacement: String::new(),
                         });
                     }
                 }
@@ -791,6 +802,7 @@ impl Rule for YamlUnsafeRule {
                         problem: "YAML load without safe Loader can lead to arbitrary code execution.".to_string(),
                         fix_hint: "Use yaml.safe_load() or yaml.load(data, Loader=yaml.SafeLoader).".to_string(),
                         auto_fix_available: true,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -862,6 +874,7 @@ impl Rule for AssertInProductionRule {
                         problem: format!("Assert statement used for security: {}", desc),
                         fix_hint: "Assertions can be disabled with -O flag. Use proper if/raise statements for security checks.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -917,6 +930,7 @@ impl Rule for DebugModeRule {
                         problem: format!("Debug mode enabled: {}", desc),
                         fix_hint: "Disable debug mode in production. Set DEBUG=False and use environment variables for configuration.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -972,6 +986,7 @@ impl Rule for CorsWildcardRule {
                         problem: format!("CORS misconfiguration: {}", desc),
                         fix_hint: "Don't use wildcard (*) for Access-Control-Allow-Origin with credentials. Specify exact origins instead.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1026,6 +1041,7 @@ impl Rule for JwtNoneRule {
                         problem: format!("JWT security issue: {}", desc),
                         fix_hint: "Use RS256 or ES256 algorithm. Always verify signatures. Don't use algorithm 'none'.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1079,6 +1095,7 @@ impl Rule for WeakRandomRule {
                         problem: format!("Using weak random for security: {}", desc),
                         fix_hint: "Use the secrets module for security-sensitive operations: secrets.choice(), secrets.randbelow(), etc.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1126,6 +1143,7 @@ impl Rule for LdapInjectionRule {
                         problem: format!("Potential LDAP injection: {}", desc),
                         fix_hint: "Use parameterized LDAP queries. Escape special characters in user input before using in LDAP filters.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1169,6 +1187,7 @@ impl Rule for XssRule {
                         problem: format!("Potential XSS vulnerability: {}", desc),
                         fix_hint: "Sanitize and escape user input before rendering. Use templating engines with auto-escaping.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1210,6 +1229,7 @@ impl Rule for SsrfRule {
                         problem: format!("Potential SSRF vulnerability: {}", desc),
                         fix_hint: "Validate and whitelist URLs. Don't use user input directly in URLs. Use URL parsing libraries to extract and validate components.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1256,6 +1276,7 @@ impl Rule for OpenRedirectRule {
                         problem: format!("Potential open redirect: {}", desc),
                         fix_hint: "Validate and whitelist redirect URLs. Never use user input directly for redirects.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1298,6 +1319,7 @@ impl Rule for InsecureTempFileRule {
                         problem: format!("Insecure temporary file usage: {}", desc),
                         fix_hint: "Use tempfile.TemporaryDirectory or NamedTemporaryFile with delete=True. Ensure proper cleanup.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1339,6 +1361,7 @@ impl Rule for JwtVerificationDisabledRule {
                         problem: format!("JWT verification disabled: {}", desc),
                         fix_hint: "Always verify JWT signatures. Use secure algorithms like RS256. Validate all claims.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1380,6 +1403,7 @@ impl Rule for CookieHttpOnlyRule {
                         problem: format!("Cookie missing HttpOnly flag: {}", desc),
                         fix_hint: "Set HttpOnly=True for session cookies and sensitive data cookies to prevent XSS access.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1421,6 +1445,7 @@ impl Rule for CookieSecureFlagRule {
                         problem: format!("Cookie missing Secure flag: {}", desc),
                         fix_hint: "Set Secure=True for all cookies in production to ensure they're only sent over HTTPS.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1462,6 +1487,7 @@ impl Rule for MissingSecurityHeaderRule {
                         problem: format!("Missing security headers: {}", desc),
                         fix_hint: "Add security headers: X-Content-Type-Options, X-Frame-Options, CSP, Strict-Transport-Security.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1503,6 +1529,7 @@ impl Rule for TraceMethodRule {
                         problem: format!("TRACE method enabled: {}", desc),
                         fix_hint: "Disable TRACE method. It can be used in Cross-Site Tracing (XST) attacks.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1542,6 +1569,7 @@ impl Rule for XContentTypeOptionsRule {
                         problem: format!("X-Content-Type-Options header: {}", desc),
                         fix_hint: "Add 'X-Content-Type-Options: nosniff' header to prevent MIME sniffing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1581,6 +1609,7 @@ impl Rule for XFrameOptionsRule {
                         problem: format!("X-Frame-Options header: {}", desc),
                         fix_hint: "Add 'X-Frame-Options: DENY' or 'SAMEORIGIN' header to prevent clickjacking.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1620,6 +1649,7 @@ impl Rule for CspMissingRule {
                         problem: format!("Content-Security-Policy header: {}", desc),
                         fix_hint: "Add a strict CSP header to prevent XSS and data injection attacks.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1669,6 +1699,7 @@ impl Rule for SensitiveCommentRule {
                         problem: format!("Sensitive data in comment: {}", desc),
                         fix_hint: "Remove sensitive data from comments. Store credentials in environment variables.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1714,6 +1745,7 @@ impl Rule for InfoDisclosureRule {
                         problem: format!("Information disclosure: {}", desc),
                         fix_hint: "Use structured error responses instead of exposing stack traces. Log errors server-side.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1755,6 +1787,7 @@ impl Rule for ExifDataRule {
                         problem: format!("EXIF data handling: {}", desc),
                         fix_hint: "Strip EXIF metadata from uploaded images using PIL or similar library before saving.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1794,6 +1827,7 @@ impl Rule for MissingReferrerPolicyRule {
                         problem: format!("Referrer-Policy: {}", desc),
                         fix_hint: "Add 'Referrer-Policy: strict-origin-when-cross-origin' header to HTTP responses.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1837,6 +1871,7 @@ impl Rule for SecurityDisabledRule {
                         problem: format!("Security feature disabled: {}", desc),
                         fix_hint: "Enable SSL verification. Use verify=True or provide the correct CA bundle path.".to_string(),
                         auto_fix_available: true,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1903,6 +1938,7 @@ impl Rule for AntiAutomationRule {
                         problem: format!("Insufficient anti-automation: {}", desc),
                         fix_hint: "Add CAPTCHA, rate limiting, or other anti-automation controls to sensitive endpoints.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1945,6 +1981,7 @@ impl Rule for PiiLogRule {
                         problem: format!("PII in logs: {}", desc),
                         fix_hint: "Mask or hash PII before logging. Use placeholder identifiers instead.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1987,6 +2024,7 @@ impl Rule for WeakPasswordRule {
                         problem: format!("Weak password policy: {}", desc),
                         fix_hint: "Enforce minimum 8 characters with mixed case, numbers, and special characters.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2032,6 +2070,7 @@ impl Rule for DeprecatedFunctionRule {
                         problem: format!("Deprecated function: {}", desc),
                         fix_hint: "Use SHA-256+ for hashing, use cryptography library instead of PyCrypto.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2073,6 +2112,7 @@ impl Rule for MissingAccessControlRule {
                         problem: format!("Missing access control: {}", desc),
                         fix_hint: "Add authorization decorators like @login_required, @require_roles, or permission checks.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2115,6 +2155,7 @@ impl Rule for ImproperErrorHandlingRule {
                         problem: format!("Improper error handling: {}", desc),
                         fix_hint: "Log errors appropriately and return structured error responses. Never silently swallow exceptions.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2157,6 +2198,7 @@ impl Rule for IntegerOverflowRule {
                         problem: format!("Potential integer overflow: {}", desc),
                         fix_hint: "Add bounds checking before arithmetic operations. Use Python's arbitrary precision integers or explicit overflow handling.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2198,6 +2240,7 @@ impl Rule for ToctouInfoRule {
                         problem: format!("TOCTOU race condition: {}", desc),
                         fix_hint: "Use atomic operations or file locking. Perform check and operation in a single transaction.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2240,6 +2283,7 @@ impl Rule for CertificateValidationRule {
                         problem: format!("Improper certificate validation: {}", desc),
                         fix_hint: "Always verify SSL certificates. Use the system's CA bundle.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2282,6 +2326,7 @@ impl Rule for MissingEncryptionRule {
                         problem: format!("Missing encryption: {}", desc),
                         fix_hint: "Use proper encryption (Fernet, cryptography library) for sensitive data. Don't store in plaintext.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2323,6 +2368,7 @@ impl Rule for UiLayerRestrictionRule {
                         problem: format!("UI layer restriction issue: {}", desc),
                         fix_hint: "Use X-Frame-Options: DENY or SAMEORIGIN to prevent clickjacking.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2366,6 +2412,7 @@ impl Rule for SsrfCloudRule {
                         problem: format!("SSRF targeting cloud metadata: {}", desc),
                         fix_hint: "Validate and whitelist URLs. Block access to metadata endpoints from untrusted input.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2408,6 +2455,7 @@ impl Rule for BusinessLogicRule {
                         problem: format!("Business logic issue: {}", desc),
                         fix_hint: "Validate business rules server-side. Use Decimal for financial calculations. Add rate limiting.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2458,6 +2506,7 @@ impl Rule for NoSqlInjectionRule {
                         problem: format!("NoSQL injection vulnerability: {}", desc),
                         fix_hint: "Use MongoDB $eq operator or parameterized queries. Never include user input directly in NoSQL queries.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2502,6 +2551,7 @@ impl Rule for JwtAlgorithmConfusionRule {
                         problem: format!("JWT algorithm confusion: {}", desc),
                         fix_hint: "Use a hardcoded algorithm (e.g., HS256). Never allow the client to specify the algorithm. Validate the algorithm matches your expectation.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2544,6 +2594,7 @@ impl Rule for OAuthMissingStateRule {
                         problem: format!("OAuth CSRF vulnerability: {}", desc),
                         fix_hint: "Generate a cryptographically random state parameter in the authorization request and validate it on callback to prevent CSRF attacks.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2590,6 +2641,7 @@ impl Rule for DynamicImportInjectionRule {
                         problem: format!("Dynamic import injection: {}", desc),
                         fix_hint: "Never use user input to import modules dynamically. Use a whitelist of allowed modules and validate the module name against that list.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2641,6 +2693,7 @@ impl Rule for SsrfAdvancedRule {
                         problem: format!("Advanced SSRF: {}", desc),
                         fix_hint: "Validate and whitelist URLs. Block access to cloud metadata endpoints, private IP ranges, and dangerous URL schemes (file://, gopher://, dict://, ldap://).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2782,6 +2835,10 @@ pub fn all_security_rules() -> Vec<Box<dyn Rule>> {
 mod tests {
     use super::*;
     use crate::scanner::tree_sitter::parse;
+    use crate::rules::extended_security::{
+        SqlInjectionSinkRule, XssSinkRule, LfiSinkRule, CsrfSinkRule, SsrfSinkRule,
+        OpenRedirectSinkRule,
+    };
 
     #[test]
     fn test_command_injection() {

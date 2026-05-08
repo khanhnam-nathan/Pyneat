@@ -358,7 +358,7 @@ impl LnAstConverter {
             end_line: info.end_line(),
             start_byte: info.start_byte,
             end_byte: info.end_byte,
-            is_definition: kind == "identifier" && text == text, // simplified
+            is_definition: kind == "identifier" && (text.starts_with("def ") || text.starts_with("class ") || text.starts_with("struct ") || text.starts_with("enum ") || text.starts_with("impl ") || text.starts_with("fn ") || text.starts_with("let ")),
         })
     }
 
@@ -608,9 +608,6 @@ fn extract_callee(text: &str) -> String {
         .next()
         .unwrap_or(text)
         .trim()
-        .split_whitespace()
-        .last()
-        .unwrap_or("")
         .to_string()
 }
 

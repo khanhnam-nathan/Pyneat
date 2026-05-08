@@ -57,6 +57,7 @@ impl TaintLangScanner {
             problem: f.problem.clone(),
             fix_hint: Self::fix_hint_for(rule_id),
             auto_fix_available: false,
+            replacement: f.replacement.clone(),
         }
     }
 

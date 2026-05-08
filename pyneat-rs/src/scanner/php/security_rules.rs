@@ -88,6 +88,7 @@ impl LangRule for PhpSqlInjection {
                     problem: format!("SQL injection risk: {} with user input", call.callee),
                     fix_hint: "Use prepared statements: $stmt = $pdo->prepare($sql); $stmt->execute($params);".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -132,6 +133,7 @@ impl LangRule for PhpXss {
                     problem: "XSS risk: unescaped user input in output".to_string(),
                     fix_hint: "Escape output: echo htmlspecialchars($user_input, ENT_QUOTES, 'UTF-8');".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -174,6 +176,7 @@ impl LangRule for PhpCommandInjection {
                 problem: format!("Command injection risk: {} with user input", call.callee),
                 fix_hint: "Use escapeshellarg() or avoid shell commands. Consider PHP native functions.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -218,6 +221,7 @@ impl LangRule for PhpPathTraversal {
                     problem: format!("Path traversal risk: {} with user input or traversal", call.callee),
                     fix_hint: "Validate and sanitize file paths. Use realpath() and whitelist allowed directories.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -259,6 +263,7 @@ impl LangRule for PhpWeakHashing {
                         problem: format!("Weak hashing: {} found", func.replace("(", "")),
                         fix_hint: "Use password_hash() with PASSWORD_DEFAULT or password_hash($password, PASSWORD_ARGON2ID).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -276,6 +281,7 @@ impl LangRule for PhpWeakHashing {
                         problem: format!("Weak hashing algorithm: {}", algo),
                         fix_hint: "Use hash_equals() for timing-safe comparison and ARGON2ID for hashing.".to_string(),
                         auto_fix_available: true,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -360,6 +366,7 @@ impl LangRule for PhpHardcodedSecrets {
                         problem: desc.to_string(),
                         fix_hint: "Use environment variables: getenv('SECRET') or _ENV['SECRET'].".to_string(),
                         auto_fix_available: true,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -428,6 +435,7 @@ impl LangRule for PhpEvalUsage {
                 problem: format!("Dangerous function: {} with user input risk", call.callee),
                 fix_hint: "Avoid eval/assert. Use type checking and whitelist validation instead.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -468,6 +476,7 @@ impl LangRule for PhpSessionFixation {
                     problem: "Session without regeneration - fixation risk".to_string(),
                     fix_hint: "Add session_regenerate_id(true) after authentication.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -510,6 +519,7 @@ impl LangRule for PhpUnvalidatedRedirect {
                     problem: "Unvalidated redirect with user input".to_string(),
                     fix_hint: "Validate and whitelist redirect URLs. Never allow absolute URLs from user input.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -552,6 +562,7 @@ impl LangRule for PhpObjectInjection {
                     problem: "Object injection: unserialize with user input".to_string(),
                     fix_hint: "Use json_decode() instead of unserialize(), or implement __wakeup/__destruct validation.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -596,6 +607,7 @@ impl LangRule for PhpInsecureCors {
                         problem: desc.to_string(),
                         fix_hint: "Specify exact origins: header('Access-Control-Allow-Origin: https://trusted.com');".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -646,6 +658,7 @@ impl LangRule for PhpInfoDisclosure {
                         problem: desc.to_string(),
                         fix_hint: "Disable display_errors in production. Use error logging instead.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -693,6 +706,7 @@ impl LangRule for PhpWeakRandom {
                         problem: desc.to_string(),
                         fix_hint: "Use random_bytes() for cryptography or Randomizer from randomlib.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -736,6 +750,7 @@ impl LangRule for PhpMissingHttps {
                 problem: "Missing HTTPS enforcement for sensitive operations".to_string(),
                 fix_hint: "Add HTTPS check: if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on') { die('HTTPS required'); }".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -752,6 +767,7 @@ impl LangRule for PhpMissingHttps {
                 problem: "Missing HTTP Strict Transport Security header".to_string(),
                 fix_hint: "Add HSTS header: header('Strict-Transport-Security: max-age=31536000; includeSubDomains');".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -794,6 +810,7 @@ impl LangRule for PhpInsecureFileUpload {
                     problem: "File upload without proper validation - may accept malicious files".to_string(),
                     fix_hint: "Validate file type using exif_imagetype(), mime_content_type(), and check file extension whitelist.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -840,6 +857,7 @@ impl LangRule for PhpLooseComparison {
                         problem: desc.to_string(),
                         fix_hint: "Use strict comparison (=== or !==) and validate input types explicitly.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -888,6 +906,7 @@ impl LangRule for PhpMissingCsrf {
                         problem: "Form POST handler without CSRF token validation".to_string(),
                         fix_hint: "Add CSRF token: generate token on form, verify with hash_equals($_SESSION['csrf'], $_POST['csrf']).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -935,6 +954,7 @@ impl LangRule for PhpXxe {
                         problem: desc.to_string(),
                         fix_hint: "Disable XXE: libxml_disable_entity_loader(true); before parsing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -979,6 +999,7 @@ impl LangRule for PhpLdapInjection {
                     problem: "LDAP injection risk: user input in LDAP query".to_string(),
                     fix_hint: "Escape LDAP special characters: ldap_escape($input, '', LDAP_ESCAPE_FILTER). Use prepared LDAP statements.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1025,6 +1046,7 @@ impl LangRule for PhpMassAssignment {
                         problem: desc.to_string(),
                         fix_hint: "Use $fillable or $guarded properties in Eloquent. Validate and whitelist allowed fields.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1068,6 +1090,7 @@ impl LangRule for PhpSlopsquatting {
                         problem: format!("Slopsquatting Risk: The package '{}' appears to be a hallucinated name.", imp.module),
                         fix_hint: "Verify this package exists on packagist.org before installing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1115,6 +1138,7 @@ impl LangRule for PhpVerboseError {
                         problem: desc.to_string(),
                         fix_hint: "Log errors to file, return generic message to user.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1162,6 +1186,7 @@ impl LangRule for PhpMissingInputValidation {
                         problem: desc.to_string(),
                         fix_hint: "Validate and sanitize all user input using filter_input() or custom validation.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1207,6 +1232,7 @@ impl LangRule for PhpAiGenComment {
                             problem: "AI-Generated Code Detected".to_string(),
                             fix_hint: "Review AI-generated code carefully before production use.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1253,6 +1279,7 @@ impl LangRule for PhpSameSiteCookie {
                     problem: "Cookie set without SameSite attribute. Without SameSite, cookies can be sent on cross-site requests, enabling CSRF attacks.".to_string(),
                     fix_hint: "Add SameSite=Lax or SameSite=Strict: setcookie($name, $value, ['samesite' => 'Lax']). Use 'Strict' for sensitive cookies, 'Lax' for general authenticated cookies.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1277,6 +1304,7 @@ impl LangRule for PhpSameSiteCookie {
                         problem: "Session cookie configuration without SameSite attribute.".to_string(),
                         fix_hint: "Add SameSite parameter to session_set_cookie_params(['samesite' => 'Lax']).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1341,6 +1369,7 @@ impl LangRule for PhpPharDeserialization {
                             problem: format!("PHAR deserialization risk: {}. A crafted PHAR file can cause arbitrary code execution.", problem),
                             fix_hint: "Never use user-controlled file paths with phar:// wrapper. Validate and sanitize all file inputs. Use realpath() to resolve paths and check they don't escape the intended directory.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1400,6 +1429,7 @@ impl LangRule for PhpTypeJuggling {
                 problem: "in_array() used without strict parameter (third arg). This uses loose comparison and can lead to type juggling bypasses (e.g., '0' matches 0, false, 'false').".to_string(),
                 fix_hint: "Add third parameter true for strict comparison: in_array($val, $arr, true). Use === instead of == for comparisons.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -1418,6 +1448,7 @@ impl LangRule for PhpTypeJuggling {
                     problem: "empty() used on user input. Since empty('0') returns true, this can bypass authentication logic.".to_string(),
                     fix_hint: "Use explicit checks: isset($val) && $val !== '' instead of empty(). For string checks, use strlen() > 0.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1438,6 +1469,7 @@ impl LangRule for PhpTypeJuggling {
                     problem: format!("Loose comparison (==) of user input '{}' detected near authentication logic. Use === for type-safe comparison.", captured),
                     fix_hint: "Replace == with === for strict type comparison. Use strcmp() or hash_equals() for string comparison.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1498,6 +1530,7 @@ impl LangRule for PhpDependencyVuln {
                             problem: problem.to_string(),
                             fix_hint: "Update to the latest stable version. Run 'composer update --dry-run' to check updates. Regularly audit dependencies with 'composer audit' or OWASP Dependency-Check.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1552,6 +1585,7 @@ impl LangRule for PhpWeakPasswordHashCost {
                 problem: "password_hash() called without explicit cost parameter. While PASSWORD_DEFAULT uses bcrypt, the default cost may be too low for production (currently 10, but was 10 in earlier PHP versions).".to_string(),
                 fix_hint: "Set explicit cost: password_hash($password, PASSWORD_DEFAULT, ['cost' => 12]). Cost 12 provides good balance between security and performance. Benchmark your server to find optimal cost.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -1575,6 +1609,7 @@ impl LangRule for PhpWeakPasswordHashCost {
                             problem: format!("password_hash() with cost={}. Costs below 10 are considered weak by modern standards.", cost),
                             fix_hint: "Use cost of 10 or higher (recommended: 12). Higher cost = slower hash = more resistant to brute-force.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1617,6 +1652,7 @@ impl LangRule for PhpRceEval {
                     problem: "Code execution function (eval/assert/create_function) called. RCE risk if input is user-controlled.".to_string(),
                     fix_hint: "Avoid eval/assert/create_function. Use whitelist validation or refactor to avoid dynamic code.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1658,6 +1694,7 @@ impl LangRule for PhpLfiRfi {
                         problem: "File inclusion with user-controlled path. Can lead to LFI/RCE.".to_string(),
                         fix_hint: "Validate and whitelist file paths. Never include files based on user input directly.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1697,6 +1734,7 @@ impl LangRule for PhpWeakCrypto {
                     problem: "Weak cryptographic function (md5/sha1/mcrypt) detected.".to_string(),
                     fix_hint: "Use password_hash()/password_verify() for passwords. Use openssl with AES-256 for encryption.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1737,6 +1775,7 @@ impl LangRule for PhpPdoSqlInjection {
                         problem: "SQL query with user input in string concatenation.".to_string(),
                         fix_hint: "Use prepared statements: $stmt = $pdo->prepare($sql); $stmt->execute([...]);".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1779,6 +1818,7 @@ impl LangRule for PhpOpenRedirect {
                         problem: "Redirect destination includes user input. Open redirect vulnerability.".to_string(),
                         fix_hint: "Validate redirect URLs against an allowlist of permitted domains.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1819,6 +1859,7 @@ impl LangRule for PhpAiHardcodedCredentials {
                         problem: "AI-generated code may contain hardcoded database credentials.".to_string(),
                         fix_hint: "Use environment variables or a secrets manager for credentials.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1859,6 +1900,7 @@ impl LangRule for PhpAiSqlInjection {
                         problem: "AI-generated SQL query with string concatenation.".to_string(),
                         fix_hint: "Use prepared statements with bound parameters.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1900,6 +1942,7 @@ impl LangRule for PhpAiCommandInjection {
                         problem: "AI-generated command execution with user-controlled input.".to_string(),
                         fix_hint: "Validate and escape all user input. Use escapeshellarg() for arguments.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1939,6 +1982,7 @@ impl LangRule for PhpAiUnserialize {
                         problem: "AI-generated code unserializes user input. Can lead to RCE.".to_string(),
                         fix_hint: "Use JSON decoding (json_decode) instead. If PHP unserialize is needed, validate input.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1979,6 +2023,7 @@ impl LangRule for PhpAiPathTraversal {
                         problem: "AI-generated file operation with user-controlled path.".to_string(),
                         fix_hint: "Validate and sanitize file paths. Use basename() and realpath() for path normalization.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2019,6 +2064,7 @@ impl LangRule for PhpAiXss {
                         problem: "AI-generated code outputs user input without escaping. XSS vulnerability.".to_string(),
                         fix_hint: "Use htmlspecialchars($input, ENT_QUOTES, 'UTF-8') to escape output.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2066,6 +2112,7 @@ impl LangRule for PhpSsrfDeep {
                         problem: "SSRF risk: URL/path with user input or internal IP address.".to_string(),
                         fix_hint: "Validate and whitelist allowed URLs/hosts. Never trust user-supplied URLs.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2088,6 +2135,7 @@ impl LangRule for PhpSsrfDeep {
                         problem: "SSRF risk: curl_setopt CURLOPT_URL with user input.".to_string(),
                         fix_hint: "Validate URL against allowlist of permitted hosts. Use parse_url() to extract and verify host.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2116,6 +2164,7 @@ impl LangRule for PhpSsrfDeep {
                         problem: "SSRF risk: URL targeting internal resource.".to_string(),
                         fix_hint: "Block access to internal IPs and hostnames. Validate URLs against allowlist.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2171,6 +2220,7 @@ impl LangRule for PhpWeakJwt {
                         problem: format!("Weak JWT verification: {}. Tokens can be forged without proper signature verification.", problem),
                         fix_hint: "Use a strong, secret key (minimum 256 bits for HS256). Retrieve the key securely from environment variables or a secrets manager. Never pass null or an empty string as the verification key.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2195,6 +2245,7 @@ impl LangRule for PhpWeakJwt {
                             problem: "Weak JWT verification: JWT decode with null or empty key.".to_string(),
                             fix_hint: "Provide a valid secret key for JWT verification.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2306,6 +2357,7 @@ impl LangRule for PhpSlopsquattingTypo {
                             problem: format!("Slopsquatting detected: '{}' looks like a typo of '{}'. This may be an AI-hallucinated package name.", pkg_name, real_pkg),
                             fix_hint: format!("Verify '{}' exists on packagist.org before installing. Did you mean '{}'?", pkg_name, real_pkg),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                         break;
                     }
@@ -2343,6 +2395,7 @@ impl LangRule for PhpSlopsquattingTypo {
                             problem: format!("Slopsquatting detected: '{}' looks like a typo of '{}'. This may be an AI-hallucinated package name.", pkg_name, real_pkg),
                             fix_hint: format!("Verify '{}' exists on packagist.org. Did you mean '{}'?", pkg_name, real_pkg),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                         break;
                     }
@@ -2408,6 +2461,7 @@ impl LangRule for PhpLaravelSqlInjection {
                             For raw queries: DB::select('SELECT * FROM users WHERE name = ?', [$name]). \
                             Never use whereRaw() or selectRaw() with user input.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2482,6 +2536,7 @@ impl LangRule for PhpSsti {
                             In Twig: use {{ user_name }} not {{ user_name|raw }}. \
                             Disable dangerous functions in sandbox mode.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2552,7 +2607,1754 @@ impl LangRule for PhpExtractOverwrite {
                             $name = $_POST['name'] ?? ''; $email = $_POST['email'] ?? ''; \
                             Never use extract() directly on user input.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP-SEC-036: SQL Injection via PDO String Interpolation
+// Severity: critical | CWE-89
+// $pdo->query() and $pdo->exec() with string interpolation
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct PhpPdoStringInjection;
+
+impl LangRule for PhpPdoStringInjection {
+    fn id(&self) -> &str { "PHP2-SEC-036" }
+    fn name(&self) -> &str { "SQL Injection via PDO String Interpolation" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for PDO usage
+        let has_pdo = tree.imports.iter().any(|imp| {
+            imp.module.contains("pdo") || imp.module.contains("PDO")
+        }) || code.contains("$pdo")
+            || code.contains("new PDO")
+            || code.contains("\\PDO");
+
+        if !has_pdo {
+            return findings;
+        }
+
+        // PDO query patterns with string interpolation
+        let patterns = vec![
+            // PDO->query with string interpolation
+            (r#"\$\w+->query\s*\(\s*["'][^"']*["']\s*\.", "$pdo->query with string concatenation"),
+            (r#"\$\w+->query\s*\(\s*["'][^"']*\$\w+", "$pdo->query with variable interpolation"),
+            // PDO->exec with string interpolation
+            (r#"\$\w+->exec\s*\(\s*["'][^"']*["']\s*\.", "$pdo->exec with string concatenation"),
+            (r#"\$\w+->exec\s*\(\s*["'][^"']*\$\w+", "$pdo->exec with variable interpolation"),
+            // prepare with interpolation (should use binding)
+            (r#"\$\w+->prepare\s*\(\s*["'][^"']*\$\w+[^"']*["']\s*\)"#, "$pdo->prepare with variable interpolation"),
+            // String interpolation in SQL
+            (r#"["'][^"']*SELECT[^"']*["']\s*\.\s*\$\w+"#, "SELECT query with string concatenation"),
+            (r#"["'][^"']*INSERT[^"']*["']\s*\.\s*\$\w+"#, "INSERT query with string concatenation"),
+            (r#"["'][^"']*UPDATE[^"']*["']\s*\.\s*\$\w+"#, "UPDATE query with string concatenation"),
+            (r#"["'][^"']*DELETE[^"']*["']\s*\.\s*\$\w+"#, "DELETE query with string concatenation"),
+            // Direct query building
+            (r#"\$\w+\s*=\s*["'][^"']*\$\w+[^"']*["']"#, "SQL string built with variable interpolation"),
+            // User input in SQL
+            (r#"["'][^"']*\$_(?:GET|POST|REQUEST|COOKIE)[^"']*["']\s*\."#, "SQL with user input concatenation"),
+            (r#"\.\s*\$_(?:GET|POST|REQUEST|COOKIE)"#, "SQL concatenation with user input"),
+        ];
+
+        for (pattern, desc) in &patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "SQL injection via PDO (CWE-89): {}. String interpolation in PDO queries \
+                            allows attackers to manipulate SQL logic.",
+                            desc
+                        ),
+                        fix_hint: "Use prepared statements with parameter binding: \
+                            $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ?'); \
+                            $stmt->execute([$email]); \
+                            Never concatenate user input into SQL strings.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Additional tree-based detection for PDO method calls
+        let pdo_methods = ["query", "exec", "prepare"];
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+            let is_pdo = callee_lower.contains("$pdo")
+                || callee_lower.contains("new pdo")
+                || callee_lower.contains("database");
+
+            if is_pdo && pdo_methods.iter().any(|m| callee_lower.contains(m)) {
+                let args_str = call.arguments.join(" ");
+                // Check for dangerous patterns in arguments
+                let has_danger = args_str.contains("$_")
+                    || args_str.contains("$params")
+                    || args_str.contains("\"'\" .")
+                    || args_str.contains("'\"' .")
+                    || args_str.contains("' . $")
+                    || args_str.contains("\" . $");
+
+                if has_danger && !findings.iter().any(|f: &LangFinding| f.line == call.start_line) {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "SQL injection via PDO: {} with potentially unsafe string concatenation.",
+                            call.callee
+                        ),
+                        fix_hint: "Use prepared statements: $stmt = $pdo->prepare($sql); $stmt->execute($params);".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP-SEC-037: PHP Object Injection / Unserialize Vulnerability
+// Severity: critical | CWE-502
+// unserialize() with user input - can lead to RCE via magic methods
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct PhpUnserializeInjection;
+
+impl LangRule for PhpUnserializeInjection {
+    fn id(&self) -> &str { "PHP2-SEC-037" }
+    fn name(&self) -> &str { "PHP Object Injection (Unserialize)" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for unserialize usage
+        let has_unserialize = code.contains("unserialize(")
+            || code.contains("__wakeup")
+            || code.contains("__destruct")
+            || code.contains("__toString");
+
+        if !has_unserialize {
+            return findings;
+        }
+
+        // Unserialize patterns
+        let patterns = vec![
+            // unserialize with user input
+            (r#"unserialize\s*\(\s*\$_(?:GET|POST|REQUEST|COOKIE)"#, "unserialize() with direct user input"),
+            (r#"unserialize\s*\(\s*\$params"#, "unserialize() with params"),
+            (r#"unserialize\s*\(\s*\$input"#, "unserialize() with $input variable"),
+            (r#"unserialize\s*\(\s*\$data"#, "unserialize() with $data variable"),
+            // String interpolation/expression in unserialize
+            (r#"unserialize\s*\(\s*[^)]*\.\s*\)"#, "unserialize() with string concatenation"),
+            (r#"unserialize\s*\(\s*[^)]*\$\w+\s*\.\s*\)"#, "unserialize() with variable concatenation"),
+            // Combined with file operations
+            (r#"file_get_contents\s*\([^)]*\).*unserialize"#, "unserialize() of file contents"),
+            (r#"fopen\s*\([^)]*\).*unserialize"#, "unserialize() of fopen result"),
+            (r#"curl_exec.*unserialize"#, "unserialize() of curl response"),
+            // Session unserialization
+            (r#"session_decode\s*\("#, "session_decode() - can trigger deserialization"),
+        ];
+
+        for (pattern, desc) in &patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "PHP Object Injection (CWE-502): {}. \
+                            unserialize() on untrusted data can trigger magic methods \
+                            (__wakeup, __destruct, __toString) leading to RCE.",
+                            desc
+                        ),
+                        fix_hint: "Never use unserialize() on untrusted data. Use json_decode() instead: \
+                            $data = json_decode($json_string, false); \
+                            If you must unserialize, validate input with allowed_classes parameter in PHP 7+: \
+                            unserialize($data, ['allowed_classes' => MyClass::class]);".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Check for dangerous magic methods that could be exploited
+        let magic_methods = ["__wakeup", "__destruct", "__toString", "__call", "__invoke"];
+        for method in &magic_methods {
+            if let Ok(re) = Regex::new(&format!(r#"function\s+{}\\s*\\("#, method)) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let has_unserialize = code[..m.start()].contains("unserialize(");
+
+                    if has_unserialize && !findings.iter().any(|f: &LangFinding| f.line == line) {
+                        let (start, end) = get_line_offsets(code, line);
+                        let line_text = get_line_text(code, line).unwrap_or_default();
+
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line,
+                            column: 0,
+                            start_byte: start,
+                            end_byte: end,
+                            snippet: line_text.trim().to_string(),
+                            problem: format!(
+                                "Magic method {} found with potential unserialize usage. \
+                                Magic methods in deserialized objects can lead to RCE.",
+                                method
+                            ),
+                            fix_hint: "Avoid using unserialize() on untrusted data. \
+                                Validate all input and use allowed_classes parameter.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP-SEC-038: Remote File Inclusion (RFI)
+// Severity: critical | CWE-98
+// include, require, fopen with user-controlled URLs
+// ─────────────────────────────────────────────────────────────────────────────
+pub struct PhpRemoteFileInclusion;
+
+impl LangRule for PhpRemoteFileInclusion {
+    fn id(&self) -> &str { "PHP2-SEC-038" }
+    fn name(&self) -> &str { "Remote File Inclusion (RFI)" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Include/require functions
+        let include_funcs = ["include", "include_once", "require", "require_once"];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+            let is_include = include_funcs.iter().any(|f| callee_lower.contains(f));
+
+            if is_include {
+                let args_str = call.arguments.join(" ");
+                // Check for user input sources
+                let has_user_input = args_str.contains("$_GET")
+                    || args_str.contains("$_POST")
+                    || args_str.contains("$_REQUEST")
+                    || args_str.contains("$params")
+                    || args_str.contains("$page")
+                    || args_str.contains("$view")
+                    || args_str.contains("$template");
+
+                if has_user_input {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Remote File Inclusion (CWE-98): {} with user input. \
+                            Attackers can include remote files containing malicious code.",
+                            call.callee
+                        ),
+                        fix_hint: "Never include files based on user input. \
+                            Use an allowlist of permitted files: \
+                            $allowed = ['home' => 'home.php', 'about' => 'about.php']; \
+                            include $allowed[$page] ?? 'default.php';".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Additional patterns for RFI detection
+        let rfi_patterns = vec![
+            // Remote URL patterns
+            (r#"(?i)include\s*\(\s*['\""]?https?://"#, "include() with remote HTTP URL"),
+            (r#"(?i)require\s*\(\s*['\""]?https?://"#, "require() with remote HTTP URL"),
+            (r#"(?i)include_once\s*\(\s*['\""]?https?://"#, "include_once() with remote HTTP URL"),
+            (r#"(?i)require_once\s*\(\s*['\""]?https?://"#, "require_once() with remote HTTP URL"),
+            // fopen with remote URLs
+            (r#"(?i)fopen\s*\(\s*['\""]?https?://"#, "fopen() with remote HTTP URL"),
+            (r#"(?i)file_get_contents\s*\(\s*['\""]?https?://"#, "file_get_contents() with remote HTTP URL"),
+            (r#"(?i)curl_exec\s*\([^)]*\)"#, "curl_exec() - check URL is not user-controlled"),
+            // String concatenation with include
+            (r#"(?i)include\s*\([^)]*\.\s*\$"#, "include() with variable concatenation"),
+            (r#"(?i)require\s*\([^)]*\.\s*\$"#, "require() with variable concatenation"),
+            // allow_url_include check (should be disabled)
+            (r#"allow_url_include\s*=\s*1"#, "allow_url_include is ON - RFI possible"),
+            (r#"allow_url_include\s*=\s*On"#, "allow_url_include is ON - RFI possible"),
+        ];
+
+        for (pattern, desc) in &rfi_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Remote File Inclusion (CWE-98): {}. \
+                            Including remote files allows attackers to execute arbitrary code.",
+                            desc
+                        ),
+                        fix_hint: "Disable allow_url_include in php.ini. \
+                            Never include files based on user input. \
+                            Use an allowlist of permitted files.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-041: Zip Slip Vulnerability
+// CWE-22 — CVSS 9.1 — CRITICAL
+// Extract archives with user-controlled paths
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpZipSlip;
+
+impl LangRule for PhpZipSlip {
+    fn id(&self) -> &str { "PHP2-SEC-041" }
+    fn name(&self) -> &str { "Zip Slip Vulnerability" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let dangerous_funcs = ["ziparchive::extractto", "zip_entry_read", "zip_open"];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+            let is_dangerous = dangerous_funcs.iter().any(|f| callee_lower.contains(f));
+
+            if is_dangerous {
+                let args_str = call.arguments.join(" ");
+                let has_user_input = args_str.contains("$_GET")
+                    || args_str.contains("$_POST")
+                    || args_str.contains("$_REQUEST")
+                    || args_str.contains("$filename")
+                    || args_str.contains("$path")
+                    || args_str.contains("$dir");
+
+                if has_user_input {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Zip Slip (CWE-22): {} with user-controlled path. \
+                            Attackers can extract files outside the target directory using paths like '../../etc/passwd'.",
+                            call.callee
+                        ),
+                        fix_hint: "Always validate and sanitize archive entry names. \
+                            Use realpath() to resolve paths and verify they stay within the target directory.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Pattern-based detection for ZipArchive usage
+        let zip_patterns = vec![
+            (r#"(?i)ZipArchive.*extractTo\s*\([^,)]*\$"#, "ZipArchive::extractTo() with variable path"),
+            (r#"(?i)zip_entry_read\s*\([^)]*\$"#, "zip_entry_read() with variable path"),
+        ];
+
+        for (pattern, desc) in &zip_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Zip Slip (CWE-22): {}. \
+                            Archive entries with '../' paths can write outside the target directory.",
+                            desc
+                        ),
+                        fix_hint: "Validate extracted paths with realpath() and ensure they stay within the intended directory.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-042: XPath Injection
+// CWE-643 — CVSS 9.8 — CRITICAL
+// XPath queries with user input
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpXpathInjection;
+
+impl LangRule for PhpXpathInjection {
+    fn id(&self) -> &str { "PHP2-SEC-042" }
+    fn name(&self) -> &str { "XPath Injection" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let dangerous_funcs = ["domxpath::query", "simplexml_load_string", "simplexml_load_file", "xpath"];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+            let is_dangerous = dangerous_funcs.iter().any(|f| callee_lower.contains(f));
+
+            if is_dangerous {
+                let args_str = call.arguments.join(" ");
+                let has_user_input = args_str.contains("$_GET")
+                    || args_str.contains("$_POST")
+                    || args_str.contains("$_REQUEST");
+
+                if has_user_input {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "XPath Injection (CWE-643): {} with user input. \
+                            Attackers can manipulate XPath queries to access unauthorized data.",
+                            call.callee
+                        ),
+                        fix_hint: "Use parameterized XPath queries or escape user input with addslashes() \
+                            and avoid direct concatenation of user input into XPath expressions.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-043: preg_replace /e Modifier RCE
+// CWE-94 — CVSS 9.8 — CRITICAL
+// Deprecated /e modifier allows code execution
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpPregReplaceRce;
+
+impl LangRule for PhpPregReplaceRce {
+    fn id(&self) -> &str { "PHP2-SEC-043" }
+    fn name(&self) -> &str { "preg_replace /e Code Execution" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for preg_replace with /e modifier
+        let preg_patterns = vec![
+            (r#"preg_replace\s*\([^)]*/e[^)]*\)"#, "preg_replace() with /e modifier"),
+            (r#"preg_replace\s*\([^)]*e\s*["\']"#, "preg_replace() with /e modifier (alternative syntax)"),
+        ];
+
+        for (pattern, desc) in &preg_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "preg_replace /e RCE (CWE-94): {}. \
+                            The /e modifier evaluates replacement as PHP code, enabling remote code execution.",
+                            desc
+                        ),
+                        fix_hint: "Use preg_replace_callback() instead of preg_replace() with /e. \
+                            PHP 5.5+ deprecated this feature and it was removed in PHP 7.0.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Also check call-based detection for preg_replace
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+            if callee_lower.contains("preg_replace") {
+                let args_str = call.arguments.join(" ");
+                if args_str.contains("/e") || args_str.contains("'/e'") || args_str.contains("\"/e\"") {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    // Avoid duplicate findings
+                    if !findings.iter().any(|f: &LangFinding| f.line == call.start_line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: call.start_line,
+                            column: 0,
+                            start_byte: start,
+                            end_byte: end,
+                            snippet: line_text.trim().to_string(),
+                            problem: "preg_replace /e RCE (CWE-94): preg_replace() with /e modifier allows code execution".to_string(),
+                            fix_hint: "Use preg_replace_callback() instead. The /e modifier was deprecated in PHP 5.5 and removed in PHP 7.0.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-044: Email Header Injection
+// CWE-147 — CVSS 7.5 — HIGH
+// mail() with user input in headers
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpEmailHeaderInjection;
+
+impl LangRule for PhpEmailHeaderInjection {
+    fn id(&self) -> &str { "PHP2-SEC-044" }
+    fn name(&self) -> &str { "Email Header Injection" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+
+            // Check for mail() function or SwiftMailer/other mail libraries
+            let is_mail_func = callee_lower.contains("mail(")
+                || callee_lower.contains("mb_send_mail")
+                || callee_lower.contains("swiftmailer")
+                || callee_lower.contains("phpmailer");
+
+            if is_mail_func && call.arguments.len() >= 4 {
+                let args_str = call.arguments.join(" ");
+                let has_user_input = args_str.contains("$_GET")
+                    || args_str.contains("$_POST")
+                    || args_str.contains("$_REQUEST");
+
+                if has_user_input {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Email Header Injection (CWE-147): {} with user input in headers. \
+                            Attackers can inject CC/BCC headers to send spam or phishing emails.",
+                            call.callee
+                        ),
+                        fix_hint: "Validate and sanitize all email headers. Use an allowlist for header values \
+                            and remove newlines (\\r\\n) from user input before adding to headers.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Pattern-based detection for additional cases
+        let header_injection_patterns = vec![
+            (r#"(?i)mail\s*\([^)]*\$.*(?:cc|bcc|subject)"#, "mail() with variable CC/BCC/Subject"),
+            (r#"(?i)header\s*\([^)]*\$.*"#, "header() with variable (potential injection)"),
+        ];
+
+        for (pattern, desc) in &header_injection_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Email Header Injection (CWE-147): {}. \
+                            User-controlled headers can be manipulated to inject additional recipients.",
+                            desc
+                        ),
+                        fix_hint: "Validate and sanitize header values. Remove newlines from user input.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-045: Regular Expression Denial of Service (ReDoS)
+// CWE-400 — CVSS 7.5 — HIGH
+// Catastrophic backtracking patterns
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpRedos;
+
+impl LangRule for PhpRedos {
+    fn id(&self) -> &str { "PHP2-SEC-045" }
+    fn name(&self) -> &str { "ReDoS (Regex DoS)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Patterns that cause catastrophic backtracking
+        let redos_patterns = vec![
+            (r#"\(\.[\+\*]\)+\)"#, "Nested quantifiers: (a+)+, (a*)+ - catastrophic backtracking"),
+            (r#"\(\.[\+\*]\s*\.\?\)+\)"#, "Nested quantifiers with optional: (a*?)+ - catastrophic backtracking"),
+            (r#"\([\^][^\)]*\)+\)"#, "Negated character class with repetition: ([^x]+)+"),
+            (r#"\(\.[\*][\+]?\)\*"#, "Overlapping quantifiers: (a*)* or (a+)*"),
+            (r#"\(\.[\+][\+]?\)\+\)"#, "Multiple nested quantifiers: (a++)+"),
+            (r#"\(\.\?[\+\*]\)"#, "Optional followed by quantifier: (a?)+ or (a?)*"),
+            (r#"\(\.[\^][^\)]*[\+\*]\)\+"#, "Negated class with quantifier: ([^x]+)+"),
+            (r#"\([a-zA-Z0-9][\+\*]\)\+\)"#, "Single char with nested quantifier: ([a]+)+"),
+        ];
+
+        for (pattern, desc) in &redos_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "ReDoS (CWE-400): {} in regex pattern. \
+                            This pattern can cause exponential backtracking with crafted input.",
+                            desc
+                        ),
+                        fix_hint: "Avoid nested quantifiers like (a+)+. Rewrite patterns to be deterministic. \
+                            Use atomic groups or possessive quantifiers where possible.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Check for preg_match/preg_replace with user input in pattern
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+            if callee_lower.contains("preg_match")
+                || callee_lower.contains("preg_match_all")
+                || callee_lower.contains("preg_replace")
+                || callee_lower.contains("preg_split") {
+                if call.arguments.len() >= 2 {
+                    let pattern_arg = &call.arguments[0];
+                    let has_user_input = call.arguments.iter().skip(1).any(|arg|
+                        arg.contains("$_GET") || arg.contains("$_POST") || arg.contains("$_REQUEST"));
+
+                    if has_user_input {
+                        let (start, end) = get_line_offsets(code, call.start_line);
+                        let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                        // Check if pattern itself looks dangerous
+                        if pattern_arg.contains(".*.*")
+                            || pattern_arg.contains("+.+")
+                            || pattern_arg.contains("*.*")
+                            || pattern_arg.contains("(.*)+")
+                            || pattern_arg.contains("(.+)+") {
+                            findings.push(LangFinding {
+                                rule_id: self.id().to_string(),
+                                severity: self.severity().to_string(),
+                                line: call.start_line,
+                                column: 0,
+                                start_byte: start,
+                                end_byte: end,
+                                snippet: line_text.trim().to_string(),
+                                problem: format!(
+                                    "ReDoS (CWE-400): {} with potentially unsafe regex and user input. \
+                                    Attackers may provide malicious regex patterns.",
+                                    call.callee
+                                ),
+                                fix_hint: "Validate regex patterns against an allowlist or timeout regex execution.".to_string(),
+                                auto_fix_available: false,
+                        replacement: String::new(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-046: Session ID Exposed in URL
+// CWE-598 — CVSS 4.3 — MEDIUM
+// Session ID transmitted via URL
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpSessionIdInUrl;
+
+impl LangRule for PhpSessionIdInUrl {
+    fn id(&self) -> &str { "PHP2-SEC-046" }
+    fn name(&self) -> &str { "Session ID in URL" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for session.use_trans_sid enabled or SID constant usage
+        let patterns = vec![
+            (r#"session\.use_trans_sid\s*=\s*1"#, "session.use_trans_sid enabled - session ID in URLs"),
+            (r#"session\.use_trans_sid\s*=\s*On"#, "session.use_trans_sid enabled - session ID in URLs"),
+            (r#"(?i)SID\s*"#, "SID constant used - session ID exposed in URL"),
+            (r#"(?i)session_id\(\)\s*\.\s*["\']"#, "session_id() concatenated with string"),
+            (r#"(?i)\?.*PHPSESSID\s*="#, "PHPSESSID in URL query string"),
+            (r#"(?i)&PHPSESSID\s*="#, "PHPSESSID in URL query string"),
+        ];
+
+        for (pattern, desc) in &patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Session ID in URL (CWE-598): {}. \
+                            Session IDs in URLs can be leaked via referrer headers, browser history, and server logs.",
+                            desc
+                        ),
+                        fix_hint: "Disable session.use_trans_sid and use cookies for session storage. \
+                            Set session.cookie_httponly = 1 and session.cookie_secure = 1.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Check for session configuration in code
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+            if callee_lower.contains("session_start")
+                || callee_lower.contains("session_config")
+                || callee_lower.contains("ini_set") {
+                let args_str = call.arguments.join(" ");
+                if args_str.contains("use_trans_sid") {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    if !findings.iter().any(|f: &LangFinding| f.line == call.start_line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: call.start_line,
+                            column: 0,
+                            start_byte: start,
+                            end_byte: end,
+                            snippet: line_text.trim().to_string(),
+                            problem: "Session ID in URL (CWE-598): use_trans_sid configuration enables URL session IDs".to_string(),
+                            fix_hint: "Disable use_trans_sid in php.ini or via ini_set(). Use cookie-based sessions only.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-047: Debug Mode Enabled in Production
+// CWE-489 — CVSS 5.3 — MEDIUM
+// Display errors or debug settings in production
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpDebugModeEnabled;
+
+impl LangRule for PhpDebugModeEnabled {
+    fn id(&self) -> &str { "PHP2-SEC-047" }
+    fn name(&self) -> &str { "Debug Mode Enabled" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for dangerous debug settings
+        let debug_patterns = vec![
+            (r#"(?i)ini_set\s*\(\s*["\']display_errors['\"]\s*,\s*1\s*\)"#, "display_errors enabled via ini_set()"),
+            (r#"(?i)ini_set\s*\(\s*["\']display_errors['\"]\s*,\s*["\']on['\"]\s*\)"#, "display_errors enabled via ini_set()"),
+            (r#"(?i)ini_set\s*\(\s*["\']display_errors['\"]\s*,\s*["\']On['\"]\s*\)"#, "display_errors enabled via ini_set()"),
+            (r#"(?i)ini_set\s*\(\s*["\']error_reporting['\"]\s*,\s*E_ALL\s*\)"#, "error_reporting set to E_ALL"),
+            (r#"(?i)error_reporting\s*\(\s*E_ALL\s*\)"#, "error_reporting set to E_ALL"),
+            (r#"(?i)error_reporting\s*\(\s*\-1\s*\)"#, "error_reporting set to -1 (all errors)"),
+            (r#"(?i)ini_set\s*\(\s*["\']debug['\"]\s*,\s*true\s*\)"#, "debug mode enabled"),
+            (r#"(?i)ini_set\s*\(\s*["\']debug['\"]\s*,\s*1\s*\)"#, "debug mode enabled"),
+            (r#"(?i)ini_set\s*\(\s*["\']log_errors['\"]\s*,\s*0\s*\)"#, "log_errors disabled"),
+            (r#"(?i)ini_set\s*\(\s*["\']html_errors['\"]\s*,\s*1\s*\)"#, "html_errors enabled (exposes code in errors)"),
+        ];
+
+        for (pattern, desc) in &debug_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Debug Mode Enabled (CWE-489): {}. \
+                            Exposing errors in production can leak sensitive code paths and system information.",
+                            desc
+                        ),
+                        fix_hint: "Disable display_errors in production (display_errors = Off). \
+                            Log errors to files instead. Use a .env file or environment variables for debug settings.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-048: PCNTL/Process Control Functions
+// CWE-78 — CVSS 9.8 — CRITICAL
+// Process execution with user input
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpPcntlExecFunctions;
+
+impl LangRule for PhpPcntlExecFunctions {
+    fn id(&self) -> &str { "PHP2-SEC-048" }
+    fn name(&self) -> &str { "PCNTL/Process Execution" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+        let dangerous_funcs = ["pcntl_exec", "proc_open", "proc_close", "proc_get_status",
+                               "proc_terminate", "proc_nice", "posix_kill", "posix_setsid"];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+            let is_dangerous = dangerous_funcs.iter().any(|f| callee_lower.contains(f));
+
+            if is_dangerous {
+                let args_str = call.arguments.join(" ");
+                let has_user_input = args_str.contains("$_GET")
+                    || args_str.contains("$_POST")
+                    || args_str.contains("$_REQUEST")
+                    || args_str.contains("$cmd")
+                    || args_str.contains("$command")
+                    || args_str.contains("$program");
+
+                let (start, end) = get_line_offsets(code, call.start_line);
+                let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line: call.start_line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!(
+                        "PCNTL/Process Execution (CWE-78): {} {}. \
+                        Process control functions can be exploited to execute arbitrary commands.",
+                        call.callee,
+                        if has_user_input { "with user input" } else { "(review for safety)" }
+                    ),
+                    fix_hint: "Avoid process control functions when possible. \
+                        If needed, validate all inputs against strict allowlists.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-049: Cookie Without Secure Flag
+// CWE-614 — CVSS 6.5 — MEDIUM
+// setcookie() without Secure flag for HTTPS
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpCookieMissingSecure;
+
+impl LangRule for PhpCookieMissingSecure {
+    fn id(&self) -> &str { "PHP2-SEC-049" }
+    fn name(&self) -> &str { "Cookie Without Secure Flag" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+            let is_cookie_func = callee_lower.contains("setcookie")
+                || callee_lower.contains("setrawcookie")
+                || callee_lower.contains("session_set_cookie_params");
+
+            if is_cookie_func {
+                let args_str = call.arguments.join(" ");
+                // Check if 'Secure' flag is missing or set to false/0
+                let has_secure = args_str.contains("Secure")
+                    && (args_str.contains(", true") || args_str.contains(", 1") || args_str.contains("true"));
+                let has_secure_false = args_str.contains("Secure")
+                    && (args_str.contains(", false") || args_str.contains(", 0"));
+
+                if !has_secure || has_secure_false {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    // Check if this looks like an HTTPS context (has httponly but no secure)
+                    let has_httponly = args_str.contains("HttpOnly") || args_str.contains("httponly");
+
+                    if !has_secure || (has_httponly && !has_secure) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: call.start_line,
+                            column: 0,
+                            start_byte: start,
+                            end_byte: end,
+                            snippet: line_text.trim().to_string(),
+                            problem: format!(
+                                "Cookie Without Secure Flag (CWE-614): {} without Secure flag. \
+                                Cookies may be transmitted over unencrypted HTTP connections.",
+                                call.callee
+                            ),
+                            fix_hint: "Add the Secure flag to setcookie(): setcookie($name, $value, 0, '', '', true, true) \
+                                The 6th parameter (true) enables the Secure flag.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+        }
+
+        // Pattern-based detection for session cookie configuration
+        let cookie_patterns = vec![
+            (r#"session\.cookie_secure\s*=\s*0"#, "session.cookie_secure disabled"),
+            (r#"session\.cookie_secure\s*=\s*Off"#, "session.cookie_secure disabled"),
+            (r#"ini_set\s*\(\s*["\']session\.cookie_secure['\"]\s*,\s*["\']?0["\']?\s*\)"#, "session cookie Secure flag disabled via ini_set()"),
+        ];
+
+        for (pattern, desc) in &cookie_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Cookie Without Secure Flag (CWE-614): {}. \
+                            Session cookies can be sent over unencrypted HTTP.",
+                            desc
+                        ),
+                        fix_hint: "Enable session.cookie_secure in php.ini or via ini_set('session.cookie_secure', 1).".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-050: parse_str() without second argument overwrites existing variables
+// CWE-915 — CVSS 6.1 — MEDIUM
+// extract() from user input without EXTR_SKIP
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpExtractOverwriteV2;
+
+impl LangRule for PhpExtractOverwriteV2 {
+    fn id(&self) -> &str { "PHP2-SEC-050" }
+    fn name(&self) -> &str { "extract() Variable Overwrite" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+
+            if callee_lower.contains("extract(") {
+                let args_str = call.arguments.join(" ");
+                let has_user_input = args_str.contains("$_GET")
+                    || args_str.contains("$_POST")
+                    || args_str.contains("$_REQUEST")
+                    || args_str.contains("$_COOKIE");
+
+                // Check if EXTR_SKIP is used (safe)
+                let has_skip = args_str.contains("EXTR_SKIP");
+
+                if has_user_input && !has_skip {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "extract() Variable Overwrite (CWE-915): {} with user input without EXTR_SKIP. \
+                            Attacker can overwrite existing variables, potentially bypassing security checks.",
+                            call.callee
+                        ),
+                        fix_hint: "Use extract($_REQUEST, EXTR_SKIP) to prevent overwriting existing variables, \
+                            or better yet, avoid extract() entirely and use explicit variable assignment.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Pattern-based detection
+        let extract_patterns = vec![
+            (r#"(?i)extract\s*\(\s*\$_(GET|POST|REQUEST|COOKIE)\s*\)"#, "extract() from user input without flags"),
+            (r#"(?i)extract\s*\(\s*\$_(GET|POST|REQUEST|COOKIE)\s*,\s*EXTR_OVERWRITE"#, "extract() with EXTR_OVERWRITE (dangerous)"),
+        ];
+
+        for (pattern, desc) in &extract_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "extract() Variable Overwrite (CWE-915): {}. \
+                            User input can overwrite existing variables in the current scope.",
+                            desc
+                        ),
+                        fix_hint: "Use EXTR_SKIP flag or avoid extract() with user input.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-051: parse_str() Variable Overwrite
+// CWE-915 — CVSS 6.1 — MEDIUM
+// parse_str() overwrites existing variables
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpParseStrOverwrite;
+
+impl LangRule for PhpParseStrOverwrite {
+    fn id(&self) -> &str { "PHP2-SEC-051" }
+    fn name(&self) -> &str { "parse_str() Variable Overwrite" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+
+            if callee_lower.contains("parse_str(") {
+                // Check if second argument (result array) is provided
+                let has_result_array = call.arguments.len() >= 2;
+                let args_str = call.arguments.join(" ");
+                let has_user_input = args_str.contains("$_GET")
+                    || args_str.contains("$_POST")
+                    || args_str.contains("$_REQUEST")
+                    || args_str.contains("$_COOKIE")
+                    || args_str.contains("$query")
+                    || args_str.contains("$params");
+
+                if !has_result_array && has_user_input {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "parse_str() Variable Overwrite (CWE-915): {} without result array. \
+                            Parsed values overwrite existing variables in the current scope.",
+                            call.callee
+                        ),
+                        fix_hint: "Always use the second argument: parse_str($str, $result). \
+                            This stores parsed values in an array instead of overwriting variables.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Pattern-based detection for parse_str without second argument
+        let parse_patterns = vec![
+            (r#"(?i)parse_str\s*\(\s*\$[^)]+\)"#, "parse_str() without result array argument"),
+            (r#"(?i)parse_str\s*\(\s*\$_(GET|POST|REQUEST|COOKIE)\s*\)"#, "parse_str() with user input without result array"),
+        ];
+
+        for (pattern, desc) in &parse_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "parse_str() Variable Overwrite (CWE-915): {}. \
+                            Without a result array, parsed variables overwrite existing ones.",
+                            desc
+                        ),
+                        fix_hint: "Always provide a second argument: parse_str($str, $result).".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-052: assert() Code Execution
+// CWE-95 — CVSS 8.1 — HIGH
+// assert() with string from user input
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpAssertCodeExecution;
+
+impl LangRule for PhpAssertCodeExecution {
+    fn id(&self) -> &str { "PHP2-SEC-052" }
+    fn name(&self) -> &str { "assert() Code Execution" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+
+            if callee_lower.contains("assert(") {
+                let args_str = call.arguments.join(" ");
+                let has_user_input = args_str.contains("$_GET")
+                    || args_str.contains("$_POST")
+                    || args_str.contains("$_REQUEST")
+                    || args_str.contains("$params")
+                    || args_str.contains("$input");
+
+                let (start, end) = get_line_offsets(code, call.start_line);
+                let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                // Check if it's a string assertion (dangerous in PHP 7+)
+                let is_string_assert = args_str.contains("\"")
+                    || args_str.contains("'")
+                    || has_user_input;
+
+                if is_string_assert {
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "assert() Code Execution (CWE-95): {} {} with string. \
+                            In PHP 7+, string assertions are evaluated as code if assertion INI is enabled.",
+                            call.callee,
+                            if has_user_input { "with user input" } else { "with string argument" }
+                        ),
+                        fix_hint: "Avoid assert() with strings. Use strict type checking or boolean conditions. \
+                            In PHP 7.2+, use zend.assertions=0 and assert.exception=1 in production.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Pattern-based detection for assertion configuration
+        let assert_patterns = vec![
+            (r#"assert\.active\s*=\s*1"#, "assert.active enabled"),
+            (r#"assert\.active\s*=\s*On"#, "assert.active enabled"),
+            (r#"zend\.assertions\s*=\s*1"#, "zend.assertions enabled (PHP 7+)"),
+        ];
+
+        for (pattern, desc) in &assert_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "assert() Code Execution (CWE-95): {} - assertions are active. \
+                            String assertions can be exploited for code execution.",
+                            desc
+                        ),
+                        fix_hint: "Disable assertions in production: zend.assertions=0, assert.exception=1.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-053: create_function() Code Injection
+// CWE-94 — CVSS 9.8 — CRITICAL
+// Deprecated function allows code injection
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpCreateFunction;
+
+impl LangRule for PhpCreateFunction {
+    fn id(&self) -> &str { "PHP2-SEC-053" }
+    fn name(&self) -> &str { "create_function() Code Injection" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+
+            if callee_lower.contains("create_function(") {
+                let args_str = call.arguments.join(" ");
+                let has_user_input = args_str.contains("$_GET")
+                    || args_str.contains("$_POST")
+                    || args_str.contains("$_REQUEST")
+                    || args_str.contains("$code")
+                    || args_str.contains("$func")
+                    || args_str.contains("$function");
+
+                let (start, end) = get_line_offsets(code, call.start_line);
+                let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line: call.start_line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!(
+                        "create_function() Code Injection (CWE-94): {} {} - DEPRECATED in PHP 7.2, REMOVED in PHP 8.0. \
+                        This function creates anonymous functions from strings, enabling code injection.",
+                        call.callee,
+                        if has_user_input { "with user input" } else { "(review for safety)" }
+                    ),
+                    fix_hint: "Replace create_function() with anonymous functions: \
+                        $fn = function($args) { /* code */ }; \
+                        Or use call_user_func() with defined functions.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        // Pattern-based detection
+        let create_fn_patterns = vec![
+            (r#"create_function\s*\("#, "create_function() usage - deprecated and dangerous"),
+            (r#"\\create_function\s*\("#, "create_function() usage (namespaced) - deprecated and dangerous"),
+        ];
+
+        for (pattern, desc) in &create_fn_patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    if findings.iter().any(|f: &LangFinding| f.line == line) {
+                        continue;
+                    }
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "create_function() Code Injection (CWE-94): {}. \
+                            This function was deprecated in PHP 7.2 and removed in PHP 8.0.",
+                            desc
+                        ),
+                        fix_hint: "Replace with anonymous functions: $fn = function($args) { /* code */ };.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-054: register_globals Enabled
+// CWE-915 — CVSS 8.1 — HIGH
+// Deprecated setting exposes variables
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpRegisterGlobals;
+
+impl LangRule for PhpRegisterGlobals {
+    fn id(&self) -> &str { "PHP2-SEC-054" }
+    fn name(&self) -> &str { "register_globals Enabled" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for register_globals configuration
+        let patterns = vec![
+            (r#"register_globals\s*=\s*1"#, "register_globals enabled"),
+            (r#"register_globals\s*=\s*On"#, "register_globals enabled"),
+            (r#"register_globals\s*=\s*True"#, "register_globals enabled"),
+            (r#"ini_set\s*\(\s*["\']register_globals['\"]\s*,\s*1\s*\)"#, "register_globals enabled via ini_set()"),
+            (r#"ini_set\s*\(\s*["\']register_globals['\"]\s*,\s*["\']?on["\']?\s*\)"#, "register_globals enabled via ini_set()"),
+        ];
+
+        for (pattern, desc) in &patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "register_globals Enabled (CWE-915): {}. \
+                            This deprecated setting automatically creates variables from request parameters, \
+                            enabling variable overwrite attacks.",
+                            desc
+                        ),
+                        fix_hint: "register_globals was removed in PHP 5.4.0. If found in code, remove immediately. \
+                            Always use superglobals ($_GET, $_POST) explicitly and initialize variables.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHP2-SEC-055: Weak File Permissions
+// CWE-732 — CVSS 6.5 — MEDIUM
+// chmod() with 0777 or umask(0)
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub struct PhpWeakFilePermissions;
+
+impl LangRule for PhpWeakFilePermissions {
+    fn id(&self) -> &str { "PHP2-SEC-055" }
+    fn name(&self) -> &str { "Weak File Permissions" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        // Check for dangerous permission settings
+        let patterns = vec![
+            (r#"chmod\s*\(\s*[^,]+,\s*0\s*7\s*7\s*7\s*\)"#, "chmod() with 0777 permissions - world readable/writable"),
+            (r#"chmod\s*\(\s*[^,]+,\s*0777\s*\)"#, "chmod() with 0777 permissions - world readable/writable"),
+            (r#"chmod\s*\(\s*[^,]+,\s*0\s*7\s*7\s*5\s*\)"#, "chmod() with 0775 permissions - world readable"),
+            (r#"chmod\s*\(\s*[^,]+,\s*0\s*7\s*5\s*5\s*\)"#, "chmod() with 0755 permissions - world readable/executable"),
+            (r#"umask\s*\(\s*0\s*\)"#, "umask(0) - removes all permission restrictions"),
+            (r#"umask\s*\(\s*00\s*\)"#, "umask(00) - removes all permission restrictions"),
+            (r#"umask\s*\(\s*000\s*\)"#, "umask(000) - removes all permission restrictions"),
+        ];
+
+        for (pattern, desc) in &patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                for m in re.find_iter(code) {
+                    let line = code[..m.start()].matches('\n').count() + 1;
+                    let (start, end) = get_line_offsets(code, line);
+                    let line_text = get_line_text(code, line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!(
+                            "Weak File Permissions (CWE-732): {}. \
+                            Overly permissive file permissions can allow unauthorized access.",
+                            desc
+                        ),
+                        fix_hint: "Use restrictive permissions: chmod($file, 0644) for files, 0755 for directories. \
+                            Avoid 0777 in production. Set appropriate umask (022 or 027).".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        // Call-based detection for chmod/umask
+        for call in &tree.calls {
+            let callee_lower = call.callee.to_lowercase();
+
+            if callee_lower.contains("chmod(") && call.arguments.len() >= 2 {
+                let args_str = call.arguments.join(" ");
+                let is_world_writable = args_str.contains("0777")
+                    || args_str.contains("0o777")
+                    || args_str.contains("0x777");
+
+                if is_world_writable {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    if !findings.iter().any(|f: &LangFinding| f.line == call.start_line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: call.start_line,
+                            column: 0,
+                            start_byte: start,
+                            end_byte: end,
+                            snippet: line_text.trim().to_string(),
+                            problem: format!(
+                                "Weak File Permissions (CWE-732): {} with 0777. \
+                                World-writable files/directories can be accessed by any user on the system.",
+                                call.callee
+                            ),
+                            fix_hint: "Use restrictive permissions like 0644 for files or 0755 for directories.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
+                }
+            }
+
+            if callee_lower.contains("umask(") {
+                let args_str = call.arguments.join(" ");
+                let is_zero_umask = args_str.contains("0")
+                    || args_str.contains("00")
+                    || args_str.contains("000");
+
+                if is_zero_umask {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    if !findings.iter().any(|f: &LangFinding| f.line == call.start_line) {
+                        findings.push(LangFinding {
+                            rule_id: self.id().to_string(),
+                            severity: self.severity().to_string(),
+                            line: call.start_line,
+                            column: 0,
+                            start_byte: start,
+                            end_byte: end,
+                            snippet: line_text.trim().to_string(),
+                            problem: "Weak File Permissions (CWE-732): umask(0) removes all permission restrictions".to_string(),
+                            fix_hint: "Use a restrictive umask like umask(022) or umask(027) for secure defaults.".to_string(),
+                            auto_fix_available: false,
+                        replacement: String::new(),
+                        });
+                    }
                 }
             }
         }
@@ -2612,11 +4414,27 @@ pub fn php_security_rules() -> Vec<Box<dyn LangRule>> {
         Box::new(PhpAiXss),
         Box::new(PhpSsrfDeep),
         Box::new(PhpSlopsquattingTypo),
-        // New rule PHP-SEC-032
+        // PHP-SEC-032
         Box::new(PhpWeakJwt),
-        // PHP-SEC-033 to PHP-SEC-035: Vulnerable Sink Detection (Reverse-Engineered from hackingtool)
-        Box::new(PhpLaravelSqlInjection),
-        Box::new(PhpSsti),
+        // PHP-SEC-036 to PHP-SEC-038
+        Box::new(PhpPdoStringInjection),
+        Box::new(PhpUnserializeInjection),
+        Box::new(PhpRemoteFileInclusion),
+        // PHP-SEC-041 to PHP-SEC-055: New Security Rules
+        Box::new(PhpZipSlip),
+        Box::new(PhpXpathInjection),
+        Box::new(PhpPregReplaceRce),
+        Box::new(PhpEmailHeaderInjection),
+        Box::new(PhpRedos),
+        Box::new(PhpSessionIdInUrl),
+        Box::new(PhpDebugModeEnabled),
+        Box::new(PhpPcntlExecFunctions),
+        Box::new(PhpCookieMissingSecure),
         Box::new(PhpExtractOverwrite),
+        Box::new(PhpExtractOverwriteV2),
+        Box::new(PhpAssertCodeExecution),
+        Box::new(PhpCreateFunction),
+        Box::new(PhpRegisterGlobals),
+        Box::new(PhpWeakFilePermissions),
     ]
 }

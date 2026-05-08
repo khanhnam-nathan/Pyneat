@@ -135,6 +135,7 @@ impl Rule for PhpSqlInjectionRule {
                         problem: format!("SQL Injection via string concatenation: {}", desc),
                         fix_hint: "Use PDO prepared statements or mysqli with prepare() and bind_param().".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -168,6 +169,7 @@ impl Rule for PhpXssRule {
                         problem: format!("XSS vulnerability: {} without escaping.", desc),
                         fix_hint: "Always escape output with htmlspecialchars().".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -201,6 +203,7 @@ impl Rule for PhpInsecureFileUploadRule {
                         problem: format!("Insecure file upload: {}", desc),
                         fix_hint: "Validate file extension with whitelist. Check MIME type with finfo_file().".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -234,6 +237,7 @@ impl Rule for PhpLooseComparisonRule {
                         problem: format!("Type juggling vulnerability: {} using loose comparison.", desc),
                         fix_hint: "Use strict comparison (=== or !==).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -270,6 +274,7 @@ impl Rule for PhpEvalAssertRule {
                         problem: format!("Code injection risk: {}", desc),
                         fix_hint: "Replace eval() with safer alternatives.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -303,6 +308,7 @@ impl Rule for PhpUnserializeRule {
                         problem: format!("PHP Object Injection: {}", desc),
                         fix_hint: "Use json_decode() instead of unserialize(). If required, use allowed_classes parameter.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -336,6 +342,7 @@ impl Rule for PhpIncludeTraversalRule {
                         problem: format!("Path traversal / File inclusion: {}", desc),
                         fix_hint: "Never use user input directly in include/require. Use an allowlist.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -369,6 +376,7 @@ impl Rule for PhpHardcodedSecretsRule {
                         problem: format!("Hardcoded credentials: {}", desc),
                         fix_hint: "Store credentials in environment variables.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -402,6 +410,7 @@ impl Rule for PhpCommandInjectionRule {
                         problem: format!("OS Command Injection: {}", desc),
                         fix_hint: "Never pass user input directly to shell commands. Use escapeshellarg().".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -435,6 +444,7 @@ impl Rule for PhpSsrfRule {
                         problem: format!("SSRF vulnerability: {}", desc),
                         fix_hint: "Validate URLs against an allowlist of permitted domains.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -468,6 +478,7 @@ impl Rule for PhpDebugModeRule {
                         problem: format!("Debug mode / Information disclosure: {}", desc),
                         fix_hint: "Disable display_errors in production.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -501,6 +512,7 @@ impl Rule for PhpSessionRule {
                         problem: format!("Weak session management: {}", desc),
                         fix_hint: "Set secure session options: session.cookie_httponly=1, session.cookie_secure=1.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -534,6 +546,7 @@ impl Rule for PhpCsrfRule {
                         problem: format!("Missing CSRF protection: {}", desc),
                         fix_hint: "Generate and validate CSRF tokens.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -567,6 +580,7 @@ impl Rule for PhpXxeRule {
                         problem: format!("XXE vulnerability: {} without safe XML configuration.", desc),
                         fix_hint: "Disable external entities: libxml_disable_entity_loader(true).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -600,6 +614,7 @@ impl Rule for PhpOpenRedirectRule {
                         problem: format!("Open redirect: {} without validation.", desc),
                         fix_hint: "Validate redirect URLs against an allowlist.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -633,6 +648,7 @@ impl Rule for PhpLdapInjectionRule {
                         problem: format!("LDAP Injection: {} without escaping.", desc),
                         fix_hint: "Escape LDAP special characters or validate input against allowlist.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -666,6 +682,7 @@ impl Rule for PhpMassAssignmentRule {
                         problem: format!("Mass assignment vulnerability: {}", desc),
                         fix_hint: "Use fillable/guarded properties in models.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -699,6 +716,7 @@ impl Rule for PhpInfoDisclosureRule {
                         problem: format!("Information disclosure: {}", desc),
                         fix_hint: "Never output environment variables, server info, or configuration values.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

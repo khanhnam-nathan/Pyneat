@@ -252,6 +252,9 @@ impl TaintRule for SqlInjectionRule {
             // Python
             TaintSink { rule_id: self.id().to_string(), name: "cursor.execute".into(), severity: "CRITICAL".into(), description: "SQL query built from untrusted input — SQL injection".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::Sql] },
             TaintSink { rule_id: self.id().to_string(), name: "cursor.executemany".into(), severity: "CRITICAL".into(), description: "SQL executemany with untrusted input".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::Sql] },
+            TaintSink { rule_id: self.id().to_string(), name: "db.execute".into(), severity: "CRITICAL".into(), description: "Generic db.execute with untrusted input — SQL injection".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::Sql] },
+            TaintSink { rule_id: self.id().to_string(), name: "database.execute".into(), severity: "CRITICAL".into(), description: "Database execute with untrusted input — SQL injection".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::Sql] },
+            TaintSink { rule_id: self.id().to_string(), name: "engine.execute".into(), severity: "CRITICAL".into(), description: "SQLAlchemy/engine execute with untrusted input — SQL injection".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::Sql] },
             TaintSink { rule_id: self.id().to_string(), name: "sqlite3.execute".into(), severity: "CRITICAL".into(), description: "SQLite query with untrusted input".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::Sql] },
             TaintSink { rule_id: self.id().to_string(), name: "sqlite3.connect".into(), severity: "CRITICAL".into(), description: "SQLite connection with untrusted query".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::Sql] },
             TaintSink { rule_id: self.id().to_string(), name: "Model.objects.raw".into(), severity: "CRITICAL".into(), description: "Django ORM raw SQL with user input".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::Sql] },
@@ -1307,6 +1310,311 @@ impl TaintRule for YamlUnsafeRule {
 }
 
 // --------------------------------------------------------------------------
+// TAINT-PP001: Prototype Pollution
+// --------------------------------------------------------------------------
+
+pub struct PrototypePollutionRule;
+
+impl TaintRule for PrototypePollutionRule {
+    fn id(&self) -> &str { "TAINT-PP001" }
+    fn name(&self) -> &str { "Prototype Pollution (CWE-1321)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "bracket_access_assignment".into(), severity: "HIGH".into(), description: "Object property assignment with user-controlled key — prototype pollution".into(), sink_arg: SinkPosition::Argument(1), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "__proto__".into(), severity: "CRITICAL".into(), description: "Direct __proto__ assignment — prototype pollution".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "constructor.prototype".into(), severity: "CRITICAL".into(), description: "constructor.prototype pollution — prototype pollution".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "Object.assign".into(), severity: "HIGH".into(), description: "Object.assign with user-controlled properties — prototype pollution".into(), sink_arg: SinkPosition::Argument(1), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "merge".into(), severity: "HIGH".into(), description: "Deep merge with user input — prototype pollution".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "clone".into(), severity: "HIGH".into(), description: "Clone function with user input — prototype pollution".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-JWT001: JWT Security Issues
+// --------------------------------------------------------------------------
+
+pub struct JwtSecurityRule;
+
+impl TaintRule for JwtSecurityRule {
+    fn id(&self) -> &str { "TAINT-JWT001" }
+    fn name(&self) -> &str { "JWT Security Misconfiguration" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "jwt.decode".into(), severity: "HIGH".into(), description: "JWT decode without verification — authentication bypass".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "jwt.encode".into(), severity: "MEDIUM".into(), description: "JWT encode with weak algorithm — algorithm confusion attack".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::Crypto] },
+            TaintSink { rule_id: self.id().to_string(), name: "jsonwebtoken.verify".into(), severity: "HIGH".into(), description: "JWT verify without proper validation".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "jwtService.verify".into(), severity: "HIGH".into(), description: "JWT verify with weak secret or none algorithm".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "jwt.sign".into(), severity: "MEDIUM".into(), description: "JWT sign with weak secret".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::Crypto] },
+            TaintSink { rule_id: self.id().to_string(), name: "Jwts.parser".into(), severity: "HIGH".into(), description: "JJWT parser without required validation".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "jwt-go.Parse".into(), severity: "HIGH".into(), description: "jwt.Parse without key function — verification bypass".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "golang-jwt.Parse".into(), severity: "HIGH".into(), description: "golang-jwt Parse without key — verification bypass".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-OPENREDIRECT001: Open Redirect
+// --------------------------------------------------------------------------
+
+pub struct OpenRedirectRule;
+
+impl TaintRule for OpenRedirectRule {
+    fn id(&self) -> &str { "TAINT-OPENREDIRECT001" }
+    fn name(&self) -> &str { "Open Redirect Vulnerability" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "redirect".into(), severity: "MEDIUM".into(), description: "Flask redirect with user input — open redirect".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "HttpResponseRedirect".into(), severity: "MEDIUM".into(), description: "Django redirect with user input — open redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "RedirectResponse".into(), severity: "MEDIUM".into(), description: "FastAPI redirect with user input — open redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "res.redirect".into(), severity: "MEDIUM".into(), description: "Express redirect with user input — open redirect".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "ctx.redirect".into(), severity: "MEDIUM".into(), description: "Koa redirect with user input — open redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "sendRedirect".into(), severity: "MEDIUM".into(), description: "Servlet sendRedirect with user input — open redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "header".into(), severity: "MEDIUM".into(), description: "PHP header(Location:) with user input — open redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "redirect_to".into(), severity: "MEDIUM".into(), description: "Rails redirect_to with user input — open redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "http.Redirect".into(), severity: "MEDIUM".into(), description: "Go http.Redirect with user input — open redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "Response.Redirect".into(), severity: "MEDIUM".into(), description: "ASP.NET redirect with user input — open redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-COOKIE001: Cookie Security Issues
+// --------------------------------------------------------------------------
+
+pub struct CookieSecurityRule;
+
+impl TaintRule for CookieSecurityRule {
+    fn id(&self) -> &str { "TAINT-COOKIE001" }
+    fn name(&self) -> &str { "Insecure Cookie Configuration" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "res.cookie".into(), severity: "MEDIUM".into(), description: "Express cookie without httpOnly — XSS cookie theft".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "document.cookie".into(), severity: "HIGH".into(), description: "Reading document.cookie directly — sensitive data exposure".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "set_cookie".into(), severity: "MEDIUM".into(), description: "Django cookie without secure/httpOnly — session hijacking".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "setcookie".into(), severity: "MEDIUM".into(), description: "PHP setcookie without secure/httpOnly — session security".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "cookies".into(), severity: "MEDIUM".into(), description: "Rails cookie without httpOnly — XSS cookie theft".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-SESSION001: Session Fixation
+// --------------------------------------------------------------------------
+
+pub struct SessionFixationRule;
+
+impl TaintRule for SessionFixationRule {
+    fn id(&self) -> &str { "TAINT-SESSION001" }
+    fn name(&self) -> &str { "Session Fixation Vulnerability" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "session.permanent".into(), severity: "MEDIUM".into(), description: "Flask permanent session set from user input — session fixation".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "sessionID".into(), severity: "MEDIUM".into(), description: "Session ID set from user input — session fixation".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "session_id".into(), severity: "HIGH".into(), description: "PHP session_id() called with user input — session fixation".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-AUTHZ001: Improper Authorization / IDOR
+// --------------------------------------------------------------------------
+
+pub struct ImproperAuthorizationRule;
+
+impl TaintRule for ImproperAuthorizationRule {
+    fn id(&self) -> &str { "TAINT-AUTHZ001" }
+    fn name(&self) -> &str { "Improper Authorization / IDOR" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "objects.get".into(), severity: "HIGH".into(), description: "Django ORM get() with user ID — IDOR vulnerability".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "Model.query.get".into(), severity: "HIGH".into(), description: "SQLAlchemy query.get with user input — IDOR".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "findById".into(), severity: "HIGH".into(), description: "Mongoose findById with user input — IDOR".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "entityManager.find".into(), severity: "HIGH".into(), description: "JPA entityManager.find with user input — IDOR".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "User.find".into(), severity: "HIGH".into(), description: "Rails User.find with user input — IDOR".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "First".into(), severity: "HIGH".into(), description: "GORM First() with user input — IDOR".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput, TaintLabel::Sql] },
+            TaintSink { rule_id: self.id().to_string(), name: "DbSet.Find".into(), severity: "HIGH".into(), description: "EF Core DbSet.Find with user input — IDOR".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-CODE001: Code Injection / Eval
+// --------------------------------------------------------------------------
+
+pub struct CodeInjectionRule;
+
+impl TaintRule for CodeInjectionRule {
+    fn id(&self) -> &str { "TAINT-CODE001" }
+    fn name(&self) -> &str { "Code Injection / Eval Injection" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "eval".into(), severity: "CRITICAL".into(), description: "eval() with user input — arbitrary code execution".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "exec".into(), severity: "CRITICAL".into(), description: "exec() with user input — arbitrary code execution".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "compile".into(), severity: "CRITICAL".into(), description: "compile() with user input — arbitrary code execution".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "Function(".into(), severity: "CRITICAL".into(), description: "new Function() with user input — arbitrary JS execution".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "setTimeout".into(), severity: "HIGH".into(), description: "setTimeout with string and user input — eval injection".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "vm.runIn".into(), severity: "CRITICAL".into(), description: "Node vm.runIn* with user input — sandbox escape".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "assert".into(), severity: "CRITICAL".into(), description: "PHP assert() with string and user input — RCE".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "call_user_func".into(), severity: "HIGH".into(), description: "call_user_func with user-controlled function name — RCE".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "send".into(), severity: "HIGH".into(), description: "Object.send with user-controlled method — code execution".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "ScriptEngine".into(), severity: "CRITICAL".into(), description: "JavaScript ScriptEngine with user input — code execution".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "GroovyShell".into(), severity: "CRITICAL".into(), description: "GroovyShell.evaluate with user input — code execution".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-SMUGGLE001: HTTP Request Smuggling
+// --------------------------------------------------------------------------
+
+pub struct RequestSmugglingRule;
+
+impl TaintRule for RequestSmugglingRule {
+    fn id(&self) -> &str { "TAINT-SMUGGLE001" }
+    fn name(&self) -> &str { "HTTP Request Smuggling" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "ReverseProxy".into(), severity: "HIGH".into(), description: "httputil.ReverseProxy without request body handling — smuggling".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "NewSingleHostReverseProxy".into(), severity: "HIGH".into(), description: "Reverse proxy without CL.TE handling — request smuggling".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+            TaintSink { rule_id: self.id().to_string(), name: "http.createServer".into(), severity: "MEDIUM".into(), description: "HTTP server without proper header parsing — smuggling".into(), sink_arg: SinkPosition::Entire, requires: vec![] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-XPATH001: XPath Injection
+// --------------------------------------------------------------------------
+
+pub struct XPathInjectionRule;
+
+impl TaintRule for XPathInjectionRule {
+    fn id(&self) -> &str { "TAINT-XPATH001" }
+    fn name(&self) -> &str { "XPath Injection" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "etree.iterparse".into(), severity: "HIGH".into(), description: "lxml iterparse with user input — XPath injection".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput, TaintLabel::Xml] },
+            TaintSink { rule_id: self.id().to_string(), name: "ElementPath".into(), severity: "HIGH".into(), description: "ElementPath with user input — XPath injection".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput, TaintLabel::Xml] },
+            TaintSink { rule_id: self.id().to_string(), name: "xpath".into(), severity: "HIGH".into(), description: "xpath library with user input — XPath injection".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "evaluate".into(), severity: "HIGH".into(), description: "XPath evaluate with user input — XPath injection".into(), sink_arg: SinkPosition::Argument(1), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "DOMXPath".into(), severity: "HIGH".into(), description: "DOMXPath.query with user input — XPath injection".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "XPathFactory".into(), severity: "HIGH".into(), description: "XPath evaluation with user input — XPath injection".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput, TaintLabel::Xml] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-HEADER001: HTTP Header Injection
+// --------------------------------------------------------------------------
+
+pub struct HTTPHeaderInjectionRule;
+
+impl TaintRule for HTTPHeaderInjectionRule {
+    fn id(&self) -> &str { "TAINT-HEADER001" }
+    fn name(&self) -> &str { "HTTP Header Injection" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "w.Header.Set".into(), severity: "MEDIUM".into(), description: "Header.Set with user input — header injection".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "res.setHeader".into(), severity: "MEDIUM".into(), description: "res.setHeader with user input — header injection".into(), sink_arg: SinkPosition::Argument(1), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "header".into(), severity: "HIGH".into(), description: "PHP header() with user input — response splitting / cache poisoning".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "response.setHeader".into(), severity: "MEDIUM".into(), description: "Servlet setHeader with user input — header injection".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "headers".into(), severity: "MEDIUM".into(), description: "Rails response headers with user input — header injection".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-EVAL001: Eval Injection via Dynamic Strings
+// --------------------------------------------------------------------------
+
+pub struct EvalInjectionRule;
+
+impl TaintRule for EvalInjectionRule {
+    fn id(&self) -> &str { "TAINT-EVAL001" }
+    fn name(&self) -> &str { "Eval Injection via Dynamic Strings" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "innerHTML".into(), severity: "HIGH".into(), description: "innerHTML with user input — XSS (indirect script execution)".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "outerHTML".into(), severity: "HIGH".into(), description: "outerHTML with user input — XSS".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "insertAdjacentHTML".into(), severity: "HIGH".into(), description: "insertAdjacentHTML with user input — XSS".into(), sink_arg: SinkPosition::Argument(1), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "document.write".into(), severity: "HIGH".into(), description: "document.write with user input — XSS".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "dangerouslySetInnerHTML".into(), severity: "HIGH".into(), description: "React dangerouslySetInnerHTML with user input — XSS".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "v-html".into(), severity: "HIGH".into(), description: "Vue v-html directive with user input — XSS".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "bypassSecurityTrustHtml".into(), severity: "HIGH".into(), description: "Angular bypassSecurityTrustHtml — CSP bypass".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "safe".into(), severity: "HIGH".into(), description: "Jinja2 safe filter on user input — XSS".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
+// TAINT-REDIRECT001: URL Redirect Without Validation
+// --------------------------------------------------------------------------
+
+pub struct URLRedirectRule;
+
+impl TaintRule for URLRedirectRule {
+    fn id(&self) -> &str { "TAINT-REDIRECT001" }
+    fn name(&self) -> &str { "URL Redirect Without Validation" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn sources(&self) -> Vec<TaintSource> { all_user_input_sources(self.id()) }
+
+    fn sinks(&self) -> Vec<TaintSink> {
+        vec![
+            TaintSink { rule_id: self.id().to_string(), name: "urlparse".into(), severity: "MEDIUM".into(), description: "URL parsing of user input for redirect — open redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "URL(".into(), severity: "MEDIUM".into(), description: "URL object constructed with user input".into(), sink_arg: SinkPosition::Argument(0), requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "urljoin".into(), severity: "MEDIUM".into(), description: "urljoin with user-controlled base or relative — redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "pathJoin".into(), severity: "MEDIUM".into(), description: "path.Join with user input — path traversal in redirect".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+            TaintSink { rule_id: self.id().to_string(), name: "path.resolve".into(), severity: "MEDIUM".into(), description: "path.resolve with user input — redirect to arbitrary domain".into(), sink_arg: SinkPosition::Entire, requires: vec![TaintLabel::UserInput] },
+        ]
+    }
+}
+
+// --------------------------------------------------------------------------
 // Get all built-in taint rules
 // --------------------------------------------------------------------------
 
@@ -1335,5 +1643,18 @@ pub fn all_taint_rules() -> Vec<Box<dyn TaintRule>> {
         Box::new(TypeConfusionRule),
         Box::new(LogInjectionRule),
         Box::new(YamlUnsafeRule),
+        // Phase 4: Additional language-specific and cross-language rules
+        Box::new(PrototypePollutionRule),
+        Box::new(JwtSecurityRule),
+        Box::new(OpenRedirectRule),
+        Box::new(CookieSecurityRule),
+        Box::new(SessionFixationRule),
+        Box::new(ImproperAuthorizationRule),
+        Box::new(CodeInjectionRule),
+        Box::new(RequestSmugglingRule),
+        Box::new(XPathInjectionRule),
+        Box::new(HTTPHeaderInjectionRule),
+        Box::new(EvalInjectionRule),
+        Box::new(URLRedirectRule),
     ]
 }

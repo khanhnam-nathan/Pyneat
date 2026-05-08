@@ -65,6 +65,7 @@ impl LangRule for PhpTodoComments {
                 problem: format!("Unresolved {} marker: {}", todo.marker, todo.description),
                 fix_hint: "Address the TODO or provide a timeline for resolution.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -95,6 +96,7 @@ impl LangRule for PhpEchoVarDump {
                     problem: "Debug output found. Remove before production.".to_string(),
                     fix_hint: "Use a proper logging library or remove debug output.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }

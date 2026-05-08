@@ -52,6 +52,7 @@ impl Rule for WeakJwtSecretRule {
                         problem: format!("Weak or hardcoded JWT secret: {}", desc),
                         fix_hint: "Use cryptographically strong secret (256+ bits) from environment variables.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

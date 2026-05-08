@@ -84,6 +84,7 @@ impl LangRule for PhpEmptyCatchBlock {
                     problem: "Empty catch block detected.".to_string(),
                     fix_hint: "Either remove the empty catch block or add proper error handling.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -116,6 +117,7 @@ impl LangRule for PhpEmptyCatchBlock {
                     problem: "Empty catch block detected.".to_string(),
                     fix_hint: "Add error handling: log the exception or rethrow with context.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -190,6 +192,7 @@ impl LangRule for PhpEchoUsage {
                             ),
                             fix_hint: "Remove debug statements or use proper logging.".to_string(),
                             auto_fix_available: true,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -270,6 +273,7 @@ impl LangRule for PhpDeepNesting {
                         ),
                         fix_hint: "Extract deeply nested logic into separate functions to improve readability.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                     nesting_start_line = line_idx + 1;
                 }
@@ -333,6 +337,7 @@ impl LangRule for PhpSuperglobalUsage {
                         problem: "Superglobal used without apparent sanitization.".to_string(),
                         fix_hint: "Always validate and sanitize superglobal input. Use filter_var() or appropriate sanitization functions.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -391,6 +396,7 @@ impl LangRule for PhpInlineHtml {
                     problem: "Inline HTML detected in PHP file.".to_string(),
                     fix_hint: "Consider using a template engine (Twig, Blade) or separating views from logic.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -443,6 +449,7 @@ impl LangRule for PhpMissingReturnType {
                     problem: "Function without return type declaration.".to_string(),
                     fix_hint: "Add return type declaration for better type safety: function foo(): void {}".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -494,6 +501,7 @@ impl LangRule for PhpTodoComments {
                         problem: format!("{}: Unresolved marker found in code.", label),
                         fix_hint: "Resolve the TODO/FIXME or add a tracking issue.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

@@ -220,7 +220,8 @@ For full benchmarks with detection rates and methodology, see [pyneat-rs/README.
 ### Rust Backend Features
 
 - **LN-AST (Language-Neutral AST)**: Unified AST format for all 9 languages
-- **191 Rules**: 71 core + 120 language-specific rules
+- **500+ Rules**: 141 core Python/Rust + 230+ language-specific (JS/TS/Go/Java/Rust/C#/PHP/Ruby) + 23 AI security + 100+ enterprise rules
+- **Multi-Language**: Native scanners for Python, JavaScript, TypeScript, Go, Java, Rust, C#, PHP, Ruby
 - **Auto-fix Engine**: Atomic, conflict-aware code transformations
 - **SARIF 2.1.0 Export**: Full compliance with GitHub Security Lab format
 - **Python Bindings**: PyO3 integration for seamless Python usage
@@ -450,6 +451,38 @@ enable_match_case = false
 
 # CI/CD
 export_manifest = false
+```
+
+## Rust/PyO3 API (High-Performance)
+
+For maximum performance, use the Rust-accelerated scanner directly:
+
+```python
+import pyneat  # replaces pyneat_rs from v3.1.2+
+
+# Security scan (Python)
+issues = pyneat.scan_security(code)
+
+# Security scan (any language: js, ts, go, java, rs, cs, php, rb)
+js_issues = pyneat.scan_multilang(js_code, "javascript")
+ts_issues = pyneat.scan_multilang(ts_code, "typescript")
+
+# AI security scan
+ai_issues = pyneat.scan_ai_security(ai_code, "python")
+
+# Get rule catalog
+rules = pyneat.get_rules()       # Core security rules (~141)
+ai_rules = pyneat.get_ai_rules() # AI security rules (23)
+
+# Detect language from file extension
+lang = pyneat.detect_language("file.js")   # → "javascript"
+lang = pyneat.detect_language("file.ts")    # → "typescript"
+
+# Auto-fix
+fixed_code = pyneat.apply_auto_fix(code, json.dumps(finding))
+
+# Batch fixes with conflict resolution
+result = pyneat.apply_fixes_batch(code, json.dumps(findings))
 ```
 
 ## Pre-commit Integration

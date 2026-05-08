@@ -51,6 +51,7 @@ impl Rule for Sec026 {
                         problem: format!("Insecure temporary file usage: {}", desc),
                         fix_hint: "Use tempfile.TemporaryDirectory or NamedTemporaryFile with delete=True. Ensure proper cleanup.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

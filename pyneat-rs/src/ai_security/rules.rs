@@ -68,6 +68,12 @@ pub enum AiVulnerabilityType {
     ConfigMisuse,
     ContextWindowError,
     HallucinatedApi,
+    // MCP-specific vulnerability types
+    McpSchemaInjection,
+    McpSecretExfiltration,
+    McpServerImpersonation,
+    McpToolPoisoning,
+    McpPromptInjection,
 }
 
 impl AiVulnerabilityType {
@@ -84,6 +90,12 @@ impl AiVulnerabilityType {
             AiVulnerabilityType::ConfigMisuse => "config_misuse",
             AiVulnerabilityType::ContextWindowError => "context_window_error",
             AiVulnerabilityType::HallucinatedApi => "hallucinated_api",
+            // MCP-specific vulnerability types
+            AiVulnerabilityType::McpSchemaInjection => "mcp_schema_injection",
+            AiVulnerabilityType::McpSecretExfiltration => "mcp_secret_exfiltration",
+            AiVulnerabilityType::McpServerImpersonation => "mcp_server_impersonation",
+            AiVulnerabilityType::McpToolPoisoning => "mcp_tool_poisoning",
+            AiVulnerabilityType::McpPromptInjection => "mcp_prompt_injection",
         }
     }
 
@@ -100,6 +112,12 @@ impl AiVulnerabilityType {
             AiVulnerabilityType::ConfigMisuse => "AI Configuration",
             AiVulnerabilityType::ContextWindowError => "AI Integration",
             AiVulnerabilityType::HallucinatedApi => "AI Output Security",
+            // MCP-specific categories
+            AiVulnerabilityType::McpSchemaInjection => "MCP Security",
+            AiVulnerabilityType::McpSecretExfiltration => "MCP Security",
+            AiVulnerabilityType::McpServerImpersonation => "MCP Security",
+            AiVulnerabilityType::McpToolPoisoning => "MCP Security",
+            AiVulnerabilityType::McpPromptInjection => "MCP Security",
         }
     }
 }
@@ -942,6 +960,249 @@ impl AiSecurityRule for HallucinatedApiRule {
                         "Potential hallucinated/non-existent API call",
                         line_num + 1, line.trim(),
                         "Verify that the imported AI library/API actually exists.",
+                        self.confidence(),
+                    ));
+                    break;
+                }
+            }
+        }
+        findings
+    }
+}
+
+// --------------------------------------------------------------------------
+// MCP-Specific Security Rules
+// --------------------------------------------------------------------------
+
+/// AI-100: Detects MCP tool schema injection vulnerabilities
+/// User input being used in tool descriptions, names, or parameter schemas
+pub struct McpToolSchemaInjectionRule {
+    patterns: Vec<Regex>,
+}
+
+impl McpToolSchemaInjectionRule {
+    pub fn new() -> Self {
+        Self {
+            patterns: vec![
+                Regex::new(r##"(?i)(tool_name|tool_description)\s*=\s*.*(input|user)"##).unwrap(),
+                Regex::new(r##"(?i)\.format\s*\("##).unwrap(),
+                Regex::new(r##"(?i)new\s+Tool\s*\("##).unwrap(),
+                Regex::new(r##"(?i)Tool\s*\([^)]*f['\"]"##).unwrap(),
+            ],
+        }
+    }
+}
+
+impl AiSecurityRule for McpToolSchemaInjectionRule {
+    fn id(&self) -> &str { "AI-100" }
+    fn name(&self) -> &str { "MCP Tool Schema Injection" }
+    fn vulnerability_type(&self) -> AiVulnerabilityType { AiVulnerabilityType::McpSchemaInjection }
+    fn description(&self) -> &str { "Detects user input being directly used in MCP tool schemas (CWE-79)" }
+    fn severity(&self) -> &str { "high" }
+    fn confidence(&self) -> f32 { 0.85 }
+
+    fn detect(&self, code: &str, _language: &str) -> Vec<AiFinding> {
+        let mut findings = Vec::new();
+        for (line_num, line) in code.lines().enumerate() {
+            for pattern in &self.patterns {
+                if pattern.is_match(line) {
+                    findings.push(AiFinding::new(
+                        self.id(), self.severity(), self.vulnerability_type(),
+                        "Potential MCP tool schema injection: user input in tool definition",
+                        line_num + 1, line.trim(),
+                        "Validate and sanitize all user input before using in tool schemas. Use allowlists for tool names.",
+                        self.confidence(),
+                    ));
+                    break;
+                }
+            }
+        }
+        findings
+    }
+}
+
+/// AI-101: Detects MCP tools accessing sensitive environment/credential data
+pub struct McpSecretExfiltrationRule {
+    patterns: Vec<Regex>,
+}
+
+impl McpSecretExfiltrationRule {
+    pub fn new() -> Self {
+        Self {
+            patterns: vec![
+                Regex::new(r##"(?i)os\.environ"##).unwrap(),
+                Regex::new(r##"(?i)os\.getenv"##).unwrap(),
+                Regex::new(r##"(?i)process\.env"##).unwrap(),
+                Regex::new(r##"(?i)import\s+dotenv"##).unwrap(),
+                Regex::new(r##"(?i)load_dotenv"##).unwrap(),
+                Regex::new(r##"(?i)mcp.*env"##).unwrap(),
+                Regex::new(r##"(?i)get_secret|get_credential"##).unwrap(),
+                Regex::new(r##"(?i)aws_access_key|aws_secret_key"##).unwrap(),
+            ],
+        }
+    }
+}
+
+impl AiSecurityRule for McpSecretExfiltrationRule {
+    fn id(&self) -> &str { "AI-101" }
+    fn name(&self) -> &str { "MCP Secret Exfiltration" }
+    fn vulnerability_type(&self) -> AiVulnerabilityType { AiVulnerabilityType::McpSecretExfiltration }
+    fn description(&self) -> &str { "Detects MCP tools accessing sensitive environment/credentials (CWE-200)" }
+    fn severity(&self) -> &str { "critical" }
+    fn confidence(&self) -> f32 { 0.90 }
+
+    fn detect(&self, code: &str, _language: &str) -> Vec<AiFinding> {
+        let mut findings = Vec::new();
+        for (line_num, line) in code.lines().enumerate() {
+            for pattern in &self.patterns {
+                if pattern.is_match(line) {
+                    findings.push(AiFinding::new(
+                        self.id(), self.severity(), self.vulnerability_type(),
+                        "Potential MCP secret exfiltration: sensitive data access detected",
+                        line_num + 1, line.trim(),
+                        "Never expose secrets to MCP tools or LLMs. Use secure secret management and privilege separation.",
+                        self.confidence(),
+                    ));
+                    break;
+                }
+            }
+        }
+        findings
+    }
+}
+
+/// AI-102: Detects MCP client connecting to HTTP (non-HTTPS) servers
+pub struct McpServerImpersonationRule {
+    patterns: Vec<Regex>,
+}
+
+impl McpServerImpersonationRule {
+    pub fn new() -> Self {
+        Self {
+            patterns: vec![
+                Regex::new(r##"http://"##).unwrap(),
+                Regex::new(r##"(?i)mcp.*connect"##).unwrap(),
+                Regex::new(r##"(?i)endpoint.*=.*http"##).unwrap(),
+                Regex::new(r##"(?i)allow_insecure"##).unwrap(),
+                Regex::new(r##"(?i)verify_ssl.*False"##).unwrap(),
+            ],
+        }
+    }
+}
+
+impl AiSecurityRule for McpServerImpersonationRule {
+    fn id(&self) -> &str { "AI-102" }
+    fn name(&self) -> &str { "MCP Server Impersonation" }
+    fn vulnerability_type(&self) -> AiVulnerabilityType { AiVulnerabilityType::McpServerImpersonation }
+    fn description(&self) -> &str { "Detects MCP client connecting to insecure HTTP servers (CWE-300)" }
+    fn severity(&self) -> &str { "high" }
+    fn confidence(&self) -> f32 { 0.80 }
+
+    fn detect(&self, code: &str, _language: &str) -> Vec<AiFinding> {
+        let mut findings = Vec::new();
+        for (line_num, line) in code.lines().enumerate() {
+            for pattern in &self.patterns {
+                if pattern.is_match(line) {
+                    findings.push(AiFinding::new(
+                        self.id(), self.severity(), self.vulnerability_type(),
+                        "Potential MCP server impersonation: insecure HTTP connection detected",
+                        line_num + 1, line.trim(),
+                        "Always use HTTPS for MCP server connections. Validate server certificates.",
+                        self.confidence(),
+                    ));
+                    break;
+                }
+            }
+        }
+        findings
+    }
+}
+
+/// AI-103: Detects MCP tools that may return modified/malicious results
+pub struct McpToolPoisoningRule {
+    patterns: Vec<Regex>,
+}
+
+impl McpToolPoisoningRule {
+    pub fn new() -> Self {
+        Self {
+            patterns: vec![
+                Regex::new(r##"(?i)return.*\+.*extra"##).unwrap(),
+                Regex::new(r##"(?i)result\s*\+="##).unwrap(),
+                Regex::new(r##"(?i)\.update\s*\("##).unwrap(),
+                Regex::new(r##"(?i)no_validate|skip_validation"##).unwrap(),
+                Regex::new(r##"(?i)callback\s*\("##).unwrap(),
+            ],
+        }
+    }
+}
+
+impl AiSecurityRule for McpToolPoisoningRule {
+    fn id(&self) -> &str { "AI-103" }
+    fn name(&self) -> &str { "MCP Tool Poisoning" }
+    fn vulnerability_type(&self) -> AiVulnerabilityType { AiVulnerabilityType::McpToolPoisoning }
+    fn description(&self) -> &str { "Detects MCP tools potentially returning modified/malicious results (CWE-94)" }
+    fn severity(&self) -> &str { "critical" }
+    fn confidence(&self) -> f32 { 0.75 }
+
+    fn detect(&self, code: &str, _language: &str) -> Vec<AiFinding> {
+        let mut findings = Vec::new();
+        for (line_num, line) in code.lines().enumerate() {
+            for pattern in &self.patterns {
+                if pattern.is_match(line) {
+                    findings.push(AiFinding::new(
+                        self.id(), self.severity(), self.vulnerability_type(),
+                        "Potential MCP tool poisoning: result may be modified or malicious",
+                        line_num + 1, line.trim(),
+                        "Validate all tool outputs. Implement result signing and integrity checking.",
+                        self.confidence(),
+                    ));
+                    break;
+                }
+            }
+        }
+        findings
+    }
+}
+
+/// AI-104: Detects prompt injection via user input in MCP tool prompts
+pub struct McpPromptInjectionRule {
+    patterns: Vec<Regex>,
+}
+
+impl McpPromptInjectionRule {
+    pub fn new() -> Self {
+        Self {
+            patterns: vec![
+                Regex::new(r##"(?i)system_prompt.*=.*f['\"]"##).unwrap(),
+                Regex::new(r##"(?i)base_prompt.*=.*f['\"]"##).unwrap(),
+                Regex::new(r##"(?i)system_prompt.*\+="##).unwrap(),
+                Regex::new(r##"(?i)\.format\s*\(.*user"##).unwrap(),
+                Regex::new(r##"(?i)prompt.*=.*\+"##).unwrap(),
+                Regex::new(r##"(?i)tool_prompt"##).unwrap(),
+            ],
+        }
+    }
+}
+
+impl AiSecurityRule for McpPromptInjectionRule {
+    fn id(&self) -> &str { "AI-104" }
+    fn name(&self) -> &str { "Prompt Injection via MCP" }
+    fn vulnerability_type(&self) -> AiVulnerabilityType { AiVulnerabilityType::McpPromptInjection }
+    fn description(&self) -> &str { "Detects user input being used in MCP tool prompts (CWE-1336)" }
+    fn severity(&self) -> &str { "critical" }
+    fn confidence(&self) -> f32 { 0.85 }
+
+    fn detect(&self, code: &str, _language: &str) -> Vec<AiFinding> {
+        let mut findings = Vec::new();
+        for (line_num, line) in code.lines().enumerate() {
+            for pattern in &self.patterns {
+                if pattern.is_match(line) {
+                    findings.push(AiFinding::new(
+                        self.id(), self.severity(), self.vulnerability_type(),
+                        "Potential prompt injection via MCP: user input in prompt construction",
+                        line_num + 1, line.trim(),
+                        "Never concatenate user input directly into prompts. Use parameterized prompts and input sanitization.",
                         self.confidence(),
                     ));
                     break;

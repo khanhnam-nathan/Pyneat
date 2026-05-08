@@ -88,6 +88,7 @@ impl LangRule for RustDebugMacros {
                     ),
                     fix_hint: "Remove this debug output or replace with proper logging.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -136,6 +137,7 @@ impl LangRule for RustUnwrapUsage {
                         ),
                         fix_hint: "Consider using 'if let' or 'match' for proper error handling.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -180,6 +182,7 @@ impl LangRule for RustUnsafeBlocks {
                         problem: "Unsafe block detected. This bypasses Rust's memory safety guarantees.".to_string(),
                         fix_hint: "Ensure all unsafe operations are documented and necessary.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -224,6 +227,7 @@ impl LangRule for RustTodoComments {
                 ),
                 fix_hint: "Address the TODO or provide a timeline for resolution.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -270,6 +274,7 @@ impl LangRule for RustAllowLints {
                     ),
                     fix_hint: "Consider fixing the lint instead of suppressing it.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }

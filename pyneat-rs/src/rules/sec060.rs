@@ -54,6 +54,7 @@ impl Rule for AutocompleteEnabledRule {
                         problem: format!("Autocomplete enabled on sensitive field: {}", desc),
                         fix_hint: "Add autocomplete='off' or autocomplete='new-password' to sensitive input fields.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

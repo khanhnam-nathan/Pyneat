@@ -56,6 +56,7 @@ impl Rule for MissingSriRule {
                     problem: "External script loaded without Subresource Integrity (SRI)".to_string(),
                     fix_hint: "Add integrity and crossorigin attributes to external scripts.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }

@@ -1,0 +1,11 @@
+.git
+.vscode-test
+src/test
+out/test
+*.map
+*.ts
+tsconfig.json
+eslint.config.js
+.vscodeignore
+package-lock.json
+node_modules/.cache

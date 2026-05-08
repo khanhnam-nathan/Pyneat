@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pyneat-cli"
-version = "3.1.1"
+version = "3.1.2"
 description = "AI-Generated Code Scanner — detects bugs, security vulnerabilities, and quality issues that AI coding assistants introduce"
 readme = "README.md"
 license = {text = "GNU AGPL-3.0-or-later"}
@@ -65,9 +65,9 @@ pyneat = "pyneat.cli:cli"
 [tool.maturin]
 features = ["pyo3/extension-module"]
 manifest-path = "pyneat-rs/Cargo.toml"
-module-name = "pyneat_rs"
+module-name = "pyneat"
 args = ["--release"]
-packages = ["pyneat-rs/pyneat"]
+strip = true
 
 [tool.pyneat]
 # Default rule settings for pyneat clean / pyneat clean-dir

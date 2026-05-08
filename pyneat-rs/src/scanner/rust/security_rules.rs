@@ -247,6 +247,7 @@ impl LangRule for RustCommandInjection {
                             separated list: Command::new(\"ls\").arg(user_input) — avoid \
                             shell interpretation. Use an allowlist for permitted values.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -273,6 +274,7 @@ impl LangRule for RustCommandInjection {
                         fix_hint: "Sanitize and validate user input before passing to Command::arg(). \
                             Use an allowlist for permitted values.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -326,6 +328,7 @@ impl LangRule for RustHardcodedSecret {
                                     Use a secrets manager (HashiCorp Vault, AWS Secrets Manager, \
                                     Docker secrets). Load at runtime from secure storage.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -350,6 +353,7 @@ impl LangRule for RustHardcodedSecret {
                                     Use a secrets manager (HashiCorp Vault, AWS Secrets Manager, \
                                     Docker secrets). Load at runtime from secure storage.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -374,6 +378,7 @@ impl LangRule for RustHardcodedSecret {
                                     Use a secrets manager (HashiCorp Vault, AWS Secrets Manager, \
                                     Docker secrets). Load at runtime from secure storage.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -398,6 +403,7 @@ impl LangRule for RustHardcodedSecret {
                                     Use a secrets manager (HashiCorp Vault, AWS Secrets Manager, \
                                     Docker secrets). Load at runtime from secure storage.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -422,6 +428,7 @@ impl LangRule for RustHardcodedSecret {
                                     Use a secrets manager (HashiCorp Vault, AWS Secrets Manager, \
                                     Docker secrets). Load at runtime from secure storage.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -453,6 +460,7 @@ impl LangRule for RustHardcodedSecret {
                         std::env::var(\"KEY_NAME\"). Store secrets in secure vaults, \
                         not in source code.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -540,6 +548,7 @@ impl LangRule for RustPathTraversal {
                             let path = path.canonicalize()?; \
                             if !path.starts_with(ALLOWED_DIR) { return Err(...); }".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -591,6 +600,7 @@ impl LangRule for RustSensitiveDataLogging {
                                 explicitly exclude sensitive fields from output. Example: \
                                 logger.info(\"User logged in: {}\", username) — never log password.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
             if LOG_CALL_PATTERN.is_match(trimmed_line) {
@@ -613,6 +623,7 @@ impl LangRule for RustSensitiveDataLogging {
                                 explicitly exclude sensitive fields from output. Example: \
                                 logger.info(\"User logged in: {}\", username) — never log password.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
             if PRINTLN_PATTERN.is_match(trimmed_line) {
@@ -635,6 +646,7 @@ impl LangRule for RustSensitiveDataLogging {
                                 explicitly exclude sensitive fields from output. Example: \
                                 logger.info(\"User logged in: {}\", username) — never log password.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
             if PII_PATTERN.is_match(trimmed_line) {
@@ -657,6 +669,7 @@ impl LangRule for RustSensitiveDataLogging {
                                 explicitly exclude sensitive fields from output. Example: \
                                 logger.info(\"User logged in: {}\", username) — never log password.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -691,15 +704,14 @@ impl LangRule for RustSensitiveDataLogging {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RUST-SEC-005: Integer Overflow
+// RUST-SEC-005: Integer Overflow — Debug/Cargo Overflow Checks Disabled
 // Severity: medium | CWE-190
-// AI performs arithmetic without checking for overflow
 // ─────────────────────────────────────────────────────────────────────────────
-pub struct RustIntegerOverflow;
+pub struct RustOverflowChecksDisabled;
 
-impl LangRule for RustIntegerOverflow {
+impl LangRule for RustOverflowChecksDisabled {
     fn id(&self) -> &str { "RUST-SEC-005" }
-    fn name(&self) -> &str { "Potential Integer Overflow" }
+    fn name(&self) -> &str { "Integer Overflow Checks Disabled in Release" }
     fn severity(&self) -> &'static str { "medium" }
 
     fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
@@ -729,6 +741,7 @@ impl LangRule for RustIntegerOverflow {
                             wrapping arithmetic, use explicit wrapping methods: \
                             a.wrapping_add(b), a.saturating_add(b), or a.checked_add(b).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -761,6 +774,7 @@ impl LangRule for RustIntegerOverflow {
                     fix_hint: "Use checked indexing: vec.get(index) instead of vec[index].unwrap(). \
                         Or ensure index is validated before access.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -836,6 +850,7 @@ impl LangRule for RustInsecureRandom {
                             For passwords: use rand::distributions::Alphanumeric \
                             with a secure RNG.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -911,6 +926,7 @@ impl LangRule for RustUnboundedCollection {
                             collections. Validate input size before adding to collection. \
                             Example: if items.len() > MAX_SIZE { return Err(...); }".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -969,6 +985,7 @@ impl LangRule for RustWeakCrypto {
                             encryption, SHA-256 or SHA-3 for hashing. For passwords, use \
                             bcrypt, argon2, or scrypt.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1008,6 +1025,7 @@ impl LangRule for RustWeakCrypto {
                     fix_hint: "Replace with a modern, secure algorithm: AES-256-GCM, \
                         SHA-256, or ChaCha20-Poly1305.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1020,16 +1038,14 @@ impl LangRule for RustWeakCrypto {
     fn supports_auto_fix(&self) -> bool { false }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RUST-SEC-009: Use After Free (Unsafe Rust)
+// RUST-SEC-009: Use After Free — Unsafe Dereference
 // Severity: high | CWE-416
-// AI may create use-after-free patterns in unsafe code
 // ─────────────────────────────────────────────────────────────────────────────
-pub struct RustUseAfterFree;
+pub struct RustUnsafeDeref;
 
-impl LangRule for RustUseAfterFree {
+impl LangRule for RustUnsafeDeref {
     fn id(&self) -> &str { "RUST-SEC-009" }
-    fn name(&self) -> &str { "Potential Use-After-Free Pattern" }
+    fn name(&self) -> &str { "Unsafe Block with Pointer Dereference" }
     fn severity(&self) -> &'static str { "high" }
 
     fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
@@ -1073,6 +1089,7 @@ impl LangRule for RustUseAfterFree {
                             for owned heap allocations. If you must use raw pointers, \
                             follow Rust's unsafe guidelines strictly. Document all invariants.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1136,6 +1153,7 @@ impl LangRule for RustRegexDos {
                                 Simplify alternation patterns. Consider using regex crate with \
                                Consider using regex-debug or static analysis tools to limit complexity.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1182,6 +1200,7 @@ impl LangRule for RustUnsafeDocs {
                         problem: "unsafe block without safety documentation comment. Unsafe code must document invariants that must be upheld to maintain memory safety.".to_string(),
                         fix_hint: "Add a # Safety: doc comment before the unsafe block explaining: 1) What invariants the caller must uphold, 2) What behavior is undefined if violated, 3) Why this unsafe block is necessary.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1222,6 +1241,7 @@ impl LangRule for RustDataRace {
                     problem: "Rc<RefCell<T>> is not Send or Sync. This pattern is not thread-safe and can cause data races when shared across threads. RefCell provides runtime borrow checking which is not atomic.".to_string(),
                     fix_hint: "Use Arc<Mutex<T>> or Arc<RwLock<T>> instead for thread-safe shared mutable state. If you need multiple owners, Arc is the thread-safe reference counter.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1240,6 +1260,7 @@ impl LangRule for RustDataRace {
                     problem: "Raw pointer dereference detected. Raw pointers are unsafe and bypass Rust's memory safety guarantees.".to_string(),
                     fix_hint: "Prefer safe Rust abstractions. If raw pointers are necessary, wrap them in a safe API with clear safety invariants documented.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1285,6 +1306,7 @@ impl LangRule for RustIntegerWraparound {
                         problem: format!("Integer wraparound risk: {}. This can lead to unexpected behavior in security-critical calculations.", label),
                         fix_hint: "Use checked arithmetic (checked_add, checked_sub) that returns None on overflow. For performance-critical code where wraparound is intentional, document it clearly and use wrapping_* explicitly. Never cast usize::MAX to signed types.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                     break;
                 }
@@ -1332,6 +1354,7 @@ impl LangRule for RustInsecureTls {
                         problem: problem.to_string(),
                         fix_hint: "Always verify TLS certificates in production. Use the system's certificate store via native_tls or rustls with default configuration. If you must disable verification (e.g., for testing), guard it behind a feature flag and never use in production.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                     break;
                 }
@@ -1390,6 +1413,7 @@ impl LangRule for RustPanicPublicApi {
                                 problem: format!("Public API uses {}(), which panics on None/Err. This creates a denial-of-service risk for callers.", method),
                                 fix_hint: "Return a Result or Option instead of panicking. If panicking is acceptable, add #[track_caller] for better stack traces. Consider using unwrap_or, unwrap_or_else, or ? operator.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -1437,6 +1461,7 @@ impl LangRule for RustDbgFormatString {
                         problem: "dbg! macro used with potentially sensitive data. dbg! prints to stderr and can leak sensitive information in logs.".to_string(),
                         fix_hint: "Remove dbg! calls before production. Use proper logging at info/warn level for debugging. Sensitive values should be redacted in logs.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1449,16 +1474,15 @@ impl LangRule for RustDbgFormatString {
     fn supports_auto_fix(&self) -> bool { false }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RUST-SEC-017: Integer Overflow in Arithmetic
+// RUST-SEC-026: Integer Overflow — Unchecked Arithmetic Operations
 // Severity: high | CWE-190
 // AI generates arithmetic without checked operations
 // ─────────────────────────────────────────────────────────────────────────────
-pub struct RustIntegerOverflowArithmetic;
+pub struct RustIntegerOverflowArith;
 
-impl LangRule for RustIntegerOverflowArithmetic {
-    fn id(&self) -> &str { "RUST-SEC-017" }
-    fn name(&self) -> &str { "Integer Overflow in Arithmetic Operations" }
+impl LangRule for RustIntegerOverflowArith {
+    fn id(&self) -> &str { "RUST-SEC-026" }
+    fn name(&self) -> &str { "Unchecked Integer Overflow in Arithmetic" }
     fn severity(&self) -> &'static str { "high" }
 
     fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
@@ -1486,6 +1510,7 @@ impl LangRule for RustIntegerOverflowArithmetic {
                     problem: format!("Integer overflow risk: {} on line {}. Default Rust integer arithmetic panics on overflow in debug mode.", desc, line),
                     fix_hint: "Use checked arithmetic (checked_add, checked_sub, checked_mul), wrapping arithmetic (wrapping_add, etc.), or saturating arithmetic (saturating_add, etc.) depending on your needs.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1497,8 +1522,7 @@ impl LangRule for RustIntegerOverflowArithmetic {
     fn supports_auto_fix(&self) -> bool { false }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RUST-SEC-018: Use After Free Pattern
+// RUST-SEC-018: Use After Free — Freed Memory Access Pattern
 // Severity: high | CWE-416
 // AI generates code that may access freed memory via pointers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1506,7 +1530,7 @@ pub struct RustUseAfterFreePattern;
 
 impl LangRule for RustUseAfterFreePattern {
     fn id(&self) -> &str { "RUST-SEC-018" }
-    fn name(&self) -> &str { "Use After Free Pattern" }
+    fn name(&self) -> &str { "Memory Freed Then Accessed Pattern" }
     fn severity(&self) -> &'static str { "high" }
 
     fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
@@ -1530,6 +1554,7 @@ impl LangRule for RustUseAfterFreePattern {
                     problem: format!("Use-after-free risk: {} on line {}. Direct pointer manipulation can lead to use-after-free vulnerabilities.", desc, line),
                     fix_hint: "Prefer safe Rust abstractions. Use Box<T>, Rc<T>, Arc<T>, or std::mem::replace/std::mem::take instead of raw pointer operations.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1574,6 +1599,7 @@ impl LangRule for RustInsecureRandomGen {
                     problem: format!("Insecure randomness: {} on line {}. The 'rand' crate is not cryptographically secure.", desc, line),
                     fix_hint: "Use the 'rand' crate with a cryptographic random number generator: rand::rngs::StdRng seeded from rand::SeedableRng::from_entropy(), or use the 'getrandom' crate for OS-level randomness.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1621,7 +1647,7 @@ impl LangRule for RustUnsafeTooBroad {
                         found_open = true;
                     }
 
-                    if brace_count <= 0 && found_open {
+                    if brace_count == 0 && found_open {
                         unsafe_end = j;
                         break;
                     }
@@ -1642,6 +1668,7 @@ impl LangRule for RustUnsafeTooBroad {
                         problem: format!("Unsafe block spans {} lines (lines {}-{}). Large unsafe blocks are hard to audit and increase the attack surface.", total_unsafe_lines, line_num, unsafe_end + 1),
                         fix_hint: "Minimize unsafe scope: extract each unsafe operation into a separate, small, well-documented unsafe function. Each unsafe block should do one thing with documented safety invariants.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1687,6 +1714,7 @@ impl LangRule for RustHardcodedSecrets {
                     problem: format!("Hardcoded secret detected: {} on line {}. Credentials should never be stored in source code.", desc, line),
                     fix_hint: "Use environment variables: let key = env::var(\"API_KEY\").expect(\"API_KEY must be set\"); or use a secrets manager (AWS Secrets Manager, HashiCorp Vault, Doppler).".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1731,6 +1759,7 @@ impl LangRule for RustWrongTypeCast {
                     problem: format!("Type casting issue: {} on line {}. Incorrect casting can cause undefined behavior, data corruption, or panics.", desc, line),
                     fix_hint: "mem::transmute requires source and destination to have the same size. For type conversions, prefer TryFrom/TryInto or explicit checked conversions. Ensure the target type can represent the source value.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1774,6 +1803,7 @@ impl LangRule for RustInsecureCrypto {
                     fix_hint: "Use SHA-256 or SHA-3 for hashing. Example: use sha2::{Sha256, Digest}; \
                         let mut hasher = Sha256::new(); hasher.update(data); let result = hasher.finalize();".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
             if imp.module.contains("sha1") || imp.name.contains("sha1") {
@@ -1791,6 +1821,7 @@ impl LangRule for RustInsecureCrypto {
                     fix_hint: "Use SHA-256 or SHA-3 for hashing. Example: use sha2::{Sha256, Digest}; \
                         let mut hasher = Sha256::new(); hasher.update(data);".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1813,6 +1844,7 @@ impl LangRule for RustInsecureCrypto {
                     fix_hint: "Use AES-GCM or ChaCha20-Poly1305 for authenticated encryption. \
                         Example: use aes_gcm::{Aes256Gcm, Nonce}; or use chacha20poly1305::ChaCha20Poly1305.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1837,6 +1869,7 @@ impl LangRule for RustInsecureCrypto {
                         fix_hint: "Use RSA keys of at least 2048 bits. For security, prefer 4096 bits. \
                                 Alternatively, use elliptic curve cryptography (P-256, P-384, or X25519).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1862,6 +1895,7 @@ impl LangRule for RustInsecureCrypto {
                         fix_hint: "Use SHA-256 or SHA-3 for cryptographic hashing. \
                                 For the 'ring' crate: use Sha256::digest() instead of md5.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1937,6 +1971,7 @@ impl LangRule for RustXssRule {
                                 escaping (askama auto-escapes by default for expressions). Avoid \
                                 raw() or SafeString unless absolutely necessary.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2009,6 +2044,7 @@ impl LangRule for RustSsrfRule {
                             localhost, or cloud metadata endpoints (169.254.169.254). \
                             Use a URL parser to check the scheme (only http/https).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2093,6 +2129,7 @@ impl LangRule for RustInsecureDeserRule {
                             Consider using a safe replacement like postcard for serialization. \
                             Validate schema and data bounds before deserialization.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2102,6 +2139,1012 @@ impl LangRule for RustInsecureDeserRule {
     }
 
     fn fix(&self, _finding: &LangFinding, _code: &str) -> Option<LangFix> { None }
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-027: Timing Side-Channel AES (CWE-208)
+// Severity: high
+// Non-constant-time AES operations that leak timing information
+// ─────────────────────────────────────────────────────────────────────────────
+static AES_NON_CONST_TIME_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"aes::\w+::(?:Aes|Aes256|Aes128)::(?:new|encrypt|decrypt)"#, "AES block cipher without CTR/GCM mode — vulnerable to timing side-channel"),
+    (r#"Aes::(?:new|encrypt_block|decrypt_block)"#, "AES encrypt/decrypt without authenticated encryption mode"),
+    (r#"aes_gcm::(?:AesGcm|Gcm)::new\s*\(\s*(?!.*(?:ccm|gcm|ctr))"#, "AES-GCM constructor without proper nonce"),
+    (r#"cbc::Encryptor|cbc::Decryptor"#, "AES-CBC mode without HMAC — vulnerable to padding oracle attacks"),
+]);
+
+pub struct RustTimingSideChannelAes;
+
+impl LangRule for RustTimingSideChannelAes {
+    fn id(&self) -> &str { "RUST-SEC-027" }
+    fn name(&self) -> &str { "Timing Side-Channel in AES Operations" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_aes = tree.imports.iter().any(|imp| {
+            imp.module.contains("aes") || imp.name.contains("aes")
+        });
+
+        if !has_aes {
+            return findings;
+        }
+
+        for (pat, desc) in &*AES_NON_CONST_TIME_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("Timing side-channel vulnerability: {}. CWE-208: Non-constant-time cryptographic operations can leak key material through timing differences.", desc),
+                    fix_hint: "Use authenticated encryption modes like AES-GCM or ChaCha20-Poly1305. These provide both confidentiality and integrity, and are designed to be constant-time.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-028: TLS Verification Disabled (CWE-295)
+// Severity: critical
+// rustls dangerous_configuration() or reqwest with disabled verification
+// ─────────────────────────────────────────────────────────────────────────────
+static TLS_DANGEROUS_CONFIG_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"dangerous_configuration\s*\(\s*\)\s*\."#, "rustls dangerous_configuration() — allows disabling TLS verification"),
+    (r#"rustls::ConfigBuilder::dangerous\s*\(\s*\)"#, "rustls ConfigBuilder::dangerous() — disables certificate verification"),
+    (r#"dangerously_disable_backtrace\s*\(\s*\)"#, "reqwest dangerously_disable_backtrace — disables security features"),
+    (r#"DangerousClientSessionBuilder"#, "DangerousClientSessionBuilder — rustls session without verification"),
+]);
+
+pub struct RustTlsVerifyDisabled;
+
+impl LangRule for RustTlsVerifyDisabled {
+    fn id(&self) -> &str { "RUST-SEC-028" }
+    fn name(&self) -> &str { "TLS Certificate Verification Disabled" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for (pat, desc) in &*TLS_DANGEROUS_CONFIG_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("TLS verification disabled: {}. CWE-295: Disabling certificate verification allows man-in-the-middle attacks.", desc),
+                    fix_hint: "Never disable TLS verification in production. Use the default TLS configuration which validates certificates properly. Only disable for local development/testing with explicit comments.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-029: Regex Catastrophic Backtracking (CWE-1333)
+// Severity: medium
+// Nested quantifiers like (a+)+, (a*)* that cause exponential complexity
+// ─────────────────────────────────────────────────────────────────────────────
+static REGEX_CATASTROPHIC_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"\([^)]*\+[^)]*\)\+"#, "nested quantifier: (x+)+ — catastrophic backtracking"),
+    (r#"\([^)]*\*[^)]*\)\*"#, "nested quantifier: (x*)* — catastrophic backtracking"),
+    (r#"\([^)]*\+[^)]*\)\*"#, "nested quantifier: (x+)* — catastrophic backtracking"),
+    (r#"\([^)]*\?[^)]*\)\*"#, "nested quantifier: (x?)* — catastrophic backtracking"),
+    (r#"\([^)]*\+[^)]*\)\?"#, "nested quantifier: (x+)? — catastrophic backtracking"),
+    (r#"\([^+*?]*\+\)[+*?]"#, "possessive quantifier followed by quantifier"),
+]);
+
+pub struct RustRegexCatastrophicBacktracking;
+
+impl LangRule for RustRegexCatastrophicBacktracking {
+    fn id(&self) -> &str { "RUST-SEC-029" }
+    fn name(&self) -> &str { "Regex Catastrophic Backtracking" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for (line_idx, line) in code.lines().enumerate() {
+            let line_num = line_idx + 1;
+
+            let is_regex_line = line.contains("Regex::new")
+                || line.contains("regex!")
+                || line.contains("is_match")
+                || line.contains("find")
+                || line.contains("captures");
+
+            if !is_regex_line { continue; }
+
+            for (pat, desc) in &*REGEX_CATASTROPHIC_PATTERNS {
+                let re = Regex::new(pat).unwrap();
+                if re.is_match(line) {
+                    let (start, end) = get_line_offsets(code, line_num);
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: line_num,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line.trim().to_string(),
+                        problem: format!("Regex catastrophic backtracking: {}. CWE-1333: Nested quantifiers can cause exponential time complexity on certain inputs.", desc),
+                        fix_hint: "Rewrite the regex to avoid nested quantifiers. Use atomic groups (not available in Rust regex) or possessive quantifiers. Simplify the pattern. Consider limiting input length.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                    break;
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-030: Unbounded Vec Allocation (CWE-400)
+// Severity: high
+// vec![x; user_input] or Vec::from_elem with large count
+// ─────────────────────────────────────────────────────────────────────────────
+static VEC_UNBOUNDED_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"vec!\s*\[[^\]]*;\s*(?:request|input|param|user|len|count|size)"#, "vec! macro with user-controlled count — can exhaust memory"),
+    (r#"Vec::from_elem\s*\([^,]+,\s*(?:request|input|param|user|len|count|size)"#, "Vec::from_elem with user-controlled count"),
+    (r#"std::iter::repeat\s*\([^)]*\)\.take\s*\([^)]*(?:request|input|param|user|len)"#, "Iterator repeat().take() with user-controlled count"),
+    (r#"vec!\s*\[[^\]]*;\s*\d{5,}\]"#, "vec! macro with very large count (5+ digits)"),
+]);
+
+pub struct RustUnboundedVecAllocation;
+
+impl LangRule for RustUnboundedVecAllocation {
+    fn id(&self) -> &str { "RUST-SEC-030" }
+    fn name(&self) -> &str { "Unbounded Vec Allocation (Memory Exhaustion)" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for (pat, desc) in &*VEC_UNBOUNDED_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("Unbounded allocation: {}. CWE-400: Allocating memory based on untrusted input can cause denial of service.", desc),
+                    fix_hint: "Always validate and bound the allocation size. Example: let count = std::cmp::min(user_count, MAX_SIZE); let vec = vec![value; count];".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-031: HashDoS Vulnerability (CWE-682)
+// Severity: medium
+// HashMap/HashSet with default hasher vulnerable to collision attacks
+// ─────────────────────────────────────────────────────────────────────────────
+static HASH_DOS_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"HashMap::<[^>]+>::\s*new\s*\(\s*(?:\)|$)"#, "HashMap::new() with default hasher — vulnerable to HashDoS"),
+    (r#"HashSet::<[^>]+>::\s*new\s*\(\s*(?:\)|$)"#, "HashSet::new() with default hasher — vulnerable to HashDoS"),
+    (r#"std::collections::HashMap::new\s*\("#, "std::collections::HashMap with default hasher"),
+    (r#"FxHashMap|FxHashSet"#, "FxHashMap/FxHashSet — not DoS-resistant, faster but insecure"),
+    (r#"AHashMap|AHashSet"#, "AHashMap/AHashSet — faster but may not be DoS-resistant"),
+]);
+
+pub struct RustHashDosVulnerability;
+
+impl LangRule for RustHashDosVulnerability {
+    fn id(&self) -> &str { "RUST-SEC-031" }
+    fn name(&self) -> &str { "HashDoS Vulnerability (DefaultHasher)" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_hashmap = tree.imports.iter().any(|imp| {
+            imp.module.contains("HashMap") || imp.module.contains("HashSet") || imp.module.contains("collections")
+        }) || code.contains("HashMap") || code.contains("HashSet");
+
+        if !has_hashmap {
+            return findings;
+        }
+
+        let has_user_input = tree.calls.iter().any(|call| {
+            call.arguments.iter().any(|a| {
+                a.contains("request") || a.contains("input") || a.contains("body") || a.contains("param")
+            })
+        });
+
+        for (pat, desc) in &*HASH_DOS_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("HashDoS risk: {}. CWE-682: DefaultHasher is vulnerable to collision attacks where attackers craft inputs with identical hash values.", desc),
+                    fix_hint: "Use a DoS-resistant hasher: BuildMap, HashMap with FxHasher in no_std, or implement custom Hash trait. Consider using IndexMap for ordered maps with better defaults.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        if has_user_input && has_hashmap {
+            for call in &tree.calls {
+                if (call.callee.contains("HashMap::new") || call.callee.contains("HashSet::new"))
+                    && !call.callee.contains("with_hasher")
+                    && !call.callee.contains("default") {
+                    let (start, end) = get_line_offsets(code, call.start_line);
+                    let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: call.start_line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: "HashMap/HashSet with default hasher in code that processes user input. CWE-682: Vulnerable to HashDoS attacks.".to_string(),
+                        fix_hint: "Use a DoS-resistant hasher like BuildMap (fnv crate) or consider using IndexMap.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-032: Format String Injection (CWE-134)
+// Severity: high
+// format!("{}", user_input) or println!(user_input) — direct user input as format
+// ─────────────────────────────────────────────────────────────────────────────
+static FORMAT_STRING_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"format!\s*\(\s*(?:request|input|param|user|args|arg)[^)]*\)"#, "format!() with user input as format string — CWE-134"),
+    (r#"format!\s*\(\s*\"[^\"]*\"[^\)]*(?:request|input|param|user)"#, "format!() using user variable in format args"),
+    (r#"println!\s*\(\s*(?:request|input|param|user|args|arg)\s*\)"#, "println!() with user input as sole argument — CWE-134"),
+    (r#"eprintln!\s*\(\s*(?:request|input|param|user|args|arg)\s*\)"#, "eprintln!() with user input — potential format string injection"),
+    (r#"write!\s*\([^,]+,\s*(?:request|input|param|user|args|arg)\s*\)"#, "write!() with user input as format string"),
+    (r#"panic!\s*\(\s*(?:request|input|param|user)[^)]*\)"#, "panic!() with user input as message"),
+]);
+
+pub struct RustFormatStringInjection;
+
+impl LangRule for RustFormatStringInjection {
+    fn id(&self) -> &str { "RUST-SEC-032" }
+    fn name(&self) -> &str { "Format String Injection" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for (pat, desc) in &*FORMAT_STRING_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("Format string vulnerability: {}. CWE-134: Passing user input directly as a format string can cause crashes or information disclosure.", desc),
+                    fix_hint: "Never use user input as the format string. Always use positional arguments: format!(\"{{}}\", user_input) instead of format!(user_input).".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-033: YAML Unsafe Deserialization (CWE-502)
+// Severity: critical
+// serde_yaml::from_str with user input without safe deserializer
+// ─────────────────────────────────────────────────────────────────────────────
+static YAML_UNSAFE_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"serde_yaml::from_str\s*\([^)]*(?:request|input|param|user|body|args)"#, "serde_yaml::from_str with user input — CWE-502"),
+    (r#"Yaml::load\s*\([^)]*(?:request|input|param|user|body)"#, "Yaml::load with user input — unsafe deserialization"),
+    (r#"serde_yaml::from_reader\s*\([^)]*(?:request|input|param|user)"#, "serde_yaml::from_reader with user input"),
+    (r#"serde_yaml::Deserializer::from"#, "serde_yaml Deserializer — ensure input is validated"),
+]);
+
+pub struct RustYamlUnsafeDeserialization;
+
+impl LangRule for RustYamlUnsafeDeserialization {
+    fn id(&self) -> &str { "RUST-SEC-033" }
+    fn name(&self) -> &str { "YAML Unsafe Deserialization" }
+    fn severity(&self) -> &'static str { "critical" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_yaml = tree.imports.iter().any(|imp| {
+            imp.module.contains("serde_yaml") || imp.module.contains("yaml")
+        });
+
+        if !has_yaml {
+            return findings;
+        }
+
+        for (pat, desc) in &*YAML_UNSAFE_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("YAML deserialization vulnerability: {}. CWE-502: Deserializing untrusted YAML can lead to code execution in some configurations.", desc),
+                    fix_hint: "Always validate YAML input before deserialization. Use explicit type deserialization with serde. Consider using a strict YAML parser that avoids arbitrary code execution.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-034: Environment Variable Injection (CWE-78)
+// Severity: medium
+// std::env::var() used in command paths or database connections
+// ─────────────────────────────────────────────────────────────────────────────
+static ENV_INJECTION_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"Command::new\s*\(\s*(?:request|input|param|user|path).*\)|Command::new\s*\(\s*std::env::var"#, "Command::new with env var that could be user-controlled"),
+    (r#"std::env::var\s*\([^)]*\)\s*\.(?:unwrap|expect)"#, "env::var with unwrap in command context"),
+    (r#"File::open\s*\(\s*std::env::var"#, "File::open with env var in path — potential path traversal"),
+    (r#"std::fs::read\s*\(\s*std::env::var"#, "std::fs::read with env var in path"),
+    (r#"std::env::var\s*\([^)]*\)\s*\+\s*(?:request|input|param|user)"#, "Env var concatenated with user input"),
+]);
+
+pub struct RustEnvVariableInjection;
+
+impl LangRule for RustEnvVariableInjection {
+    fn id(&self) -> &str { "RUST-SEC-034" }
+    fn name(&self) -> &str { "Environment Variable Injection" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_env = code.contains("std::env::var") || code.contains("env::var") || code.contains("std::env!");
+
+        if !has_env {
+            return findings;
+        }
+
+        for (pat, desc) in &*ENV_INJECTION_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("Environment variable injection risk: {}. CWE-78: Using environment variables in security-sensitive operations can be manipulated by attackers.", desc),
+                    fix_hint: "Avoid using environment variables in security-sensitive paths. If necessary, validate env var contents and use allowlists. Prefer compile-time constants for critical paths.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-035: Cleartext Transmission (CWE-319)
+// Severity: high
+// HTTP (not HTTPS) for sensitive data transmission
+// ─────────────────────────────────────────────────────────────────────────────
+static CLEARTEXT_TRANSMISSION_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"http://(?:?!localhost|127\.0\.0\.1|0\.0\.0\.0)[^\"'\s]*"#, "HTTP URL without HTTPS — sensitive data may be transmitted in cleartext"),
+    (r#"Client::new\s*\(\s*\)\s*\.\s*get\s*\(\s*\"http://"#, "reqwest client making HTTP request"),
+    (r#"Request::new\s*\(\s*Method::[Gg]et\s*,\s*\"http://"#, "HTTP request to non-HTTPS URL"),
+    (r#"surf::Client::new\s*\(\s*\)\s*\.\s*get\s*\(\s*\"http://"#, "surf HTTP request"),
+    (r#"isahc::get\s*\(\s*\"http://"#, "isahc HTTP GET request"),
+]);
+
+pub struct RustCleartextTransmission;
+
+impl LangRule for RustCleartextTransmission {
+    fn id(&self) -> &str { "RUST-SEC-035" }
+    fn name(&self) -> &str { "Cleartext Transmission of Sensitive Data" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let http_clients = ["reqwest", "isahc", "ureq", "surf", "hyper", "actix-web"];
+        let has_http = tree.imports.iter().any(|imp| {
+            http_clients.iter().any(|c| imp.module.contains(c))
+        }) || code.contains("http::");
+
+        if !has_http {
+            return findings;
+        }
+
+        let sensitive_keywords = ["auth", "token", "password", "secret", "key", "credential", "session", "api", "private", "sensitive"];
+
+        for (pat, desc) in &*CLEARTEXT_TRANSMISSION_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                let line_lower = line_text.to_lowercase();
+                let has_sensitive = sensitive_keywords.iter().any(|k| line_lower.contains(&k.to_lowercase()));
+
+                if has_sensitive {
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("Cleartext transmission: {}. CWE-319: Sensitive data sent over HTTP can be intercepted by attackers via network sniffing.", desc),
+                        fix_hint: "Always use HTTPS for transmitting sensitive data. Configure TLS certificates properly. Example: https://api.example.com instead of http://.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-036: JWT HS256 Weak Secret (CWE-347)
+// Severity: high
+// jsonwebtoken with HS256 and short secret (< 32 chars)
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+static JWT_WEAK_SECRET_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"EncodingKey::from_rsa_pem|EncodingKey::from_ec_pem"#, "RSA/EC key used with HS256 — algorithm confusion vulnerability"),
+    (r#"jsonwebtoken::EncodingKey"#, "JWT encoding key detected"),
+    (r#"HS256|HS384|HS512"#, "HMAC-SHA JWT algorithm"),
+]);
+
+pub struct RustJwtWeakSecret;
+
+impl LangRule for RustJwtWeakSecret {
+    fn id(&self) -> &str { "RUST-SEC-036" }
+    fn name(&self) -> &str { "JWT with Weak or Misconfigured Secret" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_jwt = tree.imports.iter().any(|imp| {
+            imp.module.contains("jsonwebtoken") || imp.module.contains("jwt")
+        });
+
+        if !has_jwt {
+            return findings;
+        }
+
+        let has_hs256 = code.contains("HS256") || code.contains("HS384") || code.contains("HS512");
+        let has_short_secret = Regex::new(r#"secret\s*=\s*["'][^'"]{1,31}["']"#).unwrap().is_match(code);
+        let has_rsa_with_hs = Regex::new(r#"rsa_pem|ec_pem|RS256|RS384|RS512"#).unwrap().is_match(code);
+
+        if has_hs256 && has_short_secret {
+            for m in Regex::new(r#"secret\s*=\s*["'][^'"]{1,31}["']"#).unwrap().find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: "JWT with short secret (< 32 characters). CWE-347: Short HMAC secrets can be brute-forced, allowing attackers to forge valid tokens.".to_string(),
+                    fix_hint: "Use a cryptographically random secret of at least 32 characters. Prefer RS256 (RSA) or ES256 (ECDSA) algorithms for better security. Store secrets securely.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        if has_hs256 && has_rsa_with_hs {
+            for line_idx in 0..code.lines().count() {
+                let line = code.lines().nth(line_idx).unwrap_or("");
+                if line.contains("HS256") && (line.contains("rsa_pem") || line.contains("ec_pem") || line.contains("RS256")) {
+                    let line_num = line_idx + 1;
+                    let (start, end) = get_line_offsets(code, line_num);
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: line_num,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line.trim().to_string(),
+                        problem: "Algorithm confusion: RSA/EC key used with HMAC algorithm. CWE-347: Attacker can switch algorithm and sign with public key.".to_string(),
+                        fix_hint: "Always verify the 'alg' header matches your expected algorithm. Use RS256 for RSA keys, ES256 for ECDSA keys. Never accept 'none' algorithm.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-037: Predictable Random for Security (CWE-338)
+// Severity: high
+// rand::thread_rng() or rand::random() used for tokens/passwords
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+static PREDICTABLE_RANDOM_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"rand::thread_rng\s*\(\s*\)"#, "rand::thread_rng — not cryptographically secure"),
+    (r#"rand::random::<(?:String|Token|Secret|Password)"#, "rand::random for security-sensitive type"),
+    (r#"rand::Rng::gen::<(?:String|Token|Secret)"#, "Rng::gen for security-sensitive type"),
+    (r#"rand::seq::SliceRandom::choose\s*\([^)]*\)"#, "rand::choose for security-sensitive selection"),
+    (r#"use\s+rand\s*;[\s\S]{0,100}(?:password|token|secret|key)"#, "rand crate used near security-sensitive code"),
+]);
+
+pub struct RustPredictableRandom;
+
+impl LangRule for RustPredictableRandom {
+    fn id(&self) -> &str { "RUST-SEC-037" }
+    fn name(&self) -> &str { "Predictable Random for Security-Sensitive Use" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_rand = tree.imports.iter().any(|imp| {
+            imp.module.contains("rand")
+        }) || code.contains("rand::");
+
+        if !has_rand {
+            return findings;
+        }
+
+        let security_sensitive = ["password", "token", "secret", "key", "salt", "nonce", "session_id", "otp", "captcha"];
+
+        for call in &tree.calls {
+            let uses_thread_rng = call.callee.contains("thread_rng");
+            let uses_random = call.callee.contains("rand::random");
+            let uses_gen = call.callee.contains("gen::<");
+
+            let is_security_sensitive = security_sensitive.iter().any(|s| {
+                call.callee.to_lowercase().contains(s)
+            });
+
+            if (uses_thread_rng || uses_random || uses_gen) && is_security_sensitive {
+                let (start, end) = get_line_offsets(code, call.start_line);
+                let line_text = get_line_text(code, call.start_line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line: call.start_line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("Predictable random for security use: '{}' used for {}. CWE-338: rand::thread_rng() is not cryptographically secure.", call.callee, "security-sensitive purpose"),
+                    fix_hint: "Use a CSPRNG: rand::rngs::StdRng from rand::SeedableRng::from_entropy() or the getrandom crate. Example: let mut rng = StdRng::from_entropy(); rng.gen::<u32>()".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-038: Cookie Missing Secure Flag (CWE-614)
+// Severity: medium
+// Cookie::new() without .secure(true)
+// ─────────────────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
+static COOKIE_INSECURE_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"Cookie::new\s*\([^)]*\)(?!\s*\.\s*secure\s*\(\s*true)"#, "Cookie::new without .secure(true) — missing secure flag"),
+    (r#"cookie::Cookie::new\s*\([^)]*\)(?!\s*\.secure\s*\(\s*true)"#, "cookie crate Cookie::new without secure flag"),
+    (r#"Set-Cookie:\s*[^;]*;(?!\s*Secure)"#, "Set-Cookie header without Secure attribute"),
+    (r#"Cookie::build\s*\([^)]*\)(?!\s*\.secure\s*\(\s*true)"#, "Cookie::build without secure flag"),
+]);
+
+pub struct RustCookieMissingSecure;
+
+impl LangRule for RustCookieMissingSecure {
+    fn id(&self) -> &str { "RUST-SEC-038" }
+    fn name(&self) -> &str { "Cookie Missing Secure Flag" }
+    fn severity(&self) -> &'static str { "medium" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_cookie = tree.imports.iter().any(|imp| {
+            imp.module.contains("cookie")
+        }) || code.contains("Cookie::");
+
+        if !has_cookie {
+            return findings;
+        }
+
+        for (line_idx, line) in code.lines().enumerate() {
+            let line_num = line_idx + 1;
+
+            if line.contains("Cookie::new") || line.contains("Cookie::build") {
+                let has_secure = Regex::new(r"\.secure\s*\(\s*true\s*\)").unwrap().is_match(line);
+
+                if !has_secure {
+                    let (start, end) = get_line_offsets(code, line_num);
+                    let sensitive_cookie = Regex::new(r"(?i)(?:session|auth|token|jwt|account|user)").unwrap().is_match(line);
+
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: if sensitive_cookie { "high" } else { "medium" }.to_string(),
+                        line: line_num,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line.trim().to_string(),
+                        problem: format!("Cookie without Secure flag{}. CWE-614: Cookies without Secure flag can be transmitted over HTTP, allowing attackers to intercept sensitive session data.", if sensitive_cookie { " (sensitive cookie)" } else { "" }),
+                        fix_hint: "Always add .secure(true) when creating cookies: Cookie::build(name, value).secure(true). Example: Cookie::build(\"session\", token).secure(true).path(\"/\").".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-039: CORS Wildcard with Credentials (CWE-346)
+// Severity: high
+// Access-Control-Allow-Origin: * with Access-Control-Allow-Credentials: true
+// ─────────────────────────────────────────────────────────────────────────────
+static CORS_WILDCARD_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#""Access-Control-Allow-Origin"\s*:\s*"\*""#, "CORS wildcard origin *"),
+    (r#"header!\s*\([^)]*"Access-Control-Allow-Origin"\s*,\s*"\*""#, "CORS header with wildcard origin"),
+    (r#"\.with_credentials\s*\(\s*(?:true|1)\s*\).*(?:\*|wildcard|any)"#, "Credentials enabled with potential wildcard"),
+    (r#"(?s)Access-Control-Allow-Credentials.*?Access-Control-Allow-Origin.*?\*"#, "Credentials true followed by wildcard origin"),
+]);
+
+pub struct RustCorsWildcard;
+
+impl LangRule for RustCorsWildcard {
+    fn id(&self) -> &str { "RUST-SEC-039" }
+    fn name(&self) -> &str { "CORS Wildcard Origin with Credentials" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let has_cors = code.contains("Access-Control") || code.contains("CORS") || code.contains("cors");
+
+        if !has_cors {
+            return findings;
+        }
+
+        let has_wildcard = code.contains("\"*\"") || code.contains("'*'");
+        let has_credentials = code.contains("Access-Control-Allow-Credentials")
+            && (code.contains("true") || code.contains("1"));
+
+        if has_wildcard && has_credentials {
+            for (line_idx, line) in code.lines().enumerate() {
+                let line_num = line_idx + 1;
+
+                if line.contains("Access-Control-Allow-Origin") && line.contains("*") {
+                    let (start, end) = get_line_offsets(code, line_num);
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line: line_num,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line.trim().to_string(),
+                        problem: "CORS wildcard origin with credentials. CWE-346: Access-Control-Allow-Origin: * combined with Access-Control-Allow-Credentials: true allows any website to steal user data.".to_string(),
+                        fix_hint: "Never use '*' with credentials. Specify explicit origins: Access-Control-Allow-Origin: https://your-domain.com. Use a whitelist of allowed origins.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                    break;
+                }
+            }
+        }
+
+        for (pat, desc) in &*CORS_WILDCARD_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                if !findings.iter().any(|f: &LangFinding| f.line == line) {
+                    findings.push(LangFinding {
+                        rule_id: self.id().to_string(),
+                        severity: self.severity().to_string(),
+                        line,
+                        column: 0,
+                        start_byte: start,
+                        end_byte: end,
+                        snippet: line_text.trim().to_string(),
+                        problem: format!("CORS configuration issue: {}. CWE-346: Insecure CORS setup can allow unauthorized cross-origin access.", desc),
+                        fix_hint: "Use explicit origin whitelist instead of wildcard. Validate origins against a list of allowed domains. Never allow credentials with wildcard origins.".to_string(),
+                        auto_fix_available: false,
+                        replacement: String::new(),
+                    });
+                }
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-040: Path Traversal Extended (CWE-22)
+// Severity: high
+// Additional path traversal patterns for Rust file operations
+// ─────────────────────────────────────────────────────────────────────────────
+static PATH_TRAVERSAL_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"std::fs::read\s*\(\s*(?:request|input|param|user|path|filename)"#, "std::fs::read with user-controlled path"),
+    (r#"std::fs::read_to_string\s*\(\s*(?:request|input|param|user|path|filename)"#, "std::fs::read_to_string with user-controlled path"),
+    (r#"std::fs::write\s*\(\s*(?:request|input|param|user|path|filename)"#, "std::fs::write with user-controlled path"),
+    (r#"std::fs::File::open\s*\(\s*(?:request|input|param|user|path|filename)"#, "File::open with user-controlled path"),
+    (r#"std::fs::create_dir_all\s*\(\s*(?:request|input|param|user|path)"#, "create_dir_all with user-controlled path"),
+    (r#"std::path::Path::new\s*\([^)]*(?:request|input|param|user)"#, "Path construction with user input"),
+    (r#"PathBuf::from\s*\([^)]*(?:request|input|param|user)"#, "PathBuf::from with user input"),
+    (r#"\.join\s*\([^)]*(?:request|input|param|user|path)"#, "Path join with user-controlled component"),
+]);
+
+pub struct RustPathTraversalExtended;
+
+impl LangRule for RustPathTraversalExtended {
+    fn id(&self) -> &str { "RUST-SEC-040" }
+    fn name(&self) -> &str { "Path Traversal Vulnerability" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        let fs_imports = ["std::fs", "std::path", "fs::", "File::"];
+        let has_fs = tree.imports.iter().any(|imp| {
+            fs_imports.iter().any(|fs| imp.module.contains(fs))
+        });
+
+        if !has_fs && !code.contains("fs::") && !code.contains("std::fs") {
+            return findings;
+        }
+
+        let sanitization_funcs = ["canonicalize", "components().collect", "strip_prefix", "normalize", "absolute"];
+        let has_sanitization = tree.calls.iter().any(|call| {
+            sanitization_funcs.iter().any(|sf| call.callee.contains(sf))
+        });
+
+        for (pat, desc) in &*PATH_TRAVERSAL_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let (start, end) = get_line_offsets(code, line);
+                let line_text = get_line_text(code, line).unwrap_or_default();
+
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("Path traversal: {}. CWE-22: User-controlled path components can include '../' to access files outside the intended directory.", desc),
+                    fix_hint: "Use canonicalize() and validate the resolved path stays within allowed directory: let path = path.canonicalize()?; if !path.starts_with(ALLOWED_DIR) { return Err(...); }".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        if !has_sanitization && !findings.is_empty() {
+            for finding in &mut findings {
+                finding.problem = format!("{} No path sanitization detected.", finding.problem);
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
+    fn supports_auto_fix(&self) -> bool { false }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUST-SEC-041: Integer Wraparound Unsigned (CWE-190)
+// Severity: high
+// u32::MAX, usize::MAX arithmetic without checked/wrapping operations
+// ─────────────────────────────────────────────────────────────────────────────
+static UNSIGNED_WRAPAROUND_PATTERNS: Lazy<Vec<(&'static str, &'static str)>> = Lazy::new(|| vec![
+    (r#"(?:u(?:size|8|16|32|64))::MAX\s*[+\-]"#, "unsigned MAX constant used in arithmetic — silent wraparound"),
+    (r#"(?:u(?:size|8|16|32|64))::MAX\s*"#, "unsigned MAX constant without checked operation"),
+    (r#"(?:usize|u32)::MAX\s+(?:as\s+)?i\d+"#, "Casting usize::MAX to signed — can cause unexpected overflow"),
+    (r#"(?:u(?:size|8|16|32|64))::MAX\s*/\s*(?:n|divisor|count)"#, "Division using MAX constant — potential logic error"),
+    (r#"(?:u(?:size|8|16|32|64))::MAX\s*%\s*(?:n|mod|divisor)"#, "Modulo with MAX constant — potential logic error"),
+]);
+
+pub struct RustUnsignedWraparound;
+
+impl LangRule for RustUnsignedWraparound {
+    fn id(&self) -> &str { "RUST-SEC-041" }
+    fn name(&self) -> &str { "Unsigned Integer Wraparound Risk" }
+    fn severity(&self) -> &'static str { "high" }
+
+    fn detect(&self, _tree: &LnAst, code: &str) -> Vec<LangFinding> {
+        let mut findings = vec![];
+
+        for (pat, desc) in &*UNSIGNED_WRAPAROUND_PATTERNS {
+            let re = Regex::new(pat).unwrap();
+            for m in re.find_iter(code) {
+                let line = code[..m.start()].matches('\n').count() + 1;
+                let line_text = code.lines().nth(line.saturating_sub(1)).unwrap_or("");
+
+                if line_text.trim().starts_with("//") || line_text.trim().starts_with("/*") {
+                    continue;
+                }
+
+                let (start, end) = get_line_offsets(code, line);
+                findings.push(LangFinding {
+                    rule_id: self.id().to_string(),
+                    severity: self.severity().to_string(),
+                    line,
+                    column: 0,
+                    start_byte: start,
+                    end_byte: end,
+                    snippet: line_text.trim().to_string(),
+                    problem: format!("Unsigned integer wraparound: {}. CWE-190: Unsigned integers silently wrap on overflow in release mode.", desc),
+                    fix_hint: "Use checked arithmetic (checked_add, checked_sub) or ensure operations stay within bounds. Be explicit about wraparound intent with wrapping_* methods.".to_string(),
+                    auto_fix_available: false,
+                        replacement: String::new(),
+                });
+            }
+        }
+
+        findings.sort_by_key(|f| f.line);
+        findings
+    }
+
     fn supports_auto_fix(&self) -> bool { false }
 }
 
@@ -2116,11 +3159,11 @@ pub fn rust_security_rules() -> Vec<Box<dyn LangRule>> {
         Box::new(RustHardcodedSecret),
         Box::new(RustPathTraversal),
         Box::new(RustSensitiveDataLogging),
-        Box::new(RustIntegerOverflow),
+        Box::new(RustOverflowChecksDisabled),
         Box::new(RustInsecureRandom),
         Box::new(RustUnboundedCollection),
         Box::new(RustWeakCrypto),
-        Box::new(RustUseAfterFree),
+        Box::new(RustUnsafeDeref),
         Box::new(RustRegexDos),
         Box::new(RustUnsafeDocs),
         Box::new(RustDataRace),
@@ -2128,7 +3171,7 @@ pub fn rust_security_rules() -> Vec<Box<dyn LangRule>> {
         Box::new(RustInsecureTls),
         Box::new(RustPanicPublicApi),
         Box::new(RustDbgFormatString),
-        Box::new(RustIntegerOverflowArithmetic),
+        Box::new(RustIntegerOverflowArith),
         Box::new(RustUseAfterFreePattern),
         Box::new(RustInsecureRandomGen),
         Box::new(RustUnsafeTooBroad),
@@ -2140,5 +3183,21 @@ pub fn rust_security_rules() -> Vec<Box<dyn LangRule>> {
         Box::new(RustXssRule),
         Box::new(RustSsrfRule),
         Box::new(RustInsecureDeserRule),
+        // RUST-SEC-027 to SEC-041: New security rules
+        Box::new(RustTimingSideChannelAes),           // CWE-208: Timing Side-Channel AES
+        Box::new(RustTlsVerifyDisabled),              // CWE-295: TLS Verify Disabled
+        Box::new(RustRegexCatastrophicBacktracking), // CWE-1333: Regex Catastrophic Backtracking
+        Box::new(RustUnboundedVecAllocation),         // CWE-400: Unbounded Vec Allocation
+        Box::new(RustHashDosVulnerability),           // CWE-682: HashDoS
+        Box::new(RustFormatStringInjection),          // CWE-134: Format String Injection
+        Box::new(RustYamlUnsafeDeserialization),     // CWE-502: YAML Deserialize Unsafe
+        Box::new(RustEnvVariableInjection),          // CWE-78: Env Variable Injection
+        Box::new(RustCleartextTransmission),         // CWE-319: Cleartext Transmission
+        Box::new(RustJwtWeakSecret),                  // CWE-347: JWT HS256 Weak Secret
+        Box::new(RustPredictableRandom),             // CWE-338: Predictable Random
+        Box::new(RustCookieMissingSecure),           // CWE-614: Cookie Missing Secure
+        Box::new(RustCorsWildcard),                   // CWE-346: CORS Wildcard
+        Box::new(RustPathTraversalExtended),         // CWE-22: Path Traversal Extended
+        Box::new(RustUnsignedWraparound),             // CWE-190: Integer Wraparound Unsigned
     ]
 }

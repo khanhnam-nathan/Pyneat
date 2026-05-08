@@ -79,6 +79,7 @@ fn add_finding(
                 problem: problem.to_string(),
                 fix_hint: fix_hint.to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
     }
@@ -115,6 +116,7 @@ impl LangRule for GoEmptyErrorCheck {
                         problem: "Error return value is being ignored (assigned to _). This can lead to silent failures.".to_string(),
                         fix_hint: "Handle the error properly with if err != nil { ... }.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -164,6 +166,7 @@ impl LangRule for GoTodoComments {
                             problem: format!("{}: Unresolved marker found in code.", label),
                             fix_hint: "Resolve the TODO/FIXME or add a tracking issue.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -216,6 +219,7 @@ impl LangRule for GoMagicNumbers {
                     problem: format!("Magic number '{}' found. Use a named constant instead.", m.as_str()),
                     fix_hint: "Define a const (e.g., const MaxRetries = 500) instead of using raw numbers.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -263,6 +267,7 @@ impl LangRule for GoDeepNesting {
                     problem: format!("Deep nesting detected (depth {}). Consider extracting nested logic into separate functions.", depth),
                     fix_hint: "Extract deeply nested code into helper functions to improve readability.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -306,6 +311,7 @@ impl LangRule for GoUnusedVariables {
                     problem: "Multiple return values assigned with blank identifier (_). Ensure this is intentional.".to_string(),
                     fix_hint: "If ignoring an error, consider logging it: if err != nil { log.Printf(...) }. If ignoring a return value, ensure it's intentional.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -365,6 +371,7 @@ impl LangRule for GoUncheckedErrorReturn {
                 problem: "Error return value is assigned but never checked. Unchecked errors can cause silent failures.".to_string(),
                 fix_hint: "Add error handling: if err != nil { return err, ... } or log.Fatalf(...).".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -421,6 +428,7 @@ impl LangRule for GoMissingContext {
                             problem: format!("{}.__context__() called without context. This can cause request cancellation issues.", call.callee),
                             fix_hint: "Pass context as first argument: {}(ctx, ...) instead of {}(...).".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -484,6 +492,7 @@ impl LangRule for GoHardcodedStrings {
                     problem: format!("Long hardcoded string literal found. Consider using a named constant.", ),
                     fix_hint: "Define as const: const Name = \"value\" or use environment variables.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -625,6 +634,7 @@ impl LangRule for GoDeepNestingQuality {
                     problem: format!("Deep nesting detected (depth {}). Consider extracting nested logic into separate functions.", depth),
                     fix_hint: "Extract deeply nested code into helper functions to improve readability.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -671,6 +681,7 @@ impl LangRule for GoUnusedVars {
                 problem: format!("Variable '{}' is assigned but may not be used. Unused variables indicate incomplete AI-generated code.", var_name),
                 fix_hint: "Use the variable or remove the assignment. If intentionally ignored, use _ to explicitly discard.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -718,6 +729,7 @@ impl LangRule for GoTodoCommentsQuality {
                             problem: format!("{}: Unresolved marker found in code.", label),
                             fix_hint: "Resolve the TODO/FIXME or add a tracking issue.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -767,6 +779,7 @@ impl LangRule for GoEmptyStringCheck {
                         problem: format!("Empty string/length check detected: '{}'. Note: len(x) == 0 is correct but len(x) == 0 for nil slice returns true (which is correct).", label),
                         fix_hint: "Prefer len(x) == 0 over x == \"\" for consistency. For strings, also consider strings.TrimSpace(x) == \"\" to handle whitespace-only strings.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -815,6 +828,7 @@ impl LangRule for GoMissingDefer {
                         problem: format!("Cleanup method '{}' called without defer. If an error occurs before this call, cleanup may not run.", fn_name),
                         fix_hint: "Use defer to ensure cleanup: defer obj.Close(). This guarantees the cleanup runs even if the function returns early due to an error.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -865,6 +879,7 @@ impl LangRule for GoVariableShadowing {
                 problem: format!("Variable '{}' may shadow an outer variable with the same name. This can lead to subtle bugs.", var_name),
                 fix_hint: "Use a different variable name or explicitly reference the outer variable with a package prefix.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -919,6 +934,7 @@ impl LangRule for GoSwitchWithoutDefault {
                     problem: "Switch statement without default case. Unhandled cases may indicate bugs.".to_string(),
                     fix_hint: "Add a default case to handle unexpected values: default: return error or log the unexpected state.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -962,6 +978,7 @@ impl LangRule for GoUnnecessaryMake {
                 problem: "make([]T, 0) is unnecessary. A nil slice is already an empty slice and can be appended to directly.".to_string(),
                 fix_hint: "Use var slice []T instead of make([]T, 0) for empty slices that will be appended to.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -1011,6 +1028,7 @@ impl LangRule for GoErrorNotHandled {
                 problem: "Error return value is assigned but never checked. Unchecked errors can cause silent failures.".to_string(),
                 fix_hint: "Add error handling: if err != nil { return err, ... } or log.Fatalf(...).".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -1066,6 +1084,7 @@ impl LangRule for GoHardcodedStringsQuality {
                     problem: "Long hardcoded string literal found. Consider using a named constant.".to_string(),
                     fix_hint: "Define as const: const Name = \"value\" or use environment variables.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }

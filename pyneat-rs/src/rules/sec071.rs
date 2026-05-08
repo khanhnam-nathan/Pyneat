@@ -53,6 +53,7 @@ impl Rule for WeakJwtPayloadRule {
                         problem: format!("Sensitive data in JWT: {}", desc),
                         fix_hint: "JWT is only Base64 encoded, not encrypted. Never store sensitive data in JWT payload.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

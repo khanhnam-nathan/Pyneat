@@ -348,6 +348,7 @@ impl Rule for IdorRule {
                         problem: problem.to_string(),
                         fix_hint: "Add authorization checks. Verify the user has permission to access the requested object.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -386,6 +387,7 @@ impl Rule for HorizontalPrivilegeEscalationRule {
                         problem: problem.to_string(),
                         fix_hint: "Always verify user authorization before returning sensitive data.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -424,6 +426,7 @@ impl Rule for VerticalPrivilegeEscalationRule {
                         problem: problem.to_string(),
                         fix_hint: "Use role-based access control (RBAC). Check both authentication and specific role permissions.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -473,6 +476,7 @@ impl Rule for WeakHashRule {
                         problem: problem.to_string(),
                         fix_hint: "Use bcrypt, scrypt, or Argon2 for password hashing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -511,6 +515,7 @@ impl Rule for EcbModeRule {
                         problem: problem.to_string(),
                         fix_hint: "Use CBC or GCM mode with a random IV. Example: AES.new(key, AES.MODE_CBC, iv)".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -549,6 +554,7 @@ impl Rule for HardcodedKeyRule {
                         problem: problem.to_string(),
                         fix_hint: "Store keys in environment variables or a secure key management service (e.g., AWS KMS, HashiCorp Vault).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -591,6 +597,7 @@ impl Rule for LdapInjectionRule {
                         problem: problem.to_string(),
                         fix_hint: "Use ldap.filter.escape_filter_chars() to sanitize input before building LDAP queries.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -629,6 +636,7 @@ impl Rule for XpathInjectionRule {
                         problem: problem.to_string(),
                         fix_hint: "Use parameterized XPath queries or input validation/encoding.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -667,6 +675,7 @@ impl Rule for TemplateInjectionRule {
                         problem: problem.to_string(),
                         fix_hint: "Never pass unsanitized user input to template rendering. Use template variables explicitly.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -705,6 +714,7 @@ impl Rule for ExtendedCommandInjectionRule {
                         problem: problem.to_string(),
                         fix_hint: "Use subprocess.run with shell=False and pass command arguments as a list.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -747,6 +757,7 @@ impl Rule for DebugModeRule {
                         problem: problem.to_string(),
                         fix_hint: "Set DEBUG=False in production. Use environment variables: DEBUG=os.getenv('DEBUG', 'False')".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -785,6 +796,7 @@ impl Rule for CorsMisconfigurationRule {
                         problem: problem.to_string(),
                         fix_hint: "Specify explicit allowed origins. Use a whitelist of trusted domains.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -827,6 +839,7 @@ impl Rule for WeakPasswordPolicyRule {
                         problem: problem.to_string(),
                         fix_hint: "Enforce strong password policy: minimum 12 chars, mixed case, numbers, special chars. Use Django auth password validators.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -870,6 +883,7 @@ impl Rule for BruteForceProtectionRule {
                             problem: problem.to_string(),
                             fix_hint: "Implement rate limiting, account lockout, or CAPTCHA after failed attempts.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -916,6 +930,7 @@ impl Rule for InsecureDeserializationRule {
                         problem: problem.to_string(),
                         fix_hint: "Use pickle with signed data, or JSON/msgpack for untrusted input.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -954,6 +969,7 @@ impl Rule for HttpWithoutTlsRule {
                         problem: problem.to_string(),
                         fix_hint: "Use HTTPS URLs only. Configure redirect from HTTP to HTTPS.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -996,6 +1012,7 @@ impl Rule for SensitiveInfoLoggingRule {
                         problem: problem.to_string(),
                         fix_hint: "Redact sensitive data before logging. Use structured logging with field masking.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1038,6 +1055,7 @@ impl Rule for SsrfRule {
                         problem: problem.to_string(),
                         fix_hint: "Validate and allowlist URLs. Block internal IP ranges (127.0.0.1, 10.x, 192.168.x, etc.).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1080,6 +1098,7 @@ impl Rule for XxeRule {
                         problem: problem.to_string(),
                         fix_hint: "Disable DTD processing. Use defusedxml library for parsing untrusted XML.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1118,6 +1137,7 @@ impl Rule for ExtendedPathTraversalRule {
                         problem: problem.to_string(),
                         fix_hint: "Use os.path.realpath() to resolve symlinks. Validate paths are within allowed directory.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1156,6 +1176,7 @@ impl Rule for MassAssignmentRule {
                         problem: problem.to_string(),
                         fix_hint: "Use explicit field assignment instead of **kwargs. Whitelist allowed fields.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1194,6 +1215,7 @@ impl Rule for SessionFixationRule {
                         problem: problem.to_string(),
                         fix_hint: "Regenerate session ID after login. Do not accept session IDs from user input.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1237,6 +1259,7 @@ impl Rule for MissingSecurityHeadersRule {
                     has_strict_transport, has_x_frame, has_content_type, has_csp),
                 fix_hint: "Add security headers: Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options, Content-Security-Policy.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -1255,6 +1278,7 @@ impl Rule for MissingSecurityHeadersRule {
                         problem: problem.to_string(),
                         fix_hint: "Configure security headers in after_request hook.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1293,6 +1317,7 @@ impl Rule for ZipSlipRule {
                         problem: problem.to_string(),
                         fix_hint: "Validate archive entries are within target directory. Use os.path.realpath() to resolve paths.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1331,6 +1356,7 @@ impl Rule for RedosRule {
                         problem: problem.to_string(),
                         fix_hint: "Use atomic groups or possessive quantifiers. Test regex against pathological inputs.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1371,6 +1397,7 @@ impl Rule for InsecureRandomRule {
                             problem: problem.to_string(),
                             fix_hint: "Use secrets module or os.urandom() for cryptographic purposes.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1410,6 +1437,7 @@ impl Rule for EvalInjectionRule {
                         problem: problem.to_string(),
                         fix_hint: "Never pass user input to eval() or exec(). Use AST parsing or safe expression evaluators.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1448,6 +1476,7 @@ impl Rule for RaceConditionRule {
                         problem: problem.to_string(),
                         fix_hint: "Use atomic operations. Open file with O_NOFOLLOW and handle exceptions.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1486,6 +1515,7 @@ impl Rule for ResourceShutdownRule {
                         problem: problem.to_string(),
                         fix_hint: "Use context managers (with statement) or ensure explicit cleanup in finally blocks.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1524,6 +1554,7 @@ impl Rule for InsufficientRandomRule {
                         problem: problem.to_string(),
                         fix_hint: "Use uuid.uuid4() or secrets.token_urlsafe() for unpredictable IDs.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1562,6 +1593,7 @@ impl Rule for CertValidationRule {
                         problem: problem.to_string(),
                         fix_hint: "Always validate SSL/TLS certificates. Never set verify=False for production code.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1600,6 +1632,7 @@ impl Rule for UnrestrictedUploadRule {
                         problem: problem.to_string(),
                         fix_hint: "Validate file extensions and content type. Store files outside web root. Use random filenames.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1638,6 +1671,7 @@ impl Rule for XmlBombRule {
                         problem: problem.to_string(),
                         fix_hint: "Disable entity expansion in XML parser. Use defusedxml with safe parsing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1684,6 +1718,7 @@ impl Rule for DomBasedXssRule {
                         problem: problem.to_string(),
                         fix_hint: "Use textContent instead of innerHTML. Sanitize with DOMPurify. Use React's JSX with proper escaping instead of dangerouslySetInnerHTML.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1743,6 +1778,7 @@ impl Rule for CsrfTokenMissingRule {
                             problem: problem.to_string(),
                             fix_hint: "Add CSRF protection: @app.csrf_protected() or use Flask-WTF forms with CSRF tokens. Enable CSRF on all state-changing endpoints.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1795,6 +1831,7 @@ impl Rule for MissingAuthenticationRule {
                             problem: "Sensitive endpoint detected without authentication decorator. This can allow unauthenticated access to privileged operations.".to_string(),
                             fix_hint: "Add @login_required or @requires_auth decorator to protect this endpoint. Implement proper session/token validation.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1842,6 +1879,7 @@ impl Rule for InsecureDefaultPermissionsRule {
                         problem: problem.to_string(),
                         fix_hint: "Use restrictive permissions: 0o600 for private files, 0o755 for directories. Never use 0o777. Prefer: os.chmod(path, 0o600) and os.umask(0o077) before creating files.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1888,6 +1926,7 @@ impl Rule for InsecureJwtVerificationRule {
                         problem: problem.to_string(),
                         fix_hint: "Always verify JWT signatures with a trusted public key. Remove verify=False. Use RS256 (asymmetric) instead of HS256 (symmetric). Validate expiration (exp), issuer (iss), and audience (aud) claims.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2045,6 +2084,7 @@ impl Rule for SqlInjectionSinkRule {
                         problem: problem.to_string(),
                         fix_hint: "SQLMap (Sqlmap, DSSS, Blisqy, SQLScan) exploits these sinks. Replace string interpolation with parameterized queries: cursor.execute('SELECT * FROM users WHERE name = ?', (username,)). Use SQLAlchemy ORM with bind parameters.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2145,6 +2185,7 @@ impl Rule for XssSinkRule {
                         problem: problem.to_string(),
                         fix_hint: "DalFox, XSStrike, XSpear exploit these sinks. Never pass user input to render_template_string(). Use parameterized templating: render_template('page.html', content=escape(user_input)). In Django, avoid mark_safe() on raw user input. Use bleach library for HTML sanitization.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2237,6 +2278,7 @@ impl Rule for LfiSinkRule {
                         problem: problem.to_string(),
                         fix_hint: "Commix and Dirsearch exploit these sinks. Always sanitize paths: use os.path.basename() to extract only the filename, validate against an allowlist of permitted files, use safe_join() from werkzeug.utils, and never pass raw user input to file operations.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2322,6 +2364,7 @@ impl Rule for CsrfSinkRule {
                         problem: problem.to_string(),
                         fix_hint: "CSRF exploits target state-changing endpoints. Add CSRF token validation: Flask-WTF forms with CSRFProtect, Django's @csrf_protect, or custom double-submit cookie pattern. Never use @csrf_exempt on sensitive operations.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2407,6 +2450,7 @@ impl Rule for SsrfSinkRule {
                         problem: problem.to_string(),
                         fix_hint: "Commix, SSRFMap exploit these sinks. Always validate URLs: parse with urllib.parse.urlparse(), enforce scheme='https' or allowlist permitted domains, block internal IP ranges (127.x, 10.x, 192.168.x), and deny access to cloud metadata endpoints (169.254.169.254).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2487,6 +2531,7 @@ impl Rule for OpenRedirectSinkRule {
                         problem: problem.to_string(),
                         fix_hint: "Commix and open-redirect scanners exploit these sinks. Always validate redirect URLs: use urlparse() to extract the domain and compare against an allowlist, or only accept relative paths (no external URLs). Django's is_safe_url() or Flask's URL validators can help.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

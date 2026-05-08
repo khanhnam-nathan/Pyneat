@@ -62,6 +62,7 @@ impl Rule for WeakServerValidationRule {
                             problem: format!("Client-side validation only: {}", desc),
                             fix_hint: "Always validate input server-side. Client-side validation can be bypassed.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }

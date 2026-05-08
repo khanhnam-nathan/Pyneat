@@ -50,6 +50,7 @@ impl Rule for Sec024 {
                         problem: format!("Potential mass assignment: {}", desc),
                         fix_hint: "Use explicit field assignment instead of passing request data directly. Whitelist allowed fields.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

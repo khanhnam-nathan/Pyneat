@@ -74,6 +74,7 @@ impl LangRule for CSharpConsoleWrite {
                     problem: "Console.Write found. Remove or replace with proper logging.".to_string(),
                     fix_hint: "Use ILogger or a logging framework for production.".to_string(),
                     auto_fix_available: true,
+                        replacement: String::new(),
                 });
             }
         }
@@ -120,6 +121,7 @@ impl LangRule for CSharpTodoComments {
                 problem: format!("Unresolved {} marker: {}", todo.marker, todo.description),
                 fix_hint: "Address the TODO or provide a timeline for resolution.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
         findings
@@ -186,6 +188,7 @@ impl LangRule for CSharpSqlInjection {
                             ),
                             fix_hint: "Use parameterized queries or an ORM (Entity Framework) instead of string concatenation.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -208,6 +211,7 @@ impl LangRule for CSharpSqlInjection {
                                   User input may be concatenated directly into SQL.".to_string(),
                         fix_hint: "Use parameterized queries (SqlParameter) or Entity Framework for database access.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -279,6 +283,7 @@ impl LangRule for CSharpInsecureDeserialization {
                                    Never deserialize untrusted input. If BinaryFormatter is required, \
                                    implement a custom SerializationBinder.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                     break;
                 }
@@ -308,6 +313,7 @@ impl LangRule for CSharpInsecureDeserialization {
                         fix_hint: "Replace with safe serializers like System.Text.Json. \
                                    Set TypeNameHandling = None in Newtonsoft.Json.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -389,6 +395,7 @@ impl LangRule for CSharpHardcodedSecrets {
                                        AWS Secrets Manager, or .NET User Secrets. \
                                        Never hardcode sensitive values in source code.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                         break;
                     }
@@ -444,6 +451,7 @@ impl LangRule for CSharpCommandInjection {
                     fix_hint: "Avoid shell commands entirely. Use parameterised APIs. \
                                If unavoidable, validate input against a strict whitelist of allowed values.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -483,6 +491,7 @@ impl LangRule for CSharpCommandInjection {
                                            Validate all input against a whitelist. \
                                            Consider using a safe API instead of shell commands.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -554,6 +563,7 @@ impl LangRule for CSharpWeakCryptography {
                                        RNGCryptoServiceProvider for random values, \
                                        and Argon2id or PBKDF2 with high iterations for password derivation.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                         break;
                     }
@@ -641,6 +651,7 @@ impl LangRule for CSharpPathTraversal {
                                the allowed base directory. Use Path.GetFileName() to strip directory components. \
                                Implement allowlisting of file extensions.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -672,6 +683,7 @@ impl LangRule for CSharpPathTraversal {
                         fix_hint: "Use Path.GetFullPath() and check it stays within a whitelisted base directory. \
                                    Validate and sanitize all user-supplied path components.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -731,6 +743,7 @@ impl LangRule for CSharpInsecureRandomness {
                                        or in .NET 6+: Random.Shared (thread-safe but still not for crypto). \
                                        For security-sensitive values, use cryptographic random.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                         break;
                     }
@@ -812,6 +825,7 @@ impl LangRule for CSharpXssVulnerability {
                         problem: problem.to_string(),
                         fix_hint: fix_hint.to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                     break;
                 }
@@ -891,6 +905,7 @@ impl LangRule for CSharpBrokenAuth {
                                            Use policy-based authorization for fine-grained access control. \
                                            Consider [AllowAnonymous] only for explicitly public endpoints.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                             break;
                         }
@@ -965,6 +980,7 @@ impl LangRule for CSharpXxeVulnerability {
                                    For XmlDocument, set XmlUrlResolver = null and \
                                    XDocument/XElement: use XmlReader with safe settings.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -991,6 +1007,7 @@ impl LangRule for CSharpXxeVulnerability {
                         fix_hint: "Configure XmlReader with DtdProcessing.Prohibit and XmlResolver = null. \
                                    Never load XML from untrusted sources.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1066,6 +1083,7 @@ impl LangRule for CSharpOpenRedirect {
                                Never redirect based purely on user-supplied input without validation. \
                                Use Request.ApplicationPath for same-app redirects.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1136,6 +1154,7 @@ impl LangRule for CSharpLdapInjection {
                                    Use parameterized LDAP queries or encode input with proper LDAP escaping. \
                                    Allowlist input values where possible.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1162,6 +1181,7 @@ impl LangRule for CSharpLdapInjection {
                         fix_hint: "Escape LDAP special characters in user input. \
                                    Use safe query builder APIs or allowlist validation.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1205,6 +1225,7 @@ impl LangRule for CSharpSlopsquatting {
                         problem: format!("Slopsquatting Risk: The package '{}' appears to be hallucinated.", imp.module),
                         fix_hint: "Verify this package exists on nuget.org before installing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1248,6 +1269,7 @@ impl LangRule for CSharpVerboseError {
                         problem: desc.to_string(),
                         fix_hint: "Log error details, return sanitized generic message.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1289,6 +1311,7 @@ impl LangRule for CSharpMissingInputValidation {
                         problem: desc.to_string(),
                         fix_hint: "Use model binding with DataAnnotations or explicit validation.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1331,6 +1354,7 @@ impl LangRule for CSharpAiGenComment {
                             problem: "AI-Generated Code Detected".to_string(),
                             fix_hint: "Review AI-generated code carefully before production use.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1381,6 +1405,7 @@ impl LangRule for CSharpMassAssignment {
                             problem: format!("Mass assignment risk: {}. Without [JsonIgnore] or [BindNever] attributes, attackers can set properties they shouldn't be able to modify.", label),
                             fix_hint: "Use [JsonIgnore] on sensitive properties. Use [Bind(Include)] or [Bind(Exclude)] to explicitly allowlist/denylist properties. Consider using DTOs instead of domain entities.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                         break;
                     }
@@ -1442,6 +1467,7 @@ impl LangRule for CSharpIncorrectAuthorization {
                         problem: "Sensitive method detected without any authorization attributes. This can allow unauthenticated access to privileged operations.".to_string(),
                         fix_hint: "Add [Authorize] to the method or class. Use [Authorize(Roles = \"Admin\")] for role-based access. Consider policy-based authorization with IAuthorizationService.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1464,6 +1490,7 @@ impl LangRule for CSharpIncorrectAuthorization {
                     problem: "Role-based authorization check found. Ensure this is backed by proper server-side validation, not just client-provided claims.".to_string(),
                     fix_hint: "Always validate roles server-side with IAuthorizationService. Never rely solely on User.IsInRole() for critical decisions. Combine with policy-based authorization.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1525,6 +1552,7 @@ impl LangRule for CSharpInsecureCookie {
                                 problem: format!("Insecure cookie: {} — cookies without proper flags are vulnerable to XSS and CSRF attacks.", problems.join(", ")),
                                 fix_hint: "Set Secure=true, HttpOnly=true, and SameSite=SameSiteMode.Strict (or Lax). Use CookieOptions: new CookieOptions { Secure = Required, HttpOnly = true, SameSite = SameSiteMode.Strict }.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                         break;
@@ -1580,6 +1608,7 @@ impl LangRule for CSharpDeserializationGadget {
                             problem: problem.to_string(),
                             fix_hint: "Always set TypeNameHandling = TypeNameHandling.None (default). If type info is needed, use a custom SerializationBinder with strict allowlist. Never deserialize untrusted input with type resolution enabled.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                         break;
                     }
@@ -1639,6 +1668,7 @@ impl LangRule for CSharpRegexDos {
                                     problem: problem.to_string(),
                                     fix_hint: "Refactor regex to avoid nested quantifiers. Use atomic groups or possessive quantifiers (C# doesn't support natively, but restructure). Consider using RegexOptions.Debug or a static analysis tool to verify no ReDoS. Benchmark with long inputs.".to_string(),
                                     auto_fix_available: false,
+                        replacement: String::new(),
                                 });
                                 break;
                             }
@@ -1681,6 +1711,7 @@ impl LangRule for CSharpXxe {
                     problem: "XML parser without XXE protection.".to_string(),
                     fix_hint: "Disable DTD processing: XmlReaderSettings.DtdProcessing = DtdProcessing.Prohibit.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1720,6 +1751,7 @@ impl LangRule for CSharpSqlInjectionEF {
                         problem: "EF raw SQL query with string interpolation. SQL injection risk.".to_string(),
                         fix_hint: "Use parameterized queries: ExecuteSqlRaw(\"SELECT * FROM Users WHERE Id = {0}\", userId);.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1760,6 +1792,7 @@ impl LangRule for CSharpPathTraversalRaw {
                         problem: "File operation with user-controlled path. Path traversal risk.".to_string(),
                         fix_hint: "Validate paths: Path.GetFullPath(), Path.Combine() with a base directory, reject '..'.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1797,6 +1830,7 @@ impl LangRule for CSharpInsecureRandom {
                     problem: "System.Random is predictable and not suitable for security purposes.".to_string(),
                     fix_hint: "Use RandomNumberGenerator.GetInt32() or System.Security.Cryptography.RandomNumberGenerator.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1835,6 +1869,7 @@ impl LangRule for CSharpHardcodedConnectionString {
                         problem: "Connection string may be hardcoded in source code.".to_string(),
                         fix_hint: "Use ConfigurationManager with external config or environment variables.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1874,6 +1909,7 @@ impl LangRule for CSharpWeakCrypto {
                     problem: "Weak cryptographic algorithm (DES/RC4/MD5/SHA1) detected.".to_string(),
                     fix_hint: "Use AES-256 (Aes.Create()) or SHA-256 for hashing.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1911,6 +1947,7 @@ impl LangRule for CSharpDeserializationRCE {
                     problem: "Dangerous deserializer (BinaryFormatter/SoapFormatter) used. Can lead to RCE.".to_string(),
                     fix_hint: "Use System.Text.Json or Newtonsoft.Json with TypeNameHandling = None.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -1950,6 +1987,7 @@ impl LangRule for CSharpOpenRedirectRaw {
                         problem: "Redirect to user-controlled URL. Open redirect vulnerability.".to_string(),
                         fix_hint: "Validate redirect URLs against an allowlist of permitted domains.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1990,6 +2028,7 @@ impl LangRule for CSharpSsrf {
                         problem: "HTTP request with user-controlled URL. SSRF vulnerability.".to_string(),
                         fix_hint: "Validate and allowlist URLs. Block internal IP ranges.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2029,6 +2068,7 @@ impl LangRule for CSharpAiHardcodedConnectionString {
                         problem: "AI-generated code may contain hardcoded connection strings.".to_string(),
                         fix_hint: "Store connection strings in configuration files with proper access controls.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2069,6 +2109,7 @@ impl LangRule for CSharpAiSqlInjection {
                         problem: "AI-generated SQL query with string interpolation.".to_string(),
                         fix_hint: "Use parameterized queries: ExecuteSqlRaw(\"...{0}\", param);.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2108,6 +2149,7 @@ impl LangRule for CSharpAiCommandInjection {
                         problem: "AI-generated command execution with user-controlled input.".to_string(),
                         fix_hint: "Validate input against allowlist. Use ProcessStartInfo with arguments separately.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2145,6 +2187,7 @@ impl LangRule for CSharpAiXxe {
                     problem: "AI-generated XML parser without XXE protection.".to_string(),
                     fix_hint: "Disable DTD: xmlDoc.XmlResolver = null; for XDocument: use Load with XmlReader settings.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2182,6 +2225,7 @@ impl LangRule for CSharpAiInsecureDeserialization {
                     problem: "AI-generated code uses dangerous BinaryFormatter. Can lead to RCE.".to_string(),
                     fix_hint: "Use System.Text.Json for serialization. Never deserialize untrusted data.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2221,6 +2265,7 @@ impl LangRule for CSharpAiPathTraversal {
                         problem: "AI-generated file operation with user-controlled path.".to_string(),
                         fix_hint: "Validate and sanitize file paths. Use Path.GetFullPath() and reject '..'.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2311,6 +2356,7 @@ impl LangRule for CSharpSsrfDeep {
                         problem: "HTTP request to internal IP address detected. This could allow SSRF attacks to access cloud metadata services (169.254.169.254) or internal infrastructure.".to_string(),
                         fix_hint: "Block internal IP ranges. Validate URLs against an allowlist of permitted external domains. Never allow direct access to cloud metadata endpoints.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 } else if has_user_input {
                     findings.push(LangFinding {
@@ -2324,6 +2370,7 @@ impl LangRule for CSharpSsrfDeep {
                         problem: "HTTP request with user-controlled URL detected. SSRF vulnerability.".to_string(),
                         fix_hint: "Validate and allowlist URLs. Block internal IP ranges (127.0.0.1, 169.254.169.254, etc.). Use Uri.TryCreate() to parse and validate the URL before making requests.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2345,6 +2392,7 @@ impl LangRule for CSharpSsrfDeep {
                     problem: "URL with internal IP or localhost detected in code. SSRF risk.".to_string(),
                     fix_hint: "Remove hardcoded internal URLs. Use external domain allowlists for any dynamic URL construction.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -2400,6 +2448,7 @@ impl LangRule for CSharpWeakJwt {
                                 problem: problem.to_string(),
                                 fix_hint: "Enable all JWT validation: ValidateIssuer=true, ValidateAudience=true, ValidateLifetime=true, ValidateIssuerSigningKey=true. Use a proper key validation routine.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                             break;
                         }
@@ -2432,6 +2481,7 @@ impl LangRule for CSharpWeakJwt {
                                 problem: problem.to_string(),
                                 fix_hint: "Use a cryptographically strong key of at least 256 bits (32 bytes) for HS256. Store keys securely in environment variables or a secrets manager. Never use placeholder or short keys.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                             break;
                         }
@@ -2468,6 +2518,7 @@ impl LangRule for CSharpWeakJwt {
                             problem: "JWT validation with disabled security checks detected. Tokens can be forged.".to_string(),
                             fix_hint: "Enable all validation parameters. Use Microsoft.IdentityModel.Tokens.TokenValidationParameters with proper issuer, audience, and lifetime validation.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }

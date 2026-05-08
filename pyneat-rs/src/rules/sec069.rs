@@ -61,6 +61,7 @@ impl Rule for DangerousDependenciesRule {
                             problem: format!("Potentially dangerous dependency: {}", desc),
                             fix_hint: "Use up-to-date packages. Run 'pip list --outdated' to check.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }

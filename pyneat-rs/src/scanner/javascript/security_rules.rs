@@ -147,6 +147,7 @@ impl LangRule for JsDomXss {
                             Example: element.textContent = userInput; \
                             Or: element.innerHTML = DOMPurify.sanitize(userInput);".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -170,6 +171,7 @@ impl LangRule for JsDomXss {
                     problem: "DOM XSS: innerHTML/outerHTML with user-controlled data. CWE-79.".to_string(),
                     fix_hint: "Use textContent instead of innerHTML, or sanitize with DOMPurify.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -241,6 +243,7 @@ impl LangRule for JsPrototypePollution {
                                 Validate keys against allowlist. Use schema validation (Joi, Yup). \
                                 Avoid merging user-controlled objects directly.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -313,6 +316,7 @@ impl LangRule for JsEvalInjection {
                         For dynamic code, use WebAssembly or sandboxed iframes. \
                         If you must evaluate expressions, use a safe expression parser like expr-eval.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -415,6 +419,7 @@ impl LangRule for JsPathTraversal {
                             Validate the final path stays within an allowed directory. \
                             Example: const safePath = path.join(ALLOWED_DIR, userPath);".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -477,6 +482,7 @@ impl LangRule for JsHardcodedSecret {
                                     Use secure vaults (AWS Secrets Manager, HashiCorp Vault). \
                                     In frontend, use HTTP-only cookies or proxy servers.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -509,6 +515,7 @@ impl LangRule for JsHardcodedSecret {
                     problem: "Potential hardcoded API key or token detected. CWE-798.".to_string(),
                     fix_hint: "Move to environment variables: process.env.KEY_NAME.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -596,6 +603,7 @@ impl LangRule for JsWeakCrypto {
                         const array = new Uint32Array(1); crypto.getRandomValues(array); \
                         For Node.js: require('crypto').randomBytes(16).toString('hex');".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -624,6 +632,7 @@ impl LangRule for JsWeakCrypto {
                             For passwords: use bcrypt, scrypt, or Argon2. \
                             Use Web Crypto API: crypto.subtle.digest('SHA-256', data).".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -648,6 +657,7 @@ impl LangRule for JsWeakCrypto {
                 fix_hint: "Use crypto.createCipheriv() and crypto.createDecipheriv() with explicit \
                     algorithms. Prefer Web Crypto API for browser code.".to_string(),
                 auto_fix_available: false,
+                        replacement: String::new(),
             });
         }
 
@@ -716,6 +726,7 @@ impl LangRule for JsOpenRedirect {
                             or from trusted domain. Example: \
                             if (isAllowedUrl(url)) { window.location.href = url; }".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -739,6 +750,7 @@ impl LangRule for JsOpenRedirect {
                     problem: "Potentially unsafe redirect with user input. CWE-601.".to_string(),
                     fix_hint: "Validate redirect URLs against an allowlist.".to_string(),
                     auto_fix_available: false,
+                        replacement: String::new(),
                 });
             }
         }
@@ -808,6 +820,7 @@ impl LangRule for JsSsrf {
                             Use URL parser to check hostname before fetching. \
                             Example: const url = new URL(input); if (isAllowedHost(url.hostname)) fetch(url);".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -893,6 +906,7 @@ impl LangRule for JsSqlInjection {
                                 db.query('SELECT * FROM users WHERE id = ?', [userId]). \
                                 Never concatenate user input directly into SQL strings.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                         break;
                     }
@@ -919,6 +933,7 @@ impl LangRule for JsSqlInjection {
                         problem: "SQL query with string concatenation detected. CWE-89.".to_string(),
                         fix_hint: "Use parameterized queries.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -988,6 +1003,7 @@ impl LangRule for JsJwtNoneAlgorithm {
                                 Verify algorithm in token: jwt.verify(token, secret, { algorithms: ['HS256'] }). \
                                 Never accept 'none' algorithm.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1076,6 +1092,7 @@ impl LangRule for JsNoRateLimit {
                                         const limiter = rateLimit({ windowMs: 15*60*1000, max: 100 }); \
                                         app.use('/api/', limiter);".to_string(),
                                     auto_fix_available: false,
+                        replacement: String::new(),
                                 });
                             }
                         }
@@ -1139,6 +1156,7 @@ impl LangRule for JsSensitiveDataExposure {
                                 Example: res.status(500).json({ error: 'Internal server error' }); \
                                 logger.error(err); // log full details internally".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1225,6 +1243,7 @@ impl LangRule for JsInsecureCookie {
                         fix_hint: "Always set secure cookie options: \
                             res.cookie('name', 'value', { httpOnly: true, secure: true, sameSite: 'strict' });".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -1305,6 +1324,7 @@ impl LangRule for JsRegexDos {
                                 quantifiers. Simplify regex patterns. Consider using a regex engine \
                                 with timeout support.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1366,6 +1386,7 @@ impl LangRule for JsInsecureCors {
                                 For multiple origins, use an allowlist array. \
                                 Never set credentials: true with origin: '*'.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1779,6 +1800,7 @@ impl LangRule for JsSsrfInternalIp {
                                         Validate URLs against allowlist. Use URL parser to verify hostname before fetching. \
                                         Example: const hostname = new URL(url).hostname; if (isBlocked(hostname)) throw new Error('Invalid URL');".to_string(),
                                     auto_fix_available: false,
+                        replacement: String::new(),
                                 });
                                 break;
                             }
@@ -1861,6 +1883,7 @@ impl LangRule for JsInsecureJwtV2 {
                                 Never use 'none' algorithm. Validate all JWT parameters. \
                                 Example: jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['RS256'] });".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1888,6 +1911,7 @@ impl LangRule for JsInsecureJwtV2 {
                                 Store secrets in environment variables or secure vaults. \
                                 Use RS256/ES256 for production (asymmetric algorithms).".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -1992,6 +2016,7 @@ impl LangRule for JsInsecureTlsCrypto {
                                 validation. Replace deprecated crypto.createCipher() with crypto.createCipheriv(). \
                                 Use TLS 1.2 minimum. Set secure: true for cookies.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2020,6 +2045,7 @@ impl LangRule for JsInsecureTlsCrypto {
                             fix_hint: "Remove rejectUnauthorized: false from TLS options. \
                                 Use proper certificate validation or system CA certificates.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2095,6 +2121,7 @@ impl LangRule for JsGraphqlIntrospection {
                                 includeStacktraceInErrorResponses: false. Remove playground in favor of \
                                 dedicated introspection tools for development only.".to_string(),
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2177,6 +2204,7 @@ impl LangRule for JsGraphqlMissingDepthLimit {
                                     Also consider adding cost analysis (graphql-cost-analysis) to limit \
                                     expensive field access.".to_string(),
                                 auto_fix_available: false,
+                        replacement: String::new(),
                             });
                         }
                     }
@@ -2261,6 +2289,7 @@ impl LangRule for JsGraphqlBatchAttack {
                                 complexity limits. Consider disabling batching if not needed.".to_string()
                             },
                             auto_fix_available: false,
+                        replacement: String::new(),
                         });
                     }
                 }
@@ -2325,6 +2354,7 @@ impl LangRule for JsInsecureDeser {
                             { schema: yaml.JSON_SCHEMA }) with untrusted data. Use JSON.parse() \
                             instead of eval() for data parsing.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2399,6 +2429,7 @@ impl LangRule for JsNosqlInjection {
                             Never interpolate user input directly. For $where, use query operators \
                             ($eq, $regex) instead.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2474,6 +2505,7 @@ impl LangRule for JsSsti {
                             as template data variables, not as the template itself. \
                             Example: res.render('user', { username: req.user.name });".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2547,6 +2579,7 @@ impl LangRule for JsJwtAlgorithmConfusion {
                             of HS256 when possible. Validate both the algorithm and the secret in production. \
                             Never accept 'none' as a valid algorithm.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2626,6 +2659,7 @@ impl LangRule for JsSqlInjectionDeep {
                             In Sequelize: use { where: { id: userId } } instead of raw queries. \
                             In Prisma: use Prisma's type-safe query builder.".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2698,6 +2732,7 @@ impl LangRule for JsPrototypePollutionDeep {
                             Use Object.freeze() on critical objects. Use safe-eval or ajv for schema validation. \
                             Use const safeMerge = (target, source) => Object.fromEntries(\n                                Object.entries(source)\n                                    .filter(([k]) => !['__proto__','constructor','prototype'].includes(k))\n                                    .map(([k,v]) => [k, typeof v === 'object' ? safeMerge({}, v) : v])\n                            );".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }
@@ -2780,6 +2815,7 @@ impl LangRule for JsSsrfDeep {
                             const hostname = new URL(url).hostname; \
                             if (isPrivateIP(hostname) || isLoopback(hostname)) throw new Error('Invalid URL');".to_string(),
                         auto_fix_available: false,
+                        replacement: String::new(),
                     });
                 }
             }

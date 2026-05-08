@@ -32,6 +32,8 @@ pub mod taint;
 pub mod taint_lang_rule;
 pub mod supplychain;
 pub mod ml;
+pub mod typescript;
+pub mod iac;
 
 pub use tree_sitter::ParseError;
 pub use rust::RustScanner;
@@ -42,6 +44,9 @@ pub use csharp::CSharpScanner;
 pub use php::PhpScanner;
 pub use ruby::RubyScanner;
 pub use taint_lang_rule::TaintLangScanner;
+pub use iac::{IaCScanner, IacFinding};
+#[allow(unused)]
+pub use ml::{AnomalyEngine, AnomalyFinding, CodeMetrics};
 #[allow(unused)]
 pub use base::{LanguageScanner, LanguageRegistry, LangRule, LangFinding, Language};
 #[allow(unused)]

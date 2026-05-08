@@ -72,6 +72,7 @@ pub struct TaintFinding {
     pub problem: String,
     pub labels: Vec<TaintLabel>,
     pub trace: Vec<TaintTraceNode>,
+    pub replacement: String,
 }
 
 impl TaintFinding {
@@ -93,6 +94,7 @@ impl TaintFinding {
             problem: problem.to_string(),
             labels,
             trace: Vec::new(),
+            replacement: String::new(),
         }
     }
 }
@@ -299,6 +301,9 @@ impl<'a> TaintEngine<'a> {
         None
     }
 
+
+
+
     #[allow(dead_code)]
     fn get_matching_sink(&self, callee: &str) -> Option<&TaintSink> {
         for sink in &self.sinks {
@@ -372,8 +377,16 @@ impl<'a> TaintEngine<'a> {
                     }
                 }
                 DfgNodeKind::Variable(name) => {
+                    // Standard identifier check
                     if self.sources.iter().any(|s| s.matches_identifier(name)) {
                         self.mark_tainted(node_id, TaintLabel::Tainted);
+                    }
+                    // Also check if this identifier is actually a method call result
+                    // (happens when the AST parser extracts full expression text as identifier)
+                    if name.contains('(') {
+                        if let Some(label) = self.get_source_label(name) {
+                            self.mark_tainted(node_id, label);
+                        }
                     }
                 }
                 _ => {}
@@ -500,11 +513,12 @@ impl<'a> TaintEngine<'a> {
                         .enumerate()
                         .filter(|(i, _)| {
                             let arg_id = *args.get(*i).unwrap_or(&DfgNodeId(0));
-                            self.is_tainted(arg_id)
+                            self.is_tainted(arg_id) || self.arg_contains_tainted_var(arg_id)
                         })
                         .flat_map(|(i, _)| {
-                            self.get_taint_labels(*args.get(i).unwrap_or(&DfgNodeId(0)))
+                            self.get_taint_labels_for_arg(*args.get(i).unwrap_or(&DfgNodeId(0)))
                                 .into_iter()
+                                .filter(|l| sink.accepts_taint(l))
                                 .map(|l| (i, l))
                                 .collect::<Vec<_>>()
                         })
@@ -512,9 +526,10 @@ impl<'a> TaintEngine<'a> {
                     SinkPosition::Argument(idx) => {
                         if *idx < args.len() {
                             let arg_id = *args.get(*idx).unwrap_or(&DfgNodeId(0));
-                            if self.is_tainted(arg_id) {
-                                self.get_taint_labels(arg_id)
+                            if self.is_tainted(arg_id) || self.arg_contains_tainted_var(arg_id) {
+                                self.get_taint_labels_for_arg(arg_id)
                                     .into_iter()
+                                    .filter(|l| sink.accepts_taint(l))
                                     .map(|l| (*idx, l))
                                     .collect()
                             } else {
@@ -530,56 +545,154 @@ impl<'a> TaintEngine<'a> {
                 if !tainted_args.is_empty() {
                     let labels: Vec<TaintLabel> = tainted_args.iter().map(|(_, l)| l.clone()).collect();
                     let mut finding = TaintFinding::new(&sink.rule_id, &sink.severity, &node, &sink.description, labels);
-                    finding.trace = self.build_trace(node_id);
+                    finding.trace = self.build_trace_for_sink(node_id, &tainted_args);
                     self.findings.push(finding);
                 }
             }
         }
     }
 
-    fn build_trace(&self, sink_id: DfgNodeId) -> Vec<TaintTraceNode> {
+    /// Build a trace from sources to a sink by following variable definitions.
+    fn build_trace_for_sink(&self, sink_id: DfgNodeId, tainted_args: &[(usize, TaintLabel)]) -> Vec<TaintTraceNode> {
         let mut trace = Vec::new();
         let mut visited = std::collections::HashSet::new();
-        self.backtrack(sink_id, &mut trace, &mut visited, 0);
+
+        // For each tainted argument, trace back to its source
+        for (arg_idx, _label) in tainted_args {
+            let arg_text = match self.dfg.node(DfgNodeId(*arg_idx)) {
+                Some(n) => n.display_name(),
+                None => continue,
+            };
+            // Try to find the variable reference in the arg text
+            for var_name in extract_identifiers_from_text(&arg_text) {
+                self.trace_var(&var_name, &mut trace, &mut visited, 0);
+            }
+        }
+
+        // Also add the sink itself to the trace
+        if let Some(sink_node) = self.dfg.node(sink_id) {
+            if !visited.contains(&sink_id) {
+                visited.insert(sink_id);
+                trace.push(TaintTraceNode::new("sink", sink_node, &sink_node.display_name()));
+            }
+        }
+
         trace.reverse();
         trace
     }
 
-    fn backtrack(&self, node_id: DfgNodeId, trace: &mut Vec<TaintTraceNode>, visited: &mut std::collections::HashSet<DfgNodeId>, depth: usize) {
-        if depth > self.config.max_trace_length || visited.contains(&node_id) {
+    /// Trace a variable back to its source.
+    fn trace_var(&self, var_name: &str, trace: &mut Vec<TaintTraceNode>, visited: &mut std::collections::HashSet<DfgNodeId>, depth: usize) {
+        if depth > self.config.max_trace_length {
             return;
         }
-        visited.insert(node_id);
 
-        let node = match self.dfg.node(node_id) {
-            Some(n) => n,
-            None => return,
+        // Find all definitions of this variable
+        let Some(def_ids) = self.var_nodes.get(var_name) else {
+            return;
         };
 
-        if node.is_tainted() {
-            let callee_str = match &node.kind {
-                DfgNodeKind::Call { callee, .. } => Some(callee.clone()),
-                _ => None,
-            };
-            let is_source = callee_str.as_ref().map_or(false, |c| {
-                self.sources.iter().any(|s| s.matches_call(c))
-            });
-            let kind = if is_source { "source" } else { "propagate" };
-            let labels_str: String = node.taint.iter()
-                .map(|l| l.to_string())
-                .collect::<Vec<_>>()
-                .join(", ");
-            trace.push(TaintTraceNode::new(
-                kind,
-                node,
-                &format!("{} [{}]", node.display_name(), labels_str),
-            ));
-        }
+        for def_id in def_ids {
+            if visited.contains(def_id) {
+                continue;
+            }
 
-        let preds: Vec<DfgNodeId> = self.dfg.predecessors(node_id);
-        for pred_id in preds {
-            self.backtrack(pred_id, trace, visited, depth + 1);
+            let Some(def_node) = self.dfg.node(*def_id) else {
+                continue;
+            };
+
+            visited.insert(*def_id);
+
+            match &def_node.kind {
+                DfgNodeKind::Call { callee, .. } => {
+                    // Check if this call is a source
+                    let is_source = self.sources.iter().any(|s| s.matches_call(callee));
+                    if is_source {
+                        trace.push(TaintTraceNode::new("source", def_node, &def_node.display_name()));
+                    } else {
+                        trace.push(TaintTraceNode::new("propagate", def_node, &def_node.display_name()));
+                        // Continue tracing arguments of this call
+                        if let Some(call_node) = self.dfg.node(*def_id) {
+                            if let DfgNodeKind::Call { args, .. } = &call_node.kind {
+                                for arg_id in args {
+                                    let arg_text = self.dfg.node(*arg_id).map(|n| n.display_name()).unwrap_or_default();
+                                    for inner_var in extract_identifiers_from_text(&arg_text) {
+                                        self.trace_var(&inner_var, trace, visited, depth + 1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                DfgNodeKind::Variable(v) => {
+                    trace.push(TaintTraceNode::new("propagate", def_node, &def_node.display_name()));
+                    // Trace the definition of this variable
+                    self.trace_var(v, trace, visited, depth + 1);
+                }
+                DfgNodeKind::Assignment { target, .. } => {
+                    trace.push(TaintTraceNode::new("propagate", def_node, &format!("{} = ...", target)));
+                    // The RHS of the assignment was already traced via var_nodes
+                }
+                _ => {
+                    trace.push(TaintTraceNode::new("propagate", def_node, &def_node.display_name()));
+                }
+            }
         }
+    }
+
+    /// Check if an argument's text contains references to any tainted variable.
+    fn arg_contains_tainted_var(&self, arg_id: DfgNodeId) -> bool {
+        let arg_text = match self.dfg.node(arg_id) {
+            Some(n) => n.display_name(),
+            None => return false,
+        };
+        // Skip pure string literals (constants) — no variable interpolation
+        if (arg_text.starts_with('"') || arg_text.starts_with('\''))
+            && !arg_text.contains('+')
+            && !arg_text.contains("..")
+        {
+            return false;
+        }
+        // Check each referenced variable in the text
+        for var_name in extract_identifiers_from_text(&arg_text) {
+            if let Some(var_ids) = self.var_nodes.get(&var_name) {
+                for vid in var_ids {
+                    if self.is_tainted(*vid) {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Get taint labels for an argument, including from embedded tainted variable references.
+    fn get_taint_labels_for_arg(&self, arg_id: DfgNodeId) -> Vec<TaintLabel> {
+        let mut labels = self.get_taint_labels(arg_id);
+        let arg_text = match self.dfg.node(arg_id) {
+            Some(n) => n.display_name(),
+            None => return labels,
+        };
+        if (arg_text.starts_with('"') || arg_text.starts_with('\''))
+            && !arg_text.contains('+')
+            && !arg_text.contains("..")
+        {
+            return labels;
+        }
+        for var_name in extract_identifiers_from_text(&arg_text) {
+            if let Some(var_ids) = self.var_nodes.get(&var_name) {
+                for vid in var_ids {
+                    if self.is_tainted(*vid) {
+                        for label in self.get_taint_labels(*vid) {
+                            if !labels.contains(&label) {
+                                labels.push(label);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        labels
     }
 
     pub fn findings(&self) -> &[TaintFinding] {
@@ -596,5 +709,17 @@ impl<'a> TaintEngine<'a> {
 
     pub fn finding_count(&self) -> usize {
         self.findings.len()
+    }
+
+    pub fn source_count(&self) -> usize {
+        self.sources.len()
+    }
+
+    pub fn sink_count(&self) -> usize {
+        self.sinks.len()
+    }
+
+    pub fn findings_vec(&self) -> Vec<&TaintFinding> {
+        self.findings.iter().collect()
     }
 }
