@@ -115,6 +115,9 @@ __all__ = [
     'clean_code', 'clean_file', 'analyze_code',
     # Fuzz testing tool
     'github_fuzz',
+    # Rust extension functions
+    'detect_language', 'scan_security', 'get_rules', 'get_scanner_version',
+    'parse_ln_ast', 'scan_multilang', 'apply_auto_fix', 'scan_file',
 ]
 
 # Lazy import for the fuzz testing module (avoids import overhead for normal users)
@@ -122,6 +125,14 @@ def __getattr__(name: str):
     if name == 'github_fuzz':
         from pyneat.tools import github_fuzz
         return github_fuzz
+    # Expose Rust extension functions from the pyneat_rs .pyd binary
+    if name in ('detect_language', 'scan_security', 'scan_security_configured',
+                'get_rules', 'get_scanner_version', 'parse_ln_ast',
+                'scan_multilang', 'apply_auto_fix', 'scan_file',
+                'scan_dependencies', 'generate_sarif_report',
+                'get_ai_rules', 'get_security_rules'):
+        import pyneat_rs as _rs
+        return getattr(_rs, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

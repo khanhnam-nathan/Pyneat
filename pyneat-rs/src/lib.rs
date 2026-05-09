@@ -1644,7 +1644,7 @@ fn chrono_lite_now() -> String {
 
 /// Python module definition
 #[pymodule]
-fn pyneat(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn pyneat_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(scan_security, m)?)?;
     m.add_function(wrap_pyfunction!(scan_security_configured, m)?)?;
     m.add_function(wrap_pyfunction!(apply_auto_fix, m)?)?;
