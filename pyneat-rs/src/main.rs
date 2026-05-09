@@ -619,6 +619,7 @@ fn scan_paths(
                             problem: result.problem.clone(),
                             fix_hint: result.fix_hint.clone(),
                             auto_fix_available: result.auto_fix,
+                            replacement: String::new(),
                         };
                         if let Some(fix) = rule.fix(&finding, &code) {
                             file_fixes_list.push(FixRange::new(fix.start, fix.end, fix.replacement, fix.rule_id));

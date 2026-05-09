@@ -55,6 +55,7 @@ impl Rule for CommandInjectionRule {
 
                 if has_concat || is_bare_var {
                     let snippet = extract_snippet(code, full_match.start(), full_match.end());
+                    let auto_fix = full_match.as_str().contains("os.system");
                     findings.push(Finding {
                         rule_id: "SEC-001".to_string(),
                         severity: Severity::Critical.as_str().to_string(),
@@ -70,7 +71,7 @@ impl Rule for CommandInjectionRule {
                             "User input is passed directly to a shell command through string concatenation. This can allow command injection attacks.".to_string()
                         },
                         fix_hint: "Use subprocess.run with shell=False and pass command as a list of arguments instead of a string.".to_string(),
-                        auto_fix_available: false,
+                        auto_fix_available: auto_fix,
                         replacement: String::new(),
                     });
                 }
@@ -113,7 +114,7 @@ impl Rule for CommandInjectionRule {
                     snippet,
                     problem: "os.popen() executes a command via shell — equivalent to shell=True with no argument sanitization.".to_string(),
                     fix_hint: "Use subprocess.run([...], shell=False) or the subprocess module's higher-level functions.".to_string(),
-                    auto_fix_available: false,
+                    auto_fix_available: true,
                             replacement: String::new(),
                 });
             }
@@ -194,7 +195,7 @@ impl Rule for SqlInjectionRule {
                         snippet,
                         problem: "SQL query is constructed using string concatenation, which can allow SQL injection attacks.".to_string(),
                         fix_hint: "Use parameterized queries (placeholders) instead of string concatenation: cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))".to_string(),
-                        auto_fix_available: false,
+                        auto_fix_available: true,
                         replacement: String::new(),
                     });
                 }
@@ -274,7 +275,7 @@ impl Rule for EvalExecRule {
                         snippet,
                         problem: "Use of eval() or exec() can execute arbitrary code. User input in these functions can lead to remote code execution.".to_string(),
                         fix_hint: "Avoid eval() and exec(). Use ast.literal_eval() for safe evaluation of literals, or restructure code to avoid dynamic execution.".to_string(),
-                        auto_fix_available: false,
+                        auto_fix_available: true,
                         replacement: String::new(),
                     });
                 }

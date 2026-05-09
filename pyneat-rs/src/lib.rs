@@ -156,7 +156,7 @@ pub struct DependencyFinding {
 
 /// Scan options controlling what to include in a full project scan.
 #[pyo3::pyclass(from_py_object)]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Deserialize)]
 pub struct ScanOptions {
     /// Scan lock files for dependency analysis.
     pub scan_deps: bool,
@@ -245,7 +245,7 @@ fn findings_to_json(findings: Vec<Value>) -> Vec<Value> {
                 "snippet": f["snippet"],
                 "problem": f["problem"],
                 "fix_hint": f["fix_hint"],
-                "auto_fix_available": f.get("auto_fix"),
+                "auto_fix_available": f.get("auto_fix_available"),
                 "replacement": f.get("replacement"),
             })
         })
@@ -556,6 +556,10 @@ fn parse_ln_ast(code: &str, language: &str) -> PyResult<String> {
 /// Returns language string like "python", "javascript", etc.
 #[pyfunction]
 fn detect_language(ext: &str) -> PyResult<Option<String>> {
+    let ext = std::path::Path::new(ext)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or(ext);
     Ok(crate::scanner::multilang::detect_language_from_extension(ext))
 }
 
@@ -1325,7 +1329,12 @@ fn scan_security_with_taint(code: &str, language: &str, enable_taint: bool) -> P
 
 /// Scan code with security rules and optional AI security analysis.
 #[pyfunction]
-fn scan_security_with_ai(code: &str, language: &str, options: ScanOptions) -> PyResult<String> {
+fn scan_security_with_ai(code: &str, language: &str, options_json: Option<&str>) -> PyResult<String> {
+    let options: ScanOptions = match options_json {
+        Some(json_str) => serde_json::from_str(json_str)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?,
+        None => ScanOptions::default(),
+    };
     let lang = if language.is_empty() { "python" } else { language };
     let start = Instant::now();
 
