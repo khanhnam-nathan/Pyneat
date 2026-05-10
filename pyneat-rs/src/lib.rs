@@ -457,9 +457,12 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
             }
             // Add more fix patterns here as they are implemented
             _ => {
-                return Err(pyo3::exceptions::PyValueError::new_err(format!(
-                    "No auto-fix available for rule: {}", rule_id
-                )));
+                let msg = if rule_id.is_empty() {
+                    "No rule_id provided in finding data".to_string()
+                } else {
+                    format!("No auto-fix available for rule: {}", rule_id)
+                };
+                return Err(pyo3::exceptions::PyValueError::new_err(msg));
             }
         }
     };
