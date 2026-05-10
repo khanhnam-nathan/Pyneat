@@ -1,6 +1,6 @@
 # PyNeat: AI-Generated Code Cleaner
 
-**PyNeat 3.1.0** is a code scanning and cleanup tool built specifically for AI-generated code. Unlike generic linters, PyNeat targets the patterns that AI coding assistants systematically produce -- phantom packages, hallucinated parameters, resource leaks, OWASP vulnerabilities, AI-specific security risks -- and cleans them up automatically. Supports 9 languages.
+**PyNeat 3.1.6** is a code scanning and cleanup tool built specifically for AI-generated code. Unlike generic linters, PyNeat targets the patterns that AI coding assistants systematically produce -- phantom packages, hallucinated parameters, resource leaks, OWASP vulnerabilities, AI-specific security risks -- and cleans them up automatically. Supports 9 languages.
 
 ## What It Does
 

@@ -1,4 +1,13 @@
-include LICENSE
 include README.md
+include LICENSE
 include pyproject.toml
+recursive-include pyneat *.py
+recursive-include pyneat-rs/src *.rs
 recursive-include pyneat-rs/pyneat *.py
+recursive-include pyneat-rs/*.toml
+recursive-exclude pyneat-rs/target_dev *
+recursive-exclude pyneat-rs/test-samples *
+recursive-exclude pyneat-rs/pyneat_junc *
+global-exclude *.pyc
+global-exclude *.so
+global-exclude *.pdb

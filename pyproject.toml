@@ -69,6 +69,24 @@ module-name = "pyneat_rs"
 packages = ["pyneat-rs/pyneat"]
 args = ["--release"]
 strip = true
+# Match the PyPI project name from [project] in pyproject.toml
+dist-name = "pyneat-cli"
+sdist-include = [
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+    "MANIFEST.in",
+    "pyneat/",
+    "pyneat-rs/src/",
+    "pyneat-rs/pyneat/",
+    "pyneat-rs/Cargo.toml",
+    "pyneat-rs/build.rs",
+]
+sdist-exclude = [
+    "**/target_dev/**",
+    "**/test-samples/**",
+    "**/pyneat_junc/**",
+]
 
 [tool.pyneat]
 # Default rule settings for pyneat clean / pyneat clean-dir
