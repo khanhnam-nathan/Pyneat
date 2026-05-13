@@ -1077,6 +1077,7 @@ def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, 
 
     Examples:
         pyneat check app.py
+        pyneat scan app.py
         pyneat check src/ --severity --cvss
         pyneat check . --lang javascript
         pyneat check . --fail-on critical --output report.json
@@ -2102,6 +2103,10 @@ def show_feature_menu(last_command: str = "", context: str = "", ctx: click.Cont
     import threading
     import sys
 
+    # Skip interactive menu if stdin is not a TTY (CI/non-interactive environments)
+    if not sys.stdin.isatty():
+        return
+
     suggestions = _get_menu_suggestions(last_command, context)
     click.echo("")
     click.echo("")
@@ -2118,8 +2123,9 @@ def show_feature_menu(last_command: str = "", context: str = "", ctx: click.Cont
     choice_ref = [None]
     def read_input():
         try:
-            line = sys.stdin.readline()
-            choice_ref[0] = line.strip().upper()
+            if sys.stdin.isatty():
+                line = sys.stdin.readline()
+                choice_ref[0] = line.strip().upper()
         except Exception:
             pass
 
@@ -2217,6 +2223,29 @@ def _handle_menu_choice(choice: str, suggestions: Dict[str, tuple], ctx: click.C
         click.echo(f"     Press 'q' or Enter to exit.")
         click.echo("")
         click.echo("  📚 Docs: https://pyneat.dev/docs")
+
+
+@click.command(name='scan')
+@click.argument('target', type=str, default='.', required=False)
+@click.option('--lang', '-l', 'lang_opt', type=str, default=None)
+@click.option('--severity', is_flag=True)
+@click.option('--cvss', is_flag=True)
+@click.option('--output', '-o', type=click.Path())
+@click.option('--format', '-f', type=click.Choice(['text', 'json', 'sarif']), default='text')
+@click.option('--fail-on', type=click.Choice(['critical', 'high', 'medium']), default=None)
+@click.option('--skip-deps', is_flag=True)
+@click.option('--deps/--no-deps', 'use_deps', default=True)
+@click.option('--check-cve/--no-check-cve', default=False)
+@click.option('--check-license/--no-check-license', default=False)
+@click.option('--lock-files', is_flag=True)
+@click.option('--rule', '-r', 'rule_filter', multiple=True)
+@click.option('--exclude', '-e', multiple=True)
+@click.option('--verbose', '-v', is_flag=True)
+@click.option('--quiet', '-q', is_flag=True)
+@click.option('--rust/--no-rust', 'use_rust', default=None)
+def scan_cmd(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, use_deps, check_cve, check_license, lock_files, rule_filter, exclude, verbose, quiet, use_rust):
+    """Security scan - alias for 'check'. Detect vulnerabilities without auto-fix."""
+    check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, use_deps, check_cve, check_license, lock_files, rule_filter, exclude, verbose, quiet, use_rust)
 
 
 @cli.command(name='audit-deps')
@@ -2526,4 +2555,5 @@ def test_cmd(lang, command, all_langs, verbose, debug, case_name, stop_on_failur
 
 
 if __name__ == '__main__':
+    cli.add_command(scan_cmd)
     cli()

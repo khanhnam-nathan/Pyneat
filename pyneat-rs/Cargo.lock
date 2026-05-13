@@ -2018,7 +2018,7 @@ dependencies = [
 
 [[package]]
 name = "pyneat-cli"
-version = "3.1.6"
+version = "3.1.7"
 dependencies = [
  "ahash",
  "bumpalo",

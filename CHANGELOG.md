@@ -4,6 +4,12 @@ Tất cả thay đổi đáng chú ý của dự án này sẽ được ghi ché
 
 Dự án tuân theo [Semantic Versioning](https://semver.org/lang/vi/) và [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [3.1.7] - 2026-05-13
+
+### Changed
+
+- Bump version to 3.1.7 for PyPI release
+
 ## [3.0.1] - 2026-04-16
 
 ### Fixed
