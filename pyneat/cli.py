@@ -1,9 +1,11 @@
-"""PyNEAT CLI - Re-exported from pyneat.cli for backward compatibility.
+"""PyNEAT CLI - Backward compatibility shim.
 
-The main CLI implementation lives in `pyneat/cli/cli_impl.py`.
+The main CLI lives in pyneat_cli.cli:main().
+This shim re-exports the Click CLI group for:
+  - python -m pyneat  (via __main__.py)
+  - any external code doing: from pyneat.cli import cli
 """
 
-# Re-export everything from the modular CLI package
 from pyneat.cli.cli_impl import (
     cli,
     clean,

@@ -59,14 +59,14 @@ Changelog = "https://github.com/pyneat/pyneat/blob/main/CHANGELOG.md"
 Issues = "https://github.com/pyneat/pyneat/issues"
 
 [project.scripts]
-pyneat = "pyneat.cli:cli"
+pyneat = "pyneat_cli.cli:main"
 
 # Maturin configuration for Rust extension
 [tool.maturin]
 features = ["pyo3/extension-module"]
 manifest-path = "pyneat-rs/Cargo.toml"
 module-name = "pyneat_rs"
-packages = ["pyneat-rs/pyneat"]
+packages = ["pyneat-rs/pyneat", "pyneat_cli", "pyneat"]
 args = ["--release"]
 strip = true
 # Match the PyPI project name from [project] in pyproject.toml
@@ -77,8 +77,10 @@ sdist-include = [
     "pyproject.toml",
     "MANIFEST.in",
     "pyneat/",
+    "pyneat_cli/",
     "pyneat-rs/src/",
     "pyneat-rs/pyneat/",
+    "pyneat-rs/pyneat/cli/",
     "pyneat-rs/Cargo.toml",
     "pyneat-rs/build.rs",
 ]

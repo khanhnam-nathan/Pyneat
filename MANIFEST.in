@@ -2,6 +2,7 @@ include README.md
 include LICENSE
 include pyproject.toml
 recursive-include pyneat *.py
+recursive-include pyneat_cli *.py *.typed
 recursive-include pyneat-rs/src *.rs
 recursive-include pyneat-rs/pyneat *.py
 recursive-include pyneat-rs/*.toml

@@ -1,24 +1,15 @@
 """Entry point for running pyneat as a module.
 
-Copyright (c) 2026 PyNEAT Authors
+Usage: python -m pyneat [args]
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published
-by the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+This module provides the `python -m pyneat` entry point.
+The primary entry point for the `pyneat` command is pyneat_cli.cli:main()
+(which is registered via [project.scripts.pyneat] in pyproject.toml).
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-For commercial licensing, contact: khanhnam.copywriting@gmail.com
+This __main__.py exists as a secondary entry path.
 """
 
-from pyneat.cli import cli
+from pyneat.cli.cli_impl import cli
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

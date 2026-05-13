@@ -76,3 +76,13 @@ pyneat-workspace/target/
 *PROPRIETARY*
 *LICENSE_PROPRIETARY*
 *COMMERCIAL*
+
+# Virtual environments
+.venv/
+.venv/
+
+# Test artifacts
+.pytest_cache/
+pyneat_junc/
+pyneat-rs/tests/test_rust_scanner.rs
+pyneat-rs/src/scanner/shared/
