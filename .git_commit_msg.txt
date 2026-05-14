@@ -1,9 +1,3 @@
-chore: simplify CI/CD workflows - remove redundant jobs
+chore: update CLI shims to delegate to pyneat.cli.cli_impl
 
-- Remove build_and_publish.yml (duplicates release.yml)
-- Remove performance-benchmark.yml (no need for benchmark comparisons)
-- Remove pr-security-scan.yml (overlaps with pyneat-ghas.yml)
-- Simplify ci.yml: keep only test + lint jobs
-  - Removed: rust-tests, security-audit, rust-security,
-    pyneat-self-analysis, export-manifest, summary
-- Keep release.yml, pyneat-ghas.yml, scheduled-security-scan.yml
+Also remove leftover sdist_extract/ directory from previous testing.
