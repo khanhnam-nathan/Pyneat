@@ -255,6 +255,39 @@ impl LangRule for JavaXXE {
                     let line_text = code.lines().nth(call.start_line.saturating_sub(1))
                         .unwrap_or("").trim().to_string();
 
+                    // Build the secure replacement for the whole line.
+                    let factory_var = if let Some(pos) = line_text.find("=") {
+                        let lhs = line_text[..pos].trim();
+                        if lhs.contains(' ') && !lhs.ends_with(';') {
+                            format!("{};", lhs)
+                        } else {
+                            lhs.to_string()
+                        }
+                    } else {
+                        line_text.clone()
+                    };
+                    let trimmed = factory_var.trim_end_matches(';').trim();
+                    let has_semicolon = factory_var.ends_with(';');
+                    let indent = factory_var.len() - factory_var.trim_start().len();
+
+                    let replacement = if call.callee.contains("DocumentBuilderFactory") {
+                        format!(
+                            "{}{};\n{}{}.setFeature(XMLConstants.ACCESS_EXTERNAL_DTD, false);\n{}{}.setFeature(XMLConstants.ACCESS_EXTERNAL_SCHEMA, false);\n{}{}.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);\n{}{}.setNamespaceAware(true);",
+                            " ".repeat(indent), trimmed,
+                            " ".repeat(indent), trimmed,
+                            " ".repeat(indent), trimmed,
+                            " ".repeat(indent), trimmed,
+                            " ".repeat(indent), trimmed,
+                        )
+                    } else {
+                        format!(
+                            "{}{};\n{}{}.setFeature(XMLConstants.ACCESS_EXTERNAL_DTD, false);\n{}{}.setFeature(XMLConstants.ACCESS_EXTERNAL_SCHEMA, false);",
+                            " ".repeat(indent), trimmed,
+                            " ".repeat(indent), trimmed,
+                            " ".repeat(indent), trimmed,
+                        )
+                    };
+
                     findings.push(LangFinding {
                         rule_id: self.id().to_string(),
                         severity: self.severity().to_string(),
@@ -277,7 +310,7 @@ impl LangRule for JavaXXE {
                             factory.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);"
                             .to_string(),
                         auto_fix_available: false,
-                        replacement: String::new(),
+                        replacement,
                     });
                 }
             }

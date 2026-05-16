@@ -468,9 +468,9 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
     };
 
     // Use pre-computed replacement from scan result if available
-    let replacement = finding["replacement"].as_str().unwrap_or("");
-    let replacement = if !replacement.is_empty() {
-        replacement.to_string()
+    let precomputed_replacement = finding["replacement"].as_str().unwrap_or("");
+    let replacement = if !precomputed_replacement.is_empty() {
+        precomputed_replacement.to_string()
     } else {
         // Fallback: compute replacement from known fix patterns
         let rule_id = finding["rule_id"].as_str().unwrap_or("");
@@ -530,6 +530,11 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
                         "No auto-fix available for SEC-003 in non-Python code",
                     ));
                 }
+            }
+            // JAVA-SEC-003: XML factory -> secure configuration
+            // Uses pre-computed replacement from the scan; import-level falls through to _
+            "JAVA-SEC-003" if !precomputed_replacement.is_empty() => {
+                precomputed_replacement.to_string()
             }
             // JS-005: eval/Function/setTimeout/setInterval — comment with warning
             "JS-005" => {

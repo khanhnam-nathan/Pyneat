@@ -1251,6 +1251,8 @@ def check(target, lang_opt, severity, cvss, output, format, fail_on, skip_deps, 
                     resources=(),
                     can_auto_fix=rust_finding.get("auto_fix", rust_finding.get("auto_fix_available", False)),
                     auto_fix_available=rust_finding.get("auto_fix", rust_finding.get("auto_fix_available", False)),
+                    auto_fix_before=rust_finding.get("snippet", "")[:200] if rust_finding.get("replacement") else None,
+                    auto_fix_after=rust_finding.get("replacement", "")[:200] if rust_finding.get("replacement") else None,
                 )
                 if rule_filter and rust_finding_obj.rule_id not in rule_filter:
                     continue
@@ -1764,6 +1766,10 @@ def report(target, format, output, use_rust):
                     fix_suggestion=rf.get("fix_hint", ""),
                     cwe=rf.get("cwe_id") or "",
                     owasp=rf.get("owasp_id") or "",
+                    can_auto_fix=False,
+                    auto_fix_available=False,
+                    auto_fix_before=rf.get("snippet", "")[:200] if rf.get("replacement") else None,
+                    auto_fix_after=rf.get("replacement", "")[:200] if rf.get("replacement") else None,
                 )
                 if not ignore_mgr.should_ignore(marker.rule_id, file_path, marker.line):
                     all_markers.append(marker)
