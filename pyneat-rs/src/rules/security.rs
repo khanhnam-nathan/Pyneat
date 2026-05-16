@@ -283,6 +283,9 @@ impl Rule for EvalExecRule {
         for (pattern, _) in &patterns {
             if let Ok(re) = regex::Regex::new(pattern) {
                 for m in re.find_iter(code) {
+                    let snippet_str = &code[m.start()..m.end()];
+                    let auto_fix = looks_like_python(code)
+                        && (snippet_str.contains("eval(") || snippet_str.contains("exec("));
                     let snippet = extract_snippet(code, m.start(), m.end());
                     findings.push(Finding {
                         rule_id: "SEC-003".to_string(),
@@ -295,7 +298,7 @@ impl Rule for EvalExecRule {
                         snippet,
                         problem: "Use of eval() or exec() can execute arbitrary code. User input in these functions can lead to remote code execution.".to_string(),
                         fix_hint: "Avoid eval() and exec(). Use ast.literal_eval() for safe evaluation of literals, or restructure code to avoid dynamic execution.".to_string(),
-                        auto_fix_available: looks_like_python(code),
+                        auto_fix_available: auto_fix,
                         replacement: String::new(),
                     });
                 }
