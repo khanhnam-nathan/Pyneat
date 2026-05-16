@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pyneat-cli"
-version = "3.1.7"
+version = "3.1.8"
 description = "AI-Generated Code Scanner — detects bugs, security vulnerabilities, and quality issues that AI coding assistants introduce"
 readme = "README.md"
 license = {text = "GNU AGPL-3.0-or-later"}
@@ -66,11 +66,15 @@ pyneat = "pyneat_cli.cli:main"
 features = ["pyo3/extension-module"]
 manifest-path = "pyneat-rs/Cargo.toml"
 module-name = "pyneat_rs"
-packages = ["pyneat-rs/pyneat", "pyneat_cli", "pyneat"]
+python-source = "."
 args = ["--release"]
 strip = true
 # Match the PyPI project name from [project] in pyproject.toml
 dist-name = "pyneat-cli"
+include = [
+    { path = "pyneat/**/*", format = ["sdist", "wheel"] },
+    { path = "pyneat_cli/**/*", format = ["sdist", "wheel"] },
+]
 sdist-include = [
     "README.md",
     "LICENSE",
