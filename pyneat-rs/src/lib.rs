@@ -437,12 +437,31 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
     let finding: serde_json::Value = serde_json::from_str(finding_json)
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
 
-    let start = finding["start"].as_u64().unwrap_or(0) as usize;
-    let end = finding["end"].as_u64().unwrap_or(0) as usize;
+    let byte_start = finding["start"].as_u64().unwrap_or(0) as usize;
+    let byte_end = finding["end"].as_u64().unwrap_or(0) as usize;
 
-    if start > end || end > code.len() {
-        return Err(pyo3::exceptions::PyValueError::new_err("Invalid fix range"));
-    }
+    // For lang scanners that set byte offsets to 0, fall back to line-based extraction.
+    // They set start_byte=0, end_byte=0 but provide a "line" field.
+    let (fix_start, fix_end, original_snippet) = if byte_start == 0 && byte_end == 0 {
+        if let Some(line) = finding["line"].as_u64() {
+            let line_idx = line.saturating_sub(1) as usize;
+            if let Some(line_text) = code.lines().nth(line_idx) {
+                let trimmed = line_text.trim();
+                let trim_start = line_text.len() - trimmed.len();
+                let trim_end = trim_start + trimmed.len();
+                (trim_start, trim_end, trimmed)
+            } else {
+                return Err(pyo3::exceptions::PyValueError::new_err("Invalid fix range"));
+            }
+        } else {
+            return Err(pyo3::exceptions::PyValueError::new_err("Invalid fix range"));
+        }
+    } else {
+        if byte_start > byte_end || byte_end > code.len() {
+            return Err(pyo3::exceptions::PyValueError::new_err("Invalid fix range"));
+        }
+        (byte_start, byte_end, &code[byte_start..byte_end])
+    };
 
     // Use pre-computed replacement from scan result if available
     let replacement = finding["replacement"].as_str().unwrap_or("");
@@ -451,62 +470,72 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
     } else {
         // Fallback: compute replacement from known fix patterns
         let rule_id = finding["rule_id"].as_str().unwrap_or("");
-        let original = &code[start..end];
         let _language = finding["language"].as_str().unwrap_or("python");
         match rule_id {
             // SEC-014: yaml.load -> yaml.safe_load (Python)
-            "SEC-014" if original.contains("yaml.load") => {
-                original.replace("yaml.load(", "yaml.safe_load(")
+            "SEC-014" if original_snippet.contains("yaml.load") => {
+                original_snippet.replace("yaml.load(", "yaml.safe_load(")
             }
             // JAVA-SEC-035 / JAVA-SEC-052 / JAVA-SEC-066: new Random() -> new SecureRandom()
             "JAVA-SEC-035" | "JAVA-SEC-052" | "JAVA-SEC-066"
-                if original.contains("new Random()") || original.contains("java.util.Random") =>
+                if original_snippet.contains("new Random()") || original_snippet.contains("java.util.Random") =>
             {
-                if original.contains("new Random()") {
-                    original.replace("new Random()", "new SecureRandom()")
+                if original_snippet.contains("new Random()") {
+                    original_snippet.replace("new Random()", "new SecureRandom()")
                 } else {
-                    original.replace("java.util.Random", "java.security.SecureRandom")
+                    original_snippet.replace("java.util.Random", "java.security.SecureRandom")
                 }
             }
             // JS-SEC-003: Math.random() — suggest crypto.getRandomValues
             "JS-SEC-003" | "RUST-SEC-003"
-                if original.contains("Math.random()") || original.contains("rand::ThreadRng") =>
+                if original_snippet.contains("Math.random()") || original_snippet.contains("rand::ThreadRng") =>
             {
-                if original.contains("Math.random()") {
+                if original_snippet.contains("Math.random()") {
                     "// TODO: Use crypto.getRandomValues() for secure random numbers".to_string()
                 } else {
                     "// TODO: Use rand::CryptoRng for secure random numbers".to_string()
                 }
             }
             // GO-SEC-006: rand.Seed -> rand.Read (secure seeding)
-            "GO-SEC-006" if original.contains("rand.Seed") => {
-                original.replace("rand.Seed", "rand.Read")
+            "GO-SEC-006" if original_snippet.contains("rand.Seed") => {
+                original_snippet.replace("rand.Seed", "rand.Read")
             }
             // PHP-SEC-003: rand/mt_rand -> random_bytes
-            "PHP-SEC-003" if original.contains("rand(") || original.contains("mt_rand(") => {
-                if original.contains("rand(") {
-                    original.replace("rand(", "random_int(")
+            "PHP-SEC-003" if original_snippet.contains("rand(") || original_snippet.contains("mt_rand(") => {
+                if original_snippet.contains("rand(") {
+                    original_snippet.replace("rand(", "random_int(")
                 } else {
-                    original.replace("mt_rand(", "random_int(")
+                    original_snippet.replace("mt_rand(", "random_int(")
                 }
             }
             // C# insecure random: Random -> RandomNumberGenerator
             "CSHARP-SEC-009" | "CSHARP-SEC-023"
-                if original.contains("new Random()") =>
+                if original_snippet.contains("new Random()") =>
             {
-                original.replace(
+                original_snippet.replace(
                     "new Random()",
                     "RandomNumberGenerator.Create()",
                 )
             }
             // SEC-003: eval -> ast.literal_eval (Python only)
-            "SEC-003" if original.contains("eval(") && !original.contains("ast.literal_eval") => {
+            "SEC-003" if original_snippet.contains("eval(") && !original_snippet.contains("ast.literal_eval") => {
                 if is_python_code(code) {
-                    original.replace("eval(", "ast.literal_eval(")
+                    original_snippet.replace("eval(", "ast.literal_eval(")
                 } else {
                     return Err(pyo3::exceptions::PyValueError::new_err(
                         "No auto-fix available for SEC-003 in non-Python code",
                     ));
+                }
+            }
+            // JS-005: eval/Function/setTimeout/setInterval — comment with warning
+            "JS-005" => {
+                let trimmed = original_snippet.trim();
+                let indent_len = original_snippet.len() - trimmed.len();
+                let indent = &original_snippet[..indent_len];
+                if original_snippet.contains("eval(") {
+                    format!("{}// Evaluate if this can be replaced with JSON.parse() or a safer alternative: {}", indent, trimmed)
+                } else {
+                    format!("{}// Consider using a safer alternative to this dynamic code execution: {}", indent, trimmed)
                 }
             }
             _ => {
@@ -521,7 +550,7 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
     };
 
     let mut result = code.to_string();
-    result.replace_range(start..end, &replacement);
+    result.replace_range(fix_start..fix_end, &replacement);
 
     Ok(result)
 }

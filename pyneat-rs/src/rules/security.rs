@@ -287,7 +287,7 @@ impl Rule for EvalExecRule {
                         snippet,
                         problem: "Use of eval() or exec() can execute arbitrary code. User input in these functions can lead to remote code execution.".to_string(),
                         fix_hint: "Avoid eval() and exec(). Use ast.literal_eval() for safe evaluation of literals, or restructure code to avoid dynamic execution.".to_string(),
-                        auto_fix_available: true,
+                        auto_fix_available: looks_like_python(code),
                         replacement: String::new(),
                     });
                 }
@@ -301,9 +301,6 @@ impl Rule for EvalExecRule {
     fn fix(&self, finding: &Finding, code: &str) -> Option<Fix> {
         let original = &code[finding.start..finding.end];
         if !original.contains("eval(") || original.contains("ast.literal_eval") {
-            return None;
-        }
-        if !looks_like_python(code) {
             return None;
         }
         let replacement = original.replace("eval(", "ast.literal_eval(");
