@@ -157,6 +157,7 @@ pub struct DependencyFinding {
 /// Scan options controlling what to include in a full project scan.
 #[pyo3::pyclass(from_py_object)]
 #[derive(Debug, Clone, Default, serde::Deserialize)]
+#[serde(default)]
 pub struct ScanOptions {
     /// Scan lock files for dependency analysis.
     pub scan_deps: bool,
@@ -451,11 +452,63 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
         // Fallback: compute replacement from known fix patterns
         let rule_id = finding["rule_id"].as_str().unwrap_or("");
         let original = &code[start..end];
+        let _language = finding["language"].as_str().unwrap_or("python");
         match rule_id {
+            // SEC-014: yaml.load -> yaml.safe_load (Python)
             "SEC-014" if original.contains("yaml.load") => {
                 original.replace("yaml.load(", "yaml.safe_load(")
             }
-            // Add more fix patterns here as they are implemented
+            // JAVA-SEC-035 / JAVA-SEC-052 / JAVA-SEC-066: new Random() -> new SecureRandom()
+            "JAVA-SEC-035" | "JAVA-SEC-052" | "JAVA-SEC-066"
+                if original.contains("new Random()") || original.contains("java.util.Random") =>
+            {
+                if original.contains("new Random()") {
+                    original.replace("new Random()", "new SecureRandom()")
+                } else {
+                    original.replace("java.util.Random", "java.security.SecureRandom")
+                }
+            }
+            // JS-SEC-003: Math.random() — suggest crypto.getRandomValues
+            "JS-SEC-003" | "RUST-SEC-003"
+                if original.contains("Math.random()") || original.contains("rand::ThreadRng") =>
+            {
+                if original.contains("Math.random()") {
+                    "// TODO: Use crypto.getRandomValues() for secure random numbers".to_string()
+                } else {
+                    "// TODO: Use rand::CryptoRng for secure random numbers".to_string()
+                }
+            }
+            // GO-SEC-006: rand.Seed -> rand.Read (secure seeding)
+            "GO-SEC-006" if original.contains("rand.Seed") => {
+                original.replace("rand.Seed", "rand.Read")
+            }
+            // PHP-SEC-003: rand/mt_rand -> random_bytes
+            "PHP-SEC-003" if original.contains("rand(") || original.contains("mt_rand(") => {
+                if original.contains("rand(") {
+                    original.replace("rand(", "random_int(")
+                } else {
+                    original.replace("mt_rand(", "random_int(")
+                }
+            }
+            // C# insecure random: Random -> RandomNumberGenerator
+            "CSHARP-SEC-009" | "CSHARP-SEC-023"
+                if original.contains("new Random()") =>
+            {
+                original.replace(
+                    "new Random()",
+                    "RandomNumberGenerator.Create()",
+                )
+            }
+            // SEC-003: eval -> ast.literal_eval (Python only)
+            "SEC-003" if original.contains("eval(") && !original.contains("ast.literal_eval") => {
+                if is_python_code(code) {
+                    original.replace("eval(", "ast.literal_eval(")
+                } else {
+                    return Err(pyo3::exceptions::PyValueError::new_err(
+                        "No auto-fix available for SEC-003 in non-Python code",
+                    ));
+                }
+            }
             _ => {
                 let msg = if rule_id.is_empty() {
                     "No rule_id provided in finding data".to_string()
@@ -471,6 +524,14 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
     result.replace_range(start..end, &replacement);
 
     Ok(result)
+}
+
+/// Heuristic check: does `code` look like Python source?
+fn is_python_code(code: &str) -> bool {
+    let sample = &code.to_lowercase()[..code.len().min(4096)];
+    ["def ", "import ", "from ", "class ", "self.", "elif ", "except "]
+        .iter()
+        .any(|p| sample.contains(p))
 }
 
 /// Apply multiple auto-fixes to code with conflict resolution.
@@ -528,11 +589,13 @@ fn get_rules() -> PyResult<String> {
     let mut rules_json: Vec<Value> = Vec::new();
 
     for rule in &all_rules {
+        let langs = rule.supported_languages();
         rules_json.push(json!({
             "id": rule.id(),
             "name": rule.name(),
             "severity": rule.severity().as_str(),
             "auto_fix_available": rule.supports_auto_fix(),
+            "supported_languages": langs,
             "category": "security",
         }));
     }

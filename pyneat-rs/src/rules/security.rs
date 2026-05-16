@@ -19,6 +19,18 @@ use crate::rules::base::{extract_snippet, Fix, Finding, Rule, Severity};
 use once_cell::sync::Lazy;
 use tree_sitter::Tree;
 
+/// Returns true if `code` looks like Python source (has typical Python syntax markers).
+/// This is used to prevent Python-specific auto-fixes from being applied to non-Python code.
+fn looks_like_python(code: &str) -> bool {
+    let code_lower = &code.to_lowercase()[..code.len().min(4096)];
+    let python_indicators = [
+        "def ", "import ", "from ", "class ", "self.", "elif ", "except ",
+        " __init__", " __name__", "async def", "with open", "lambda ",
+        "print(", "sys.path", "os.path", ".join(", "enumerate(",
+    ];
+    python_indicators.iter().any(|p| code_lower.contains(p))
+}
+
 /// SEC-001: Command Injection Detection
 pub struct CommandInjectionRule;
 
@@ -288,18 +300,21 @@ impl Rule for EvalExecRule {
 
     fn fix(&self, finding: &Finding, code: &str) -> Option<Fix> {
         let original = &code[finding.start..finding.end];
-        if original.contains("eval(") && !original.contains("ast.literal_eval") {
-            let replacement = original.replace("eval(", "ast.literal_eval(");
-            return Some(Fix {
-                rule_id: self.id().to_string(),
-                description: "Replace eval() with ast.literal_eval() for safe evaluation".to_string(),
-                original: original.to_string(),
-                replacement,
-                start: finding.start,
-                end: finding.end,
-            });
+        if !original.contains("eval(") || original.contains("ast.literal_eval") {
+            return None;
         }
-        None
+        if !looks_like_python(code) {
+            return None;
+        }
+        let replacement = original.replace("eval(", "ast.literal_eval(");
+        Some(Fix {
+            rule_id: self.id().to_string(),
+            description: "Replace eval() with ast.literal_eval() for safe evaluation".to_string(),
+            original: original.to_string(),
+            replacement,
+            start: finding.start,
+            end: finding.end,
+        })
     }
 
     fn supports_auto_fix(&self) -> bool {
