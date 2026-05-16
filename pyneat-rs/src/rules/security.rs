@@ -21,13 +21,21 @@ use tree_sitter::Tree;
 
 /// Returns true if `code` looks like Python source (has typical Python syntax markers).
 /// This is used to prevent Python-specific auto-fixes from being applied to non-Python code.
-fn looks_like_python(code: &str) -> bool {
+pub(crate) fn looks_like_python(code: &str) -> bool {
     let code_lower = &code.to_lowercase()[..code.len().min(4096)];
     let python_indicators = [
         "def ", "import ", "from ", "class ", "self.", "elif ", "except ",
         " __init__", " __name__", "async def", "with open", "lambda ",
         "print(", "sys.path", "os.path", ".join(", "enumerate(",
     ];
+    let ruby_indicators = [
+        "def ", "end\n", "end;", "puts ", "require '", "require \"",
+        "attr_accessor", "attr_reader", "attr_writer",
+        " do |", " { |", " |x|", " => {", "=> {",
+    ];
+    if ruby_indicators.iter().any(|p| code_lower.contains(p)) {
+        return false;
+    }
     python_indicators.iter().any(|p| code_lower.contains(p))
 }
 

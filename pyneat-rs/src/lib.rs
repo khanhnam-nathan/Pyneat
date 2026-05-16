@@ -17,6 +17,7 @@
 
 pub mod fixer;
 pub mod rules;
+use rules::security::looks_like_python;
 pub mod scanner;
 pub mod sarif;
 pub mod integrations;
@@ -519,7 +520,7 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
             }
             // SEC-003: eval -> ast.literal_eval (Python only)
             "SEC-003" if original_snippet.contains("eval(") && !original_snippet.contains("ast.literal_eval") => {
-                if is_python_code(code) {
+                if looks_like_python(code) {
                     original_snippet.replace("eval(", "ast.literal_eval(")
                 } else {
                     return Err(pyo3::exceptions::PyValueError::new_err(
@@ -553,14 +554,6 @@ fn apply_auto_fix(code: &str, finding_json: &str) -> PyResult<String> {
     result.replace_range(fix_start..fix_end, &replacement);
 
     Ok(result)
-}
-
-/// Heuristic check: does `code` look like Python source?
-fn is_python_code(code: &str) -> bool {
-    let sample = &code.to_lowercase()[..code.len().min(4096)];
-    ["def ", "import ", "from ", "class ", "self.", "elif ", "except "]
-        .iter()
-        .any(|p| sample.contains(p))
 }
 
 /// Apply multiple auto-fixes to code with conflict resolution.
