@@ -326,7 +326,10 @@ fn scan_security_internal(
     let mut raw_findings: Vec<Value> = all_rules
         .par_iter()
         .filter(|rule| {
-            rule_ids_owned.is_empty() || rule_ids_owned.iter().any(|id| id == rule.id())
+            let langs = rule.supported_languages();
+            let lang_match = langs.map_or(true, |ls| ls.iter().any(|l| l.to_lowercase() == lang.to_lowercase()));
+            let id_match = rule_ids_owned.is_empty() || rule_ids_owned.iter().any(|id| id == rule.id());
+            lang_match && id_match
         })
         .flat_map(|rule| {
             rule.detect(&tree, code)
